@@ -30,8 +30,8 @@ afterEvaluate {
                 artifact androidJavadocsJar
 
                 pom {
-                    name = "w3w-android-cerence"
-                    description = 'Android SDK for what3words cerence voice provider.'
+                    name = "w3w-android-ocr-components"
+                    description = 'Android OCR UI Components that work with Google MLKit'
                     url = 'https://github.com/what3words/w3w-android-ocr-components'
                     licenses {
                         license {
