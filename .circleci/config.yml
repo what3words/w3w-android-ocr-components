@@ -1,0 +1,108 @@
+version: 2.1
+orbs:
+  gradle: circleci/gradle@2.2.0
+  android: circleci/android@1.0
+
+jobs:
+  executor:
+    name: android/android-machine
+    resource-class: large
+  steps:
+    - checkout
+    - restore_cache:
+        key: jars2-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+    - run:
+        name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
+        command: sudo chmod +x ./gradlew
+    - run:
+        name: Wrapper
+        command: ./gradlew wrapper
+    - run:
+        name: Download Dependencies
+        command: ./gradlew androidDependencies
+    - save_cache:
+        paths:
+          - ~/.gradle
+        key: jars2-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+    - android/create-avd:
+        avd-name: testDevice
+        system-image: system-images;android-30;google_apis;x86
+        install: true
+    - android/start-emulator:
+        avd-name: testDevice
+        no-window: true
+        restore-gradle-cache-prefix: v2a
+    - android/run-tests:
+        test-command: ./gradlew lib:jacocoTestReport
+        max-tries: 3
+    - android/save-gradle-cache:
+        cache-prefix: v2a
+    - run:
+        name: Assemble sample release build
+        command: ./gradlew sample:assembleRelease
+    - run:
+        name: Assemble multiple components sample release build
+        command: ./gradlew multiple-components-sample:assembleRelease
+    - store_test_results:
+        path: testing/build/outputs/androidTest-results
+    - store_test_results:
+        path: lib/build/outputs/androidTest-results
+    - store_artifacts:
+        path: sample/build/outputs/apk/release
+    - store_artifacts:
+        path: multiple-components-sample/build/outputs/apk/release
+  deploy-to-sonatype:
+    docker:
+      - image: circleci/android:api-30
+    environment:
+      JVM_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+      - run:
+          name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
+          command: sudo chmod +x ./gradlew
+      - run:
+          name: Wrapper
+          command: ./gradlew wrapper
+      - run:
+          name: Download Dependencies
+          command: ./gradlew androidDependencies
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+      - run:
+          name: Force break line gradle.properties
+          command: |
+            echo -e '\n' >> gradle.properties
+      - run:
+          name: Inject Maven signing key
+          command: |
+            echo $GPG_SIGNING_KEY \
+            | awk 'NR == 1 { print "SIGNING_KEY=" } 1' ORS='\\n' \
+            >> gradle.properties
+      - run:
+          name: Publish to Maven
+          command: ./gradlew assemble publish
+workflows:
+  build-test-sonar-publish:
+    jobs:
+      - build-test-sonar:
+          context:
+            - SonarCloud
+            - maven-sign
+            - mobile
+      - deploy-to-sonatype:
+          name: Build, run tests, sonar and push to maven staging
+          requires:
+            - build-test-sonar
+          context:
+            - SonarCloud
+            - maven-sign
+            - mobile
+          filters:
+            branches:
+              only:
+                - dev
