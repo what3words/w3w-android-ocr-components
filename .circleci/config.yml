@@ -7,8 +7,8 @@ jobs:
   run-tests-generate-samples:
     executor:
       name: android/android-machine
-      resource-class: xlarge
-      tag: 2023.05.1-browsers
+      resource-class: large
+      tag: 2023.05.1
     steps:
       - checkout
       - restore_cache:
