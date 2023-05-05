@@ -1,0 +1,4 @@
+<resources>
+    <string name="title_activity_ocr_scan">OcrScanActivity</string>
+    <string name="slashes">///%s</string>
+</resources>
