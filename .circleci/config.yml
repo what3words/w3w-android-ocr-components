@@ -68,8 +68,7 @@ jobs:
           key: jars-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
       - run:
           name: Force break line gradle properties
-          command: |
-            echo -e '\n' >> gradle.properties
+          command: echo -e '\n' >> gradle.properties
       - run:
           name: Inject Maven signing key
           command: |
