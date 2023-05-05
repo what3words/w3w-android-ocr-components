@@ -29,7 +29,8 @@ import com.what3words.ocr.components.extensions.parcelable
 import com.what3words.ocr.components.models.OcrScanResult
 import com.what3words.ocr.components.models.W3WOcrWrapper
 import com.what3words.ocr.components.models.decodeBase64
-import com.what3words.ocr.components.ui.OcrScanActivity
+import com.what3words.ocr.components.ui.BaseOcrScanActivity
+import com.what3words.ocr.components.ui.MLKitOcrScanActivity
 
 class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     private val viewModel: ComposeOcrScanSamplePopupViewModel by viewModels()
@@ -39,7 +40,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 // There are no request codes
                 result.data?.let {
-                    val scanResult = it.parcelable<OcrScanResult>(OcrScanActivity.RESULT_ID)
+                    val scanResult = it.parcelable<OcrScanResult>(BaseOcrScanActivity.RESULT_ID)
                     if (scanResult != null && scanResult.isSuccessful()) {
                         scanResult.scannedImage?.let { base64 ->
                             viewModel.scannedImage = base64
@@ -70,11 +71,11 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                     MLKitLibrariesDropdownMenuBox()
 
                     Button(modifier = Modifier.fillMaxWidth(), onClick = {
-                        val activityIntentBuilder = OcrScanActivity.Builder().withAPI(BuildConfig.W3W_API_KEY)
+                        val activityIntentBuilder = MLKitOcrScanActivity.Builder().withAPI(BuildConfig.W3W_API_KEY)
                         when (viewModel.ocrType) {
                             W3WOcrWrapper.OcrProvider.MLKit -> {
                                 activityIntentBuilder
-                                    .withMLKitOcrProvider(viewModel.selectedMLKitLibrary)
+                                    .withMLKitLibrary(viewModel.selectedMLKitLibrary)
                             }
                             else -> {}
                         }

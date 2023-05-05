@@ -8,9 +8,8 @@
 
     <application>
         <activity
-            android:name=".ui.OcrScanActivity"
+            android:name=".ui.MLKitOcrScanActivity"
             android:exported="false"
-            android:label="@string/title_activity_ocr_scan"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>
 

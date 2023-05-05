@@ -6,7 +6,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatSpinner
 import androidx.camera.core.ExperimentalGetImage
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.ocr.components.models.OcrScanResult
@@ -27,7 +26,6 @@ class OcrScanFragmentSampleActivity : AppCompatActivity(), OcrScanFragment.OcrSc
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val spinner = findViewById<AppCompatSpinner>(R.id.language_spinner)
         results = findViewById(R.id.results_text)
         restartButton = findViewById(R.id.restart_button)
         scannedImage = findViewById(R.id.scanned_image)
