@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   gradle: circleci/gradle@2.2.0
-  android: circleci/android@1.0
+  android: circleci/android@2.2.0
 
 jobs:
   run-tests-generate-samples:
@@ -10,6 +10,13 @@ jobs:
       resource-class: large
     steps:
       - checkout
+      - run:
+          name: Install OpenJDK 17
+          command: |
+            sudo apt-get update && sudo apt-get install openjdk-17-jdk
+            sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+            sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+            java -version
       - restore_cache:
           key: jars2-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
       - run:
