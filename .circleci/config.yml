@@ -39,18 +39,11 @@ jobs:
         cache-prefix: v2a
     - run:
         name: Assemble sample release build
-        command: ./gradlew sample:assembleRelease
-    - run:
-        name: Assemble multiple components sample release build
-        command: ./gradlew multiple-components-sample:assembleRelease
-    - store_test_results:
-        path: testing/build/outputs/androidTest-results
+        command: ./gradlew samples:assembleRelease
     - store_test_results:
         path: lib/build/outputs/androidTest-results
     - store_artifacts:
-        path: sample/build/outputs/apk/release
-    - store_artifacts:
-        path: multiple-components-sample/build/outputs/apk/release
+        path: samples/build/outputs/apk/release
   deploy-to-sonatype:
     docker:
       - image: circleci/android:api-30
