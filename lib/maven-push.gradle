@@ -16,6 +16,15 @@ task androidJavadocsJar(type: Jar, dependsOn: dokkaJavadoc) {
     from "$buildDir/dokka"
 }
 
+android {
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
 afterEvaluate {
     publishing {
         publications {
