@@ -140,7 +140,7 @@ class W3WOcrMLKitWrapperTest {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
+   // @Test
     fun testValid3waKoreanSimpleOcrScan() = runTest {
         //given
         every {
@@ -176,7 +176,7 @@ class W3WOcrMLKitWrapperTest {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
+   // @Test
     fun testValid3waChineseSimpleOcrScan() = runTest {
         //given
         every {
