@@ -82,10 +82,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation 'androidx.activity:activity-compose:1.7.1'
     implementation "androidx.compose.ui:ui:1.4.2"
+    implementation "androidx.compose.runtime:runtime:1.4.2"
+
     implementation "androidx.compose.ui:ui-tooling-preview:1.4.2"
     implementation 'androidx.compose.material:material:1.4.2'
 
-    implementation 'com.what3words:w3w-android-api-sdk-bridge:1.0.2'
     // To recognize Latin script
     implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
 
