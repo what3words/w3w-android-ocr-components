@@ -90,8 +90,6 @@ workflows:
             - mobile
       - deploy-to-sonatype:
           name: Build, run tests, sonar and push to maven staging
-          requires:
-            - run-tests-generate-samples
           context:
             - SonarCloud
             - maven-sign
