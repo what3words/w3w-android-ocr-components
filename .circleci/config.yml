@@ -48,7 +48,7 @@ jobs:
           path: samples/build/outputs/apk/release
   deploy-to-sonatype:
     docker:
-      - image: circleci/android:api-30
+      - image: cimg/android:2023.05-browsers
     environment:
       JVM_OPTS: -Xmx3200m
     steps:
