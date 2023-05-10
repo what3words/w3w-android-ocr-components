@@ -59,11 +59,11 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion '1.4.2'
     }
-    packagingOptions {
-        resources {
-            excludes += '/META-INF/*'
-        }
-    }
+//    packagingOptions {
+//        resources {
+//            excludes += '/META-INF/*'
+//        }
+//    }
     publishing {
         singleVariant('release') {
             withSourcesJar()

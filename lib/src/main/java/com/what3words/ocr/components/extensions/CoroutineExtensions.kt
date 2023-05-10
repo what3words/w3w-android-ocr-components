@@ -1,6 +1,5 @@
 package com.what3words.ocr.components.extensions
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,10 +9,10 @@ import android.os.Parcelable
 import android.util.Base64
 import com.what3words.androidwrapper.helpers.DispatcherProvider
 import java.io.ByteArrayOutputStream
+import java.io.Serializable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.io.Serializable
 
 fun io(dispatcher: DispatcherProvider, work: suspend (() -> Unit)): Job {
     return CoroutineScope(dispatcher.io()).launch {

@@ -2,7 +2,6 @@ package com.what3words.ocr.components.models
 
 import android.graphics.Bitmap
 import android.graphics.RectF
-import android.util.Log
 import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
@@ -15,10 +14,8 @@ import com.what3words.javawrapper.response.APIResponse
 import com.what3words.javawrapper.response.Autosuggest
 import com.what3words.ocr.components.extensions.encodeToBase64
 import com.what3words.ocr.components.extensions.io
-import com.what3words.ocr.components.extensions.main
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class W3WOcrMLKitWrapper(
