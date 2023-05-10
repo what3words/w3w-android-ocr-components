@@ -13,6 +13,7 @@ import com.what3words.androidwrapper.helpers.DispatcherProvider
 import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.response.APIResponse
 import com.what3words.javawrapper.response.Autosuggest
+import com.what3words.ocr.components.extensions.encodeToBase64
 import com.what3words.ocr.components.extensions.io
 import com.what3words.ocr.components.extensions.main
 import java.util.concurrent.ExecutorService
@@ -73,7 +74,7 @@ class W3WOcrMLKitWrapper(
                                     val info = getInfo(autosuggestRes, visionText)
                                     ocrScanResult.suggestions = autosuggestRes.suggestions
                                     ocrScanResult.info = info
-                                    ocrScanResult.scannedImage = encodeToBase64(image)
+                                    ocrScanResult.scannedImage = image.encodeToBase64()
                                 }
                             } else {
                                 ocrScanResult.error = autosuggestRes.error

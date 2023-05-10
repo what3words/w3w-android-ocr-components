@@ -25,10 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import com.what3words.design.library.ui.components.NavigationBarScaffold
 import com.what3words.design.library.ui.theme.W3WTheme
+import com.what3words.ocr.components.extensions.decodeBase64
 import com.what3words.ocr.components.extensions.parcelable
 import com.what3words.ocr.components.models.OcrScanResult
 import com.what3words.ocr.components.models.W3WOcrWrapper
-import com.what3words.ocr.components.models.decodeBase64
 import com.what3words.ocr.components.ui.BaseOcrScanActivity
 import com.what3words.ocr.components.ui.MLKitOcrScanActivity
 
@@ -94,7 +94,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                         text = viewModel.results!!
                     )
                     if (viewModel.scannedImage != null) Image(
-                        bitmap = decodeBase64(viewModel.scannedImage!!).asImageBitmap(),
+                        bitmap = viewModel.scannedImage!!.decodeBase64().asImageBitmap(),
                         contentDescription = "scanned image"
                     )
                 }
