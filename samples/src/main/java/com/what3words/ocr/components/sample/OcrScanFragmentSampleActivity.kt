@@ -8,9 +8,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ExperimentalGetImage
 import com.what3words.androidwrapper.What3WordsV3
+import com.what3words.ocr.components.extensions.decodeBase64
 import com.what3words.ocr.components.models.OcrScanResult
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
-import com.what3words.ocr.components.models.decodeBase64
 import com.what3words.ocr.components.ui.OcrScanFragment
 
 
@@ -53,7 +53,7 @@ class OcrScanFragmentSampleActivity : AppCompatActivity(), OcrScanFragment.OcrSc
     override fun onFinished(result: OcrScanResult) {
         if (result.isSuccessful()) {
             result.scannedImage?.let { base64 ->
-                scannedImage.setImageBitmap(decodeBase64(base64))
+                scannedImage.setImageBitmap(base64.decodeBase64())
             }
             var resultText = ""
             result.suggestions.forEach { suggestion ->
