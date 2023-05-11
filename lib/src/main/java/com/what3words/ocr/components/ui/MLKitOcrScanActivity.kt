@@ -15,6 +15,25 @@ import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
 
 class MLKitOcrScanActivity : BaseOcrScanActivity() {
+    companion object {
+        fun newInstanceWithApi(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries, apiKey: String) : Intent {
+            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.API, apiKey)
+        }
+
+        fun newInstanceWithSdk(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries) : Intent {
+            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.SDK)
+        }
+
+        private fun buildInstance(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries, dataProvider: W3WOcrWrapper.DataProvider, apiKey: String? = null) : Intent {
+            return Intent(context, MLKitOcrScanActivity::class.java).apply {
+                this.putExtra(DATA_PROVIDER_ID, dataProvider)
+                this.putExtra(OCR_PROVIDER_ID, W3WOcrWrapper.OcrProvider.MLKit)
+                this.putExtra(MLKIT_LIBRARY_ID, mlKitLibrary)
+                this.putExtra(API_KEY_ID, apiKey)
+            }
+        }
+    }
+
     override val ocrWrapper: W3WOcrWrapper by lazy {
         val dataProvider: What3WordsAndroidWrapper =
             if (dataProvider == W3WOcrWrapper.DataProvider.SDK) {
@@ -32,42 +51,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             }
         }
     }
-
-    class Builder() {
-        private var dataProvider: W3WOcrWrapper.DataProvider? = null
-        private var mlkitLibrary: W3WOcrWrapper.MLKitLibraries? = null
-        private var apiKey: String? = null
-
-        fun withAPI(apiKey: String): Builder {
-            dataProvider = W3WOcrWrapper.DataProvider.API
-            this.apiKey = apiKey
-            return this
-        }
-
-        fun withSDK(): Builder {
-            dataProvider = W3WOcrWrapper.DataProvider.SDK
-            return this
-        }
-
-        fun withMLKitLibrary(mlKitLanguage: W3WOcrWrapper.MLKitLibraries): Builder {
-            mlkitLibrary = mlKitLanguage
-            return this
-        }
-
-        fun build(context: Context): Intent {
-            if (dataProvider == null) throw java.lang.Exception("OcrScanActivity requires withAPI/withSDK and withOcrProvider to build activity intent")
-            if (mlkitLibrary == null) throw ExceptionInInitializerError(
-                "MLKitOcrScanActivity needs a valid MLKit Language Library"
-            )
-            return Intent(context, MLKitOcrScanActivity::class.java).apply {
-                this.putExtra(DATA_PROVIDER_ID, dataProvider)
-                this.putExtra(OCR_PROVIDER_ID, W3WOcrWrapper.OcrProvider.MLKit)
-                this.putExtra(MLKIT_LIBRARY_ID, mlkitLibrary)
-                this.putExtra(API_KEY_ID, apiKey)
-            }
-        }
-    }
-
 
     private fun buildMLKit(dataProvider: What3WordsAndroidWrapper): W3WOcrMLKitWrapper {
         val textRecognizer = TextRecognition.getClient(

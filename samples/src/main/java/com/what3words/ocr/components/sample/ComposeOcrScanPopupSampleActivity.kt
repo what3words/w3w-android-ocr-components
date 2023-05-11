@@ -71,16 +71,9 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                     MLKitLibrariesDropdownMenuBox()
 
                     Button(modifier = Modifier.fillMaxWidth(), onClick = {
-                        val activityIntentBuilder = MLKitOcrScanActivity.Builder().withAPI(BuildConfig.W3W_API_KEY)
-                        when (viewModel.ocrType) {
-                            W3WOcrWrapper.OcrProvider.MLKit -> {
-                                activityIntentBuilder
-                                    .withMLKitLibrary(viewModel.selectedMLKitLibrary)
-                            }
-                            else -> {}
-                        }
+                        val intent = MLKitOcrScanActivity.newInstanceWithApi(this, viewModel.selectedMLKitLibrary, BuildConfig.W3W_API_KEY)
                         try {
-                            resultLauncher.launch(activityIntentBuilder.build(this))
+                            resultLauncher.launch(intent)
                         }
                         catch (e: ExceptionInInitializerError) {
                             viewModel.results = e.message
