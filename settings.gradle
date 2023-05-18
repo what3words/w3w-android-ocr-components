@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         maven {
-            url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1052"
+            url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1061"
         }
         maven {
             url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1058"
