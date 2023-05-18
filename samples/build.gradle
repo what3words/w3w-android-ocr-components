@@ -55,7 +55,7 @@ android {
         jvmTarget = '1.8'
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.2'
+        kotlinCompilerExtensionVersion '1.4.3'
     }
     packagingOptions {
         resources {
@@ -66,9 +66,9 @@ android {
 
 dependencies {
     implementation project(":lib")
-    implementation 'androidx.core:core-ktx:1.10.0'
+    implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
     // CameraX
@@ -81,11 +81,11 @@ dependencies {
     implementation 'com.what3words:w3w-android-wrapper:3.1.22'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation 'androidx.activity:activity-compose:1.7.1'
-    implementation "androidx.compose.ui:ui:1.4.2"
-    implementation "androidx.compose.runtime:runtime:1.4.2"
+    implementation "androidx.compose.ui:ui:1.4.3"
+    implementation "androidx.compose.runtime:runtime:1.4.3"
 
-    implementation "androidx.compose.ui:ui-tooling-preview:1.4.2"
-    implementation 'androidx.compose.material:material:1.4.2'
+    implementation "androidx.compose.ui:ui-tooling-preview:1.4.3"
+    implementation 'androidx.compose.material:material:1.4.3'
 
     // To recognize Latin script
     implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
@@ -98,6 +98,6 @@ dependencies {
     // To recognize Korean script
     implementation 'com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0'
 
-    debugImplementation "androidx.compose.ui:ui-tooling:1.4.2"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:1.4.2"
+    debugImplementation "androidx.compose.ui:ui-tooling:1.4.3"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:1.4.3"
 }
