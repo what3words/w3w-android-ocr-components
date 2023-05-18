@@ -1,15 +1,10 @@
 package com.what3words.ocr.components.models
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.RectF
 import android.os.Parcelable
-import android.util.Base64
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Suggestion
 import kotlinx.parcelize.Parcelize
-import java.io.ByteArrayOutputStream
-
 
 @Parcelize
 data class OcrInfo(
