@@ -61,7 +61,7 @@ class W3WOcrMLKitWrapperTest {
         //then
         verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("filled.count.soap") }
         assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
+        assertEquals(1, scanResult.suggestions.size)
         assertEquals("filled.count.soap", scanResult.suggestions[0].words)
         assertEquals("en", scanResult.suggestions[0].language)
     }
@@ -98,7 +98,7 @@ class W3WOcrMLKitWrapperTest {
             what3WordsAndroidWrapper.autosuggest("डोलने.पीसना.संभाला")
         }
         assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
+        assertEquals(1, scanResult.suggestions.size)
         assertEquals("डोलने.पीसना.संभाला", scanResult.suggestions[0].words)
         assertEquals("hi", scanResult.suggestions[0].language)
     }
@@ -134,7 +134,7 @@ class W3WOcrMLKitWrapperTest {
             what3WordsAndroidWrapper.autosuggest("こくさい。ていか。かざす")
         }
         assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
+        assertEquals(1, scanResult.suggestions.size)
         assertEquals("こくさい。ていか。かざす", scanResult.suggestions[0].words)
         assertEquals("ja", scanResult.suggestions[0].language)
     }
