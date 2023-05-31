@@ -12,9 +12,9 @@ import java.util.concurrent.ExecutorService
 
 interface W3WOcrWrapper {
     /**
-     * Change current scanning language of the wrapper using a ISO language code.
+     * Change current scanning language of the wrapper using a ISO 639-1 two letter code language code.
      *
-     * @param languageCode the ISO language code to change the wrapper too (it will ignore scanned three word address in other languages)
+     * @param languageCode the ISO 639-1 two letter code language code to change the wrapper too (it will ignore scanned three word address in other languages)
      *
      * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */

@@ -46,7 +46,7 @@ class W3WOcrMLKitWrapper(
         /**
          * Static method to check if [languageCode] is supported by this [W3WOcrWrapper], it will throw [UnsupportedOperationException] if [allowsToSetLanguage] is false.
          *
-         * @param languageCode the ISO- language code to check for support.
+         * @param languageCode the ISO 639-1 two letter code language code to check for support.
          * @return true if supports this [languageCode], false if not.
          *
          * @throws [UnsupportedOperationException] if [allowsToSetLanguage] is false.
@@ -59,9 +59,9 @@ class W3WOcrMLKitWrapper(
         }
 
         /**
-         * Static method to get the list of languages ISO supported by this wrapper, it will throw [UnsupportedOperationException] if [allowsToSetLanguage] is false.
+         * Static method to get the list of languages (ISO 639-1 two letter code language code) supported by this wrapper, it will throw [UnsupportedOperationException] if [allowsToSetLanguage] is false.
          *
-         * @return list of ISO language codes supported by this wrapper.
+         * @return list of ISO 639-1 two letter code language codes supported by this wrapper.
          *
          * @throws [UnsupportedOperationException] if [allowsToSetLanguage] is false.
          */
