@@ -8,13 +8,10 @@ import com.what3words.ocr.components.models.W3WOcrWrapper
 
 class ComposeOcrScanSamplePopupViewModel : ViewModel() {
 
-    var scannedImage: String? by mutableStateOf(null)
-
     var results: String? by mutableStateOf(null)
     var selectedMLKitLibrary: W3WOcrWrapper.MLKitLibraries by mutableStateOf(W3WOcrWrapper.MLKitLibraries.Latin)
     var availableMLKitLanguages: List<W3WOcrWrapper.MLKitLibraries> by mutableStateOf(
         W3WOcrWrapper.MLKitLibraries.values().toList()
     )
-    var ocrType: W3WOcrWrapper.OcrProvider by mutableStateOf(W3WOcrWrapper.OcrProvider.MLKit)
-        private set
+    var ocrWrapper: W3WOcrWrapper? by mutableStateOf(null)
 }

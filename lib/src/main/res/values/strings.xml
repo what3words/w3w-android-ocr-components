@@ -1,4 +1,8 @@
 <resources>
     <string name="title_activity_ocr_scan">OcrScanActivity</string>
-    <string name="slashes">///%s</string>
+    <string name="grip_content_description">Grip to move the bottom sheet up and down</string>
+    <string name="scan_state_detecting">Detecting...</string>
+    <string name="scan_state_scanning">Scan a what3words address</string>
+    <string name="scan_state_validating">Validating...</string>
+    <string name="scan_state_found">Scanned</string>
 </resources>

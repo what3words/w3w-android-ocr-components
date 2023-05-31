@@ -53,7 +53,7 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) {
                 cont.resume(it)
             }
         }
@@ -88,7 +88,7 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) {
                 cont.resume(it)
             }
         }
@@ -124,7 +124,7 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) {
                 cont.resume(it)
             }
         }
@@ -160,7 +160,7 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) {
                 cont.resume(it)
             }
         }
@@ -196,7 +196,7 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) {
                 cont.resume(it)
             }
         }

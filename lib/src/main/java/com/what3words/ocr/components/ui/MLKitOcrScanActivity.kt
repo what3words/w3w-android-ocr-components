@@ -11,25 +11,75 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
+import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.javawrapper.response.SuggestionWithCoordinates
+import com.what3words.javawrapper.response.Coordinates
 
 class MLKitOcrScanActivity : BaseOcrScanActivity() {
     companion object {
-        fun newInstanceWithApi(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries, apiKey: String) : Intent {
-            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.API, apiKey)
+        /**
+         * Creates a new [MLKitOcrScanActivity] Intent to work with our API.
+         *
+         * It creates a new instance of [BaseOcrScanActivity] where will have a jetpack compose
+         * composable that handles the Camera using CameraX with a specified MLKit Library for text recognition.
+         *
+         * @param context context needed to create new Intent.
+         * @param mlKitLibrary the MLKit Library that this instance should use to detect text,
+         * options [W3WOcrWrapper.MLKitLibraries.Latin] (default), [W3WOcrWrapper.MLKitLibraries.LatinAndChinese],
+         * [W3WOcrWrapper.MLKitLibraries.LatinAndKorean], [W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari], [W3WOcrWrapper.MLKitLibraries.LatinAndJapanese].
+         * @param apiKey the API key to use when querying the what3words API.
+         * @param options [AutosuggestOptions] to be applied when using what3words API. (Optional)
+         * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not. Default false, if true, it might result in API cost charges.
+         */
+        fun newInstanceWithApi(
+            context: Context,
+            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            apiKey: String,
+            options: AutosuggestOptions? = null,
+            returnCoordinates: Boolean = false
+        ): Intent {
+            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.API, apiKey, options, returnCoordinates)
         }
 
-        fun newInstanceWithSdk(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries) : Intent {
-            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.SDK)
+        /**
+         * Creates a new [MLKitOcrScanActivity] Intent to work with our SDK.
+         *
+         * It creates a new instance of [BaseOcrScanActivity] where will have a jetpack compose
+         * composable that handles the Camera using CameraX with a specified MLKit Library for text recognition.
+         *
+         * @param context context needed to create new Intent.
+         * @param mlKitLibrary the MLKit Library that this instance should use to detect text,
+         * options [W3WOcrWrapper.MLKitLibraries.Latin] (default), [W3WOcrWrapper.MLKitLibraries.LatinAndChinese],
+         * [W3WOcrWrapper.MLKitLibraries.LatinAndKorean], [W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari], [W3WOcrWrapper.MLKitLibraries.LatinAndJapanese].
+         * @param options [AutosuggestOptions] to be applied when using what3words SDK. (Optional)
+         * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not.
+         */
+        fun newInstanceWithSdk(
+            context: Context,
+            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            options: AutosuggestOptions? = null,
+            returnCoordinates: Boolean = false
+        ): Intent {
+            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.SDK, null, options, returnCoordinates)
         }
 
-        private fun buildInstance(context: Context, mlKitLibrary: W3WOcrWrapper.MLKitLibraries, dataProvider: W3WOcrWrapper.DataProvider, apiKey: String? = null) : Intent {
+        private fun buildInstance(
+            context: Context,
+            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            dataProvider: W3WOcrWrapper.DataProvider,
+            apiKey: String? = null,
+            options: AutosuggestOptions? = null,
+            returnCoordinates: Boolean
+        ): Intent {
             return Intent(context, MLKitOcrScanActivity::class.java).apply {
                 this.putExtra(DATA_PROVIDER_ID, dataProvider)
                 this.putExtra(OCR_PROVIDER_ID, W3WOcrWrapper.OcrProvider.MLKit)
                 this.putExtra(MLKIT_LIBRARY_ID, mlKitLibrary)
+                this.putExtra(AUTOSUGGEST_OPTIONS_ID, options)
                 this.putExtra(API_KEY_ID, apiKey)
+                this.putExtra(RETURN_COORDINATES_ID, returnCoordinates)
             }
         }
     }
