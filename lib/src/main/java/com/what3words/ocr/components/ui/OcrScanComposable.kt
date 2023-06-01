@@ -2,7 +2,6 @@ package com.what3words.ocr.components.ui
 
 import android.Manifest
 import android.content.res.Configuration
-import android.util.Log
 import android.view.ViewGroup
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
@@ -54,8 +53,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionStatus
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
@@ -68,10 +65,9 @@ import com.what3words.javawrapper.response.Coordinates
 import com.what3words.javawrapper.response.Suggestion
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
 import com.what3words.ocr.components.R
-import com.what3words.ocr.components.models.OcrScanResult
 import com.what3words.ocr.components.models.ScanResultState
-import com.what3words.ocr.components.models.W3WOcrWrapper
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
+import com.what3words.ocr.components.models.W3WOcrWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -134,8 +130,8 @@ fun W3WOcrScanner(
                 onError?.invoke(error)
             }
 
-            override fun onFound(result: OcrScanResult) {
-                scanResultState.found(result.suggestions)
+            override fun onFound(result: List<Suggestion>) {
+                scanResultState.found(result)
             }
         })
     }
@@ -148,8 +144,6 @@ fun W3WOcrScanner(
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) {
-        Log.d("TEST", "rememberPermissionState ${it}")
-        test = true
         if (it) {
             manager.startCamera(context, lifecycleOwner, previewView)
         } else {

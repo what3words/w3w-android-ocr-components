@@ -10,7 +10,7 @@ import com.what3words.androidwrapper.helpers.DispatcherProvider
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
-import com.what3words.javawrapper.response.APIResponse
+import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Suggestion
 import com.what3words.ocr.components.extensions.io
 import java.util.concurrent.ExecutorService
@@ -88,10 +88,10 @@ class W3WOcrMLKitWrapper(
         onScanning: () -> Unit,
         onDetected: () -> Unit,
         onValidating: () -> Unit,
-        onFinished: (OcrScanResult) -> Unit
+        onFinished: (List<Suggestion>, What3WordsError?) -> Unit
     ) {
         onScanning.invoke()
-        val ocrScanResult = OcrScanResult()
+        var error: What3WordsError? = null
         val listFound3wa = mutableListOf<Suggestion>()
         recognizer.process(image, 0).addOnSuccessListener { visionText ->
             io(dispatcherProvider) {
@@ -99,7 +99,7 @@ class W3WOcrMLKitWrapper(
                     onDetected.invoke()
                     val autosuggestReq =
                         wrapper.autosuggest(possible3wa)
-                    if(options != null) autosuggestReq.options(options)
+                    if (options != null) autosuggestReq.options(options)
                     val autosuggestRes = autosuggestReq.execute()
                     if (autosuggestRes.isSuccessful) {
                         //checks if at least one suggestion words matches the possible3wa from the regex,
@@ -108,20 +108,18 @@ class W3WOcrMLKitWrapper(
                             listFound3wa.add(it)
                         }
                     } else {
-                        ocrScanResult.error = autosuggestRes.error
+                        error = autosuggestRes.error
                     }
                     onValidating.invoke()
                 }
-                if (ocrScanResult.error == null) {
-                    ocrScanResult.suggestions = listFound3wa
+                withContext(dispatcherProvider.main()) {
+                    onFinished.invoke(if (error == null) listFound3wa else emptyList(), error)
                 }
-                withContext(dispatcherProvider.main()) { onFinished.invoke(ocrScanResult) }
             }
         }.addOnFailureListener { e ->
-            ocrScanResult.error = APIResponse.What3WordsError.SDK_ERROR.apply {
+            onFinished.invoke(emptyList(), What3WordsError.SDK_ERROR.apply {
                 message = e.message
-            }
-            onFinished.invoke(ocrScanResult)
+            })
         }
     }
 

@@ -8,6 +8,7 @@ import com.what3words.javawrapper.response.Suggestion
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.What3WordsV3
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
+import com.what3words.javawrapper.response.APIResponse
 import java.util.concurrent.ExecutorService
 
 interface W3WOcrWrapper {
@@ -39,7 +40,7 @@ interface W3WOcrWrapper {
         onScanning: (() -> Unit),
         onDetected: (() -> Unit),
         onValidating: (() -> Unit),
-        onFinished: ((OcrScanResult) -> Unit)
+        onFinished: ((List<Suggestion>, What3WordsError?) -> Unit)
     )
 
     /**

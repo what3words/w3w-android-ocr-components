@@ -2,6 +2,7 @@ package com.what3words.ocr.components.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.res.stringResource
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
@@ -11,11 +12,13 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
+import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
 import com.what3words.javawrapper.response.Coordinates
+import com.what3words.ocr.components.R
 
 class MLKitOcrScanActivity : BaseOcrScanActivity() {
     companion object {
@@ -38,9 +41,26 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
             apiKey: String,
             options: AutosuggestOptions? = null,
-            returnCoordinates: Boolean = false
+            returnCoordinates: Boolean = false,
+            displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
+            scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
+            scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
+            scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
+            scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
         ): Intent {
-            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.API, apiKey, options, returnCoordinates)
+            return buildInstance(
+                context,
+                mlKitLibrary,
+                W3WOcrWrapper.DataProvider.API,
+                apiKey,
+                options,
+                returnCoordinates,
+                displayUnits,
+                scanStateScanningTitle,
+                scanStateDetectedTitle,
+                scanStateValidatingTitle,
+                scanStateFoundTitle
+            )
         }
 
         /**
@@ -60,9 +80,26 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             context: Context,
             mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
             options: AutosuggestOptions? = null,
-            returnCoordinates: Boolean = false
+            returnCoordinates: Boolean = false,
+            displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
+            scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
+            scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
+            scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
+            scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
         ): Intent {
-            return buildInstance(context, mlKitLibrary, W3WOcrWrapper.DataProvider.SDK, null, options, returnCoordinates)
+            return buildInstance(
+                context,
+                mlKitLibrary,
+                W3WOcrWrapper.DataProvider.SDK,
+                null,
+                options,
+                returnCoordinates,
+                displayUnits,
+                scanStateScanningTitle,
+                scanStateDetectedTitle,
+                scanStateValidatingTitle,
+                scanStateFoundTitle
+            )
         }
 
         private fun buildInstance(
@@ -71,7 +108,12 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             dataProvider: W3WOcrWrapper.DataProvider,
             apiKey: String? = null,
             options: AutosuggestOptions? = null,
-            returnCoordinates: Boolean
+            returnCoordinates: Boolean,
+            displayUnits: DisplayUnits,
+            scanStateScanningTitle: String,
+            scanStateDetectedTitle: String,
+            scanStateValidatingTitle: String,
+            scanStateFoundTitle: String,
         ): Intent {
             return Intent(context, MLKitOcrScanActivity::class.java).apply {
                 this.putExtra(DATA_PROVIDER_ID, dataProvider)
@@ -80,6 +122,11 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 this.putExtra(AUTOSUGGEST_OPTIONS_ID, options)
                 this.putExtra(API_KEY_ID, apiKey)
                 this.putExtra(RETURN_COORDINATES_ID, returnCoordinates)
+                this.putExtra(DISPLAY_UNITS_ID, displayUnits)
+                this.putExtra(SCAN_STATE_SCANNING_TITLE_ID, scanStateScanningTitle)
+                this.putExtra(SCAN_STATE_DETECTED_TITLE_ID, scanStateDetectedTitle)
+                this.putExtra(SCAN_STATE_VALIDATING_TITLE_ID, scanStateValidatingTitle)
+                this.putExtra(SCAN_STATE_FOUND_TITLE_ID, scanStateFoundTitle)
             }
         }
     }

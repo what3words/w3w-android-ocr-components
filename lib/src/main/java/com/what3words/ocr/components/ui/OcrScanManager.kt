@@ -18,10 +18,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import com.what3words.javawrapper.request.AutosuggestOptions
-import com.what3words.javawrapper.response.APIResponse
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
+import com.what3words.javawrapper.response.Suggestion
 import com.what3words.ocr.components.extensions.BitmapUtils
-import com.what3words.ocr.components.models.OcrScanResult
 import com.what3words.ocr.components.models.W3WOcrWrapper
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +39,7 @@ internal class OcrScanManager(
         fun onDetected()
         fun onValidating()
         fun onError(error: What3WordsError)
-        fun onFound(result: OcrScanResult)
+        fun onFound(result: List<Suggestion>)
     }
 
     private var cameraProvider: ProcessCameraProvider? = null
@@ -66,13 +65,13 @@ internal class OcrScanManager(
                             layoutCoordinates!!,
                             displayMetrics!!,
                             ocrScanResultCallback
-                        ) { ocrResult ->
+                        ) { suggestions, error ->
                             CoroutineScope(Dispatchers.Main).launch {
                                 //only call onFinished if isSuccessful or there's an error
-                                if (ocrResult.isSuccessful() && ocrResult.suggestions.isNotEmpty()) {
-                                    ocrScanResultCallback.onFound(ocrResult)
-                                } else if (!ocrResult.isSuccessful() && ocrResult.error != null) {
-                                    ocrScanResultCallback.onError(ocrResult.error!!)
+                                if (error == null && suggestions.isNotEmpty()) {
+                                    ocrScanResultCallback.onFound(suggestions)
+                                } else if (error != null) {
+                                    ocrScanResultCallback.onError(error)
                                 }
                             }
                         }
@@ -112,19 +111,20 @@ internal class OcrScanManager(
         layoutCoordinates: LayoutCoordinates,
         displayMetrics: DisplayMetrics,
         private val ocrScanResultCallback: OcrScanResultCallback,
-        private val onResult: (OcrScanResult) -> Unit
+        private val onResult: (List<Suggestion>, What3WordsError?) -> Unit
     ) :
         ImageAnalysis.Analyzer {
-        private val textRecognizer = OcrRecognizer(wrapper, options, layoutCoordinates, displayMetrics)
+        private val textRecognizer =
+            OcrRecognizer(wrapper, options, layoutCoordinates, displayMetrics)
 
         @ExperimentalGetImage
         override fun analyze(imageProxy: ImageProxy) {
             textRecognizer.recognizeImageText(
                 imageProxy,
                 ocrScanResultCallback
-            ) { ocrResult ->
+            ) { suggestions, error ->
                 imageProxy.close()
-                onResult.invoke(ocrResult)
+                onResult.invoke(suggestions, error)
             }
         }
     }
@@ -140,7 +140,7 @@ internal class OcrScanManager(
         fun recognizeImageText(
             imageProxy: ImageProxy,
             ocrScanResultCallback: OcrScanResultCallback,
-            onResult: (OcrScanResult) -> Unit
+            onResult: (List<Suggestion>, What3WordsError?) -> Unit
         ) {
             //These magic numbers match the percentages on the fragment_ocr_scan,
             //ImageProxy comes with full view port size, then we have crop the bitmap to match viewfinder on the fragment
@@ -167,7 +167,9 @@ internal class OcrScanManager(
                         bitmap
                     }
                 } catch (e: Exception) {
-                    onResult(OcrScanResult(emptyList()))
+                    onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
+                        message = e.message
+                    })
                     return
                 }
                 try {
@@ -177,20 +179,20 @@ internal class OcrScanManager(
                         onScanning = { ocrScanResultCallback.onScanning() },
                         onDetected = { ocrScanResultCallback.onDetected() },
                         onValidating = { ocrScanResultCallback.onValidating() }
-                    ) { scanResult ->
-                        onResult(scanResult)
+                    ) { suggestions, error ->
+                        onResult(suggestions, error)
                         bitmap.recycle()
                         bitmapToBeScanned.recycle()
                     }
                 } catch (e: Exception) {
-                    onResult(OcrScanResult(error = APIResponse.What3WordsError.SDK_ERROR.apply {
+                    onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
                         this.message = e.message
-                    }))
+                    })
                 }
             } ?: kotlin.run {
-                onResult(OcrScanResult(error = APIResponse.What3WordsError.SDK_ERROR.apply {
+                onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
                     this.message = "Bitmap conversion error"
-                }))
+                })
             }
         }
     }
