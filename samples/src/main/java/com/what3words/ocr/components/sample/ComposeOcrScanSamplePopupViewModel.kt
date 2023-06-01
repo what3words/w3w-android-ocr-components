@@ -13,5 +13,4 @@ class ComposeOcrScanSamplePopupViewModel : ViewModel() {
     var availableMLKitLanguages: List<W3WOcrWrapper.MLKitLibraries> by mutableStateOf(
         W3WOcrWrapper.MLKitLibraries.values().toList()
     )
-    var ocrWrapper: W3WOcrWrapper? by mutableStateOf(null)
 }

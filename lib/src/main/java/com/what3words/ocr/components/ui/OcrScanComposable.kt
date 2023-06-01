@@ -2,6 +2,7 @@ package com.what3words.ocr.components.ui
 
 import android.Manifest
 import android.content.res.Configuration
+import android.util.Log
 import android.view.ViewGroup
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
@@ -53,6 +54,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.design.library.ui.components.IconButtonSize
@@ -141,10 +143,21 @@ fun W3WOcrScanner(
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = remember { BottomSheetState(BottomSheetValue.Collapsed) }
     )
+
     val heightSheet = remember { mutableStateOf(78.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
-    )
+    ) {
+        Log.d("TEST", "rememberPermissionState ${it}")
+        test = true
+        if (it) {
+            manager.startCamera(context, lifecycleOwner, previewView)
+        } else {
+            onError?.invoke(What3WordsError.UNKNOWN_ERROR.apply {
+                message = "Ocr scanner needs camera permissions"
+            })
+        }
+    }
 
     BottomSheetScaffold(
         modifier = modifier,
@@ -164,7 +177,8 @@ fun W3WOcrScanner(
                 manager.stop()
                 if (returnCoordinates) {
                     CoroutineScope(Dispatchers.IO).launch {
-                        val res = wrapper.getDataProvider().convertToCoordinates(it.words).execute()
+                        val res =
+                            wrapper.getDataProvider().convertToCoordinates(it.words).execute()
                         if (res.isSuccessful) {
                             onSuggestionSelected.invoke(
                                 SuggestionWithCoordinates(
@@ -187,11 +201,6 @@ fun W3WOcrScanner(
             if (scanResultState.state == ScanResultState.State.Idle) {
                 manager.layoutCoordinates = it
                 manager.displayMetrics = context.resources.displayMetrics
-                if (cameraPermissionState.status.isGranted) {
-                    manager.startCamera(context, lifecycleOwner, previewView)
-                } else {
-                    cameraPermissionState.launchPermissionRequest()
-                }
             } else if (scanResultState.foundItems.isNotEmpty()) {
                 heightSheet.value =
                     ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
@@ -199,6 +208,10 @@ fun W3WOcrScanner(
         }, {
             manager.stop()
             onDismiss?.invoke()
+        })
+
+        LaunchedEffect(key1 = true, block = {
+            cameraPermissionState.launchPermissionRequest()
         })
     }
 }

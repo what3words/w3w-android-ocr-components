@@ -3,6 +3,7 @@ package com.what3words.ocr.components.sample
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,6 +24,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +58,7 @@ import com.what3words.ocr.components.ui.W3WOcrScanner
 
 class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     private val viewModel: ComposeOcrScanSamplePopupViewModel by viewModels()
+    private lateinit var ocrWrapper: W3WOcrWrapper
 
     private val resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -72,7 +75,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        viewModel.ocrWrapper?.stop()
+        ocrWrapper.stop()
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -86,9 +89,15 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                     title = "OCR SDK Sample app"
                 ) {
                     var scanScreenVisible by remember { mutableStateOf(false) }
-                    val options = AutosuggestOptions().apply {
-                        focus = Coordinates(51.2, 1.2)
+                    val options = remember {
+                        AutosuggestOptions().apply {
+                            focus = Coordinates(51.2, 1.2)
+                        }
                     }
+
+                    LaunchedEffect(key1 = viewModel.selectedMLKitLibrary, block = {
+                        ocrWrapper = getOcrWrapper()
+                    })
 
                     AnimatedVisibility(
                         visible = scanScreenVisible,
@@ -104,14 +113,14 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             )
                         )
                     ) {
-                        val ocrWrapper = getOcrWrapper()
-                        viewModel.ocrWrapper = ocrWrapper
                         W3WOcrScanner(
                             ocrWrapper,
                             options = options,
                             returnCoordinates = true,
                             onError = {
                                 scanScreenVisible = false
+                                viewModel.results =
+                                    ("${it.key}, ${it.message}")
                             },
                             onDismiss = {
                                 scanScreenVisible = false
@@ -131,7 +140,11 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
                     Button(modifier = Modifier.fillMaxWidth(), onClick = {
                         val intent = MLKitOcrScanActivity.newInstanceWithApi(
-                            this, viewModel.selectedMLKitLibrary, BuildConfig.W3W_API_KEY, options, returnCoordinates = false
+                            this,
+                            viewModel.selectedMLKitLibrary,
+                            BuildConfig.W3W_API_KEY,
+                            options,
+                            returnCoordinates = true
                         )
                         try {
                             resultLauncher.launch(intent)
@@ -141,7 +154,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                     }) {
                         Text(text = "Launch OCR scanner as a pop up")
                     }
-                    
+
                     if (viewModel.results != null) Text(
                         modifier = Modifier.fillMaxWidth(), text = viewModel.results!!
                     )

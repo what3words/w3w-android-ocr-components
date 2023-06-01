@@ -7,8 +7,8 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class OcrScanResult(
-    var suggestions: List<Suggestion> = emptyList(),
-    var error: What3WordsError? = null
+    val suggestions: List<Suggestion> = emptyList(),
+    val error: What3WordsError? = null
 ) : Parcelable {
     fun isSuccessful(): Boolean {
         return error == null && suggestions.isNotEmpty()
