@@ -53,17 +53,17 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
-                cont.resume(it)
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
             }
         }
 
         //then
         verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("filled.count.soap") }
-        assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
-        assertEquals("filled.count.soap", scanResult.suggestions[0].words)
-        assertEquals("en", scanResult.suggestions[0].language)
+        assertTrue(scanResult.second == null)
+        assertEquals(1, scanResult.first.size)
+        assertEquals("filled.count.soap", scanResult.first[0].words)
+        assertEquals("en", scanResult.first[0].language)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -88,8 +88,8 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
-                cont.resume(it)
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
             }
         }
 
@@ -97,10 +97,10 @@ class W3WOcrMLKitWrapperTest {
         verify(exactly = 1) {
             what3WordsAndroidWrapper.autosuggest("डोलने.पीसना.संभाला")
         }
-        assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
-        assertEquals("डोलने.पीसना.संभाला", scanResult.suggestions[0].words)
-        assertEquals("hi", scanResult.suggestions[0].language)
+        assertTrue(scanResult.second == null)
+        assertEquals(1, scanResult.first.size)
+        assertEquals("डोलने.पीसना.संभाला", scanResult.first[0].words)
+        assertEquals("hi", scanResult.first[0].language)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -124,8 +124,8 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
-                cont.resume(it)
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
             }
         }
 
@@ -133,14 +133,14 @@ class W3WOcrMLKitWrapperTest {
         verify(exactly = 1) {
             what3WordsAndroidWrapper.autosuggest("こくさい。ていか。かざす")
         }
-        assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
-        assertEquals("こくさい。ていか。かざす", scanResult.suggestions[0].words)
-        assertEquals("ja", scanResult.suggestions[0].language)
+        assertTrue(scanResult.second == null)
+        assertEquals(1, scanResult.first.size)
+        assertEquals("こくさい。ていか。かざす", scanResult.first[0].words)
+        assertEquals("ja", scanResult.first[0].language)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-   // @Test
+    // @Test
     fun testValid3waKoreanSimpleOcrScan() = runTest {
         //given
         every {
@@ -160,8 +160,8 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
-                cont.resume(it)
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
             }
         }
 
@@ -169,14 +169,14 @@ class W3WOcrMLKitWrapperTest {
         verify(exactly = 1) {
             what3WordsAndroidWrapper.autosuggest("쓸모.평소.나다")
         }
-        assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
-        assertEquals("쓸모.평소.나다", scanResult.suggestions[0].words)
-        assertEquals("ko", scanResult.suggestions[0].language)
+        assertTrue(scanResult.second == null)
+        assertEquals(3, scanResult.first.size)
+        assertEquals("쓸모.평소.나다", scanResult.first[0].words)
+        assertEquals("ko", scanResult.first[0].language)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-   // @Test
+    // @Test
     fun testValid3waChineseSimpleOcrScan() = runTest {
         //given
         every {
@@ -196,8 +196,8 @@ class W3WOcrMLKitWrapperTest {
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan) {
-                cont.resume(it)
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
             }
         }
 
@@ -205,9 +205,9 @@ class W3WOcrMLKitWrapperTest {
         verify(exactly = 1) {
             what3WordsAndroidWrapper.autosuggest("产权.绝缘.墨镜")
         }
-        assertTrue(scanResult.isSuccessful())
-        assertEquals(3, scanResult.suggestions.size)
-        assertEquals("产权.绝缘.墨镜", scanResult.suggestions[0].words)
-        assertEquals("zh", scanResult.suggestions[0].language)
+        assertTrue(scanResult.second == null)
+        assertEquals(3, scanResult.first.size)
+        assertEquals("产权.绝缘.墨镜", scanResult.first[0].words)
+        assertEquals("zh", scanResult.first[0].language)
     }
 }
