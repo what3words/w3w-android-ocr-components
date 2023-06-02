@@ -52,12 +52,12 @@ class ScanResultState() {
     }
 
     fun found(res: List<Suggestion>) {
-        res.filter { newFound ->
-            foundItems.none { it.words == newFound.words }
-        }.forEach { uniqueFound ->
-            foundItems.add(0, uniqueFound)
-            lastAdded = uniqueFound.words
-            state = State.Found
+        res.forEach { newFound ->
+            if (foundItems.all { it.words != newFound.words }) {
+                foundItems.add(0, newFound)
+                lastAdded = newFound.words
+                state = State.Found
+            }
         }
     }
 
