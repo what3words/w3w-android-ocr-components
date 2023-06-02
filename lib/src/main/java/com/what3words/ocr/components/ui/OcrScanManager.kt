@@ -142,9 +142,6 @@ internal class OcrScanManager(
             ocrScanResultCallback: OcrScanResultCallback,
             onResult: (List<Suggestion>, What3WordsError?) -> Unit
         ) {
-            //These magic numbers match the percentages on the fragment_ocr_scan,
-            //ImageProxy comes with full view port size, then we have crop the bitmap to match viewfinder on the fragment
-            //build using guidelines with percentages to fit all screens and possible smaller views where fragment is loaded.
             BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
                 val bitmapToBeScanned = try {
                     if (layoutCoordinates.isAttached) {
@@ -167,9 +164,8 @@ internal class OcrScanManager(
                         bitmap
                     }
                 } catch (e: Exception) {
-                    onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
-                        message = e.message
-                    })
+                    //ignore frame if any cropping issues.
+                    onResult(emptyList(), null)
                     return
                 }
                 try {
