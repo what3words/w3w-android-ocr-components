@@ -29,6 +29,7 @@ import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -142,9 +143,8 @@ fun W3WOcrScanner(
         bottomSheetState = rememberBottomSheetState(BottomSheetValue.Collapsed)
     )
 
-    val scope = rememberCoroutineScope()
-    val heightSheet = remember { mutableStateOf(78.dp) }
-    val heightSheetPeek = remember { mutableStateOf(78.dp) }
+    val heightSheet by remember { mutableStateOf(78.dp) }
+    val heightSheetPeek by remember { mutableStateOf(78.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) {
