@@ -1,6 +1,17 @@
 package com.what3words.ocr.components.models
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
+import com.google.android.gms.common.api.OptionalModuleApi
+import com.google.android.gms.common.moduleinstall.InstallStatusListener
+import com.google.android.gms.common.moduleinstall.ModuleInstall
+import com.google.android.gms.common.moduleinstall.ModuleInstallClient
+import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_CANCELED
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_FAILED
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -28,9 +39,10 @@ import kotlinx.coroutines.withContext
  * @param dispatcherProvider [DispatcherProvider] to handle Coroutines threading, by default uses [DefaultDispatcherProvider]
  */
 class W3WOcrMLKitWrapper(
+    private val context: Context,
     private val wrapper: What3WordsAndroidWrapper,
     private val recognizer: TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS),
-    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
+    private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
 ) : W3WOcrWrapper {
 
     companion object {
@@ -80,6 +92,40 @@ class W3WOcrMLKitWrapper(
             "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
                     "https://developers.google.com/ml-kit/vision/text-recognition/languages"
         )
+    }
+
+    val moduleClient: ModuleInstallClient by lazy {
+        ModuleInstall.getClient(context)
+    }
+
+    override fun moduleInstalled(result: (Boolean) -> Unit) {
+        moduleClient
+            .areModulesAvailable(recognizer)
+            .addOnSuccessListener { response ->
+                result.invoke(response.areModulesAvailable())
+            }
+            .addOnFailureListener {
+                result.invoke(false)
+            }
+    }
+
+    override fun installModule(
+        onDownloaded: (Boolean, What3WordsError?) -> Unit
+    ) {
+        val moduleInstallRequest =
+            ModuleInstallRequest.newBuilder()
+                .addApi(recognizer)
+                .build()
+        moduleClient
+            .installModules(moduleInstallRequest)
+            .addOnSuccessListener {
+                onDownloaded.invoke(true, null)
+            }
+            .addOnFailureListener {
+                onDownloaded.invoke(false, What3WordsError.SDK_ERROR.apply {
+                    message = it.message
+                })
+            }
     }
 
     override fun scan(

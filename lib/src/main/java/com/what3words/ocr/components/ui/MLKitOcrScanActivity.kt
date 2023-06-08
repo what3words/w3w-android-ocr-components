@@ -140,7 +140,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             }
         when (ocrProvider) {
             W3WOcrWrapper.OcrProvider.MLKit -> {
-                buildMLKit(dataProvider)
+                buildMLKit(this, dataProvider)
             }
 
             else -> {
@@ -149,7 +149,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         }
     }
 
-    private fun buildMLKit(dataProvider: What3WordsAndroidWrapper): W3WOcrMLKitWrapper {
+    private fun buildMLKit(context: Context, dataProvider: What3WordsAndroidWrapper): W3WOcrMLKitWrapper {
         val textRecognizer = TextRecognition.getClient(
             when (mlKitV2Library) {
                 W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
@@ -170,6 +170,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 )
             }
         )
-        return W3WOcrMLKitWrapper(dataProvider, textRecognizer)
+        return W3WOcrMLKitWrapper(context, dataProvider, textRecognizer)
     }
 }

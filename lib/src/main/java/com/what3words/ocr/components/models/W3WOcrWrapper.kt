@@ -22,6 +22,13 @@ interface W3WOcrWrapper {
     @Throws(java.lang.UnsupportedOperationException::class)
     fun language(languageCode: String)
 
+    @Throws(java.lang.Exception::class)
+    fun moduleInstalled(result: ((Boolean) -> Unit))
+
+    fun installModule(
+        onDownloaded: ((Boolean, What3WordsError?) -> Unit)
+    )
+
     /**
      * Scan [image] [Bitmap] for one or more three word addresses.
      *

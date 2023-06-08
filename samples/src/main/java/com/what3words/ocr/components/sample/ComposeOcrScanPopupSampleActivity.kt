@@ -181,6 +181,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
             }
         )
         return W3WOcrMLKitWrapper(
+            this,
             What3WordsV3(
                 BuildConfig.W3W_API_KEY,
                 this@ComposeOcrScanPopupSampleActivity
