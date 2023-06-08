@@ -13,12 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
@@ -26,11 +25,14 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -103,6 +105,7 @@ fun W3WOcrScanner(
     scanStateDetectedTitle: String = stringResource(id = R.string.scan_state_detecting),
     scanStateValidatingTitle: String = stringResource(id = R.string.scan_state_validating),
     scanStateFoundTitle: String = stringResource(id = R.string.scan_state_found),
+    scanStateLoadingTitle: String = stringResource(id = R.string.scan_state_loading),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
@@ -136,11 +139,12 @@ fun W3WOcrScanner(
         })
     }
 
-    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = remember { BottomSheetState(BottomSheetValue.Collapsed) }
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberBottomSheetState(BottomSheetValue.Collapsed)
     )
 
-    val heightSheet = remember { mutableStateOf(78.dp) }
+    val heightSheet by remember { mutableStateOf(78.dp) }
+    val heightSheetPeek by remember { mutableStateOf(78.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) {
@@ -153,10 +157,36 @@ fun W3WOcrScanner(
         }
     }
 
+    LaunchedEffect(key1 = true, block = {
+        wrapper.moduleInstalled {
+            if (it) {
+                cameraPermissionState.launchPermissionRequest()
+            } else {
+                wrapper.installModule(onDownloaded = { installed, error ->
+                    if (installed) {
+                        cameraPermissionState.launchPermissionRequest()
+                    } else {
+                        onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
+                            message =
+                                "Error installing MLKit modules, check if you have Google Play Services in your device"
+                        })
+                    }
+                })
+            }
+        }
+    })
+
+    LaunchedEffect(key1 = scanResultState.lastAdded, block = {
+        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
+            scaffoldState.bottomSheetState.expand()
+            heightSheetPeek.value = 100.dp
+        }
+    })
+
     BottomSheetScaffold(
         modifier = modifier,
-        scaffoldState = bottomSheetScaffoldState,
-        sheetPeekHeight = if (scanResultState.foundItems.isNotEmpty()) 100.dp else 78.dp,
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = heightSheetPeek.value,
         sheetBackgroundColor = Color.Transparent,
         sheetContent = {
             SuggestionPicker(
@@ -166,7 +196,8 @@ fun W3WOcrScanner(
                 scanStateScanningTitle = scanStateScanningTitle,
                 scanStateDetectedTitle = scanStateDetectedTitle,
                 scanStateValidatingTitle = scanStateValidatingTitle,
-                scanStateFoundTitle = scanStateFoundTitle
+                scanStateFoundTitle = scanStateFoundTitle,
+                scanStateLoadingTitle = scanStateLoadingTitle
             ) {
                 manager.stop()
                 if (returnCoordinates) {
@@ -195,17 +226,15 @@ fun W3WOcrScanner(
             if (scanResultState.state == ScanResultState.State.Idle) {
                 manager.layoutCoordinates = it
                 manager.displayMetrics = context.resources.displayMetrics
-            } else if (scanResultState.foundItems.isNotEmpty()) {
-                heightSheet.value =
-                    ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
+            }
+            val newHeight =
+                ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
+            if (heightSheet.value != newHeight) {
+                heightSheet.value = newHeight
             }
         }, {
             manager.stop()
             onDismiss?.invoke()
-        })
-
-        LaunchedEffect(key1 = true, block = {
-            cameraPermissionState.launchPermissionRequest()
         })
     }
 }
@@ -214,18 +243,19 @@ fun W3WOcrScanner(
 @Composable
 private fun SuggestionPicker(
     scanResultState: ScanResultState,
-    heightSheet: MutableState<Dp>,
+    maxHeight: MutableState<Dp>,
     displayUnits: DisplayUnits,
     scanStateScanningTitle: String,
     scanStateDetectedTitle: String,
     scanStateValidatingTitle: String,
     scanStateFoundTitle: String,
+    scanStateLoadingTitle: String,
     onSuggestionSelected: (Suggestion) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .height(heightSheet.value)
             .clip(shape = RoundedCornerShape(8.dp, 8.dp, 0.dp, 0.dp))
+            .heightIn(min = 100.dp, max = maxHeight.value)
             .background(W3WTheme.colors.background),
     ) {
         Image(
@@ -247,7 +277,7 @@ private fun SuggestionPicker(
                     ScanResultState.State.Found -> null
                     ScanResultState.State.Scanning -> scanStateScanningTitle
                     ScanResultState.State.Validating -> scanStateValidatingTitle
-                    ScanResultState.State.Idle -> null
+                    ScanResultState.State.Idle -> scanStateLoadingTitle
                 }
                 if (!title.isNullOrEmpty()) {
                     Text(

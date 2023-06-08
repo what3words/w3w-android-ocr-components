@@ -100,8 +100,8 @@ internal class OcrScanManager(
     }
 
     fun stop() {
-        cameraProviderFuture.get().unbindAll()
-        imageAnalyzer.clearAnalyzer()
+        if (::cameraProviderFuture.isInitialized) cameraProviderFuture.get().unbindAll()
+        if (::imageAnalyzer.isInitialized) imageAnalyzer.clearAnalyzer()
     }
 
     @ExperimentalGetImage

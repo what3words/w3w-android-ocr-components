@@ -49,7 +49,7 @@ class W3WOcrMLKitWrapperTest {
         val latinTextRecognizer =
             TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
-        mlKitWrapper = W3WOcrMLKitWrapper(what3WordsAndroidWrapper, latinTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, latinTextRecognizer)
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
@@ -84,7 +84,7 @@ class W3WOcrMLKitWrapperTest {
             com.what3words.ocr.components.test.R.drawable.simple_valid_hindi_3wa
         )
 
-        mlKitWrapper = W3WOcrMLKitWrapper(what3WordsAndroidWrapper, devanagariTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, devanagariTextRecognizer)
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
@@ -120,7 +120,7 @@ class W3WOcrMLKitWrapperTest {
         val japaneseTextRecognizer =
             TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(what3WordsAndroidWrapper, japaneseTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, japaneseTextRecognizer)
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
@@ -156,7 +156,7 @@ class W3WOcrMLKitWrapperTest {
         val koreanTextRecognizer =
             TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(what3WordsAndroidWrapper, koreanTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, koreanTextRecognizer)
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
@@ -192,7 +192,7 @@ class W3WOcrMLKitWrapperTest {
         val chineseTextRecognizer =
             TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(what3WordsAndroidWrapper, chineseTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, chineseTextRecognizer)
 
         //when & wait
         val scanResult = suspendCoroutine { cont ->
