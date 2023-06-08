@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -143,8 +144,8 @@ fun W3WOcrScanner(
         bottomSheetState = rememberBottomSheetState(BottomSheetValue.Collapsed)
     )
 
-    val heightSheet by remember { mutableStateOf(78.dp) }
-    val heightSheetPeek by remember { mutableStateOf(78.dp) }
+    var heightSheet by remember { mutableStateOf(78.dp) }
+    var heightSheetPeek by remember { mutableStateOf(78.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) {
@@ -179,14 +180,14 @@ fun W3WOcrScanner(
     LaunchedEffect(key1 = scanResultState.lastAdded, block = {
         if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
             scaffoldState.bottomSheetState.expand()
-            heightSheetPeek.value = 100.dp
+            heightSheetPeek = 100.dp
         }
     })
 
     BottomSheetScaffold(
         modifier = modifier,
         scaffoldState = scaffoldState,
-        sheetPeekHeight = heightSheetPeek.value,
+        sheetPeekHeight = heightSheetPeek,
         sheetBackgroundColor = Color.Transparent,
         sheetContent = {
             SuggestionPicker(
@@ -229,8 +230,8 @@ fun W3WOcrScanner(
             }
             val newHeight =
                 ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
-            if (heightSheet.value != newHeight) {
-                heightSheet.value = newHeight
+            if (heightSheet != newHeight) {
+                heightSheet = newHeight
             }
         }, {
             manager.stop()
@@ -243,7 +244,7 @@ fun W3WOcrScanner(
 @Composable
 private fun SuggestionPicker(
     scanResultState: ScanResultState,
-    maxHeight: MutableState<Dp>,
+    maxHeight: Dp,
     displayUnits: DisplayUnits,
     scanStateScanningTitle: String,
     scanStateDetectedTitle: String,
@@ -255,7 +256,7 @@ private fun SuggestionPicker(
     Column(
         modifier = Modifier
             .clip(shape = RoundedCornerShape(8.dp, 8.dp, 0.dp, 0.dp))
-            .heightIn(min = 100.dp, max = maxHeight.value)
+            .heightIn(min = 100.dp, max = maxHeight)
             .background(W3WTheme.colors.background),
     ) {
         Image(
