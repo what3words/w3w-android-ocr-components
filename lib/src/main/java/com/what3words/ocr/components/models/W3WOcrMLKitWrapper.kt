@@ -2,16 +2,9 @@ package com.what3words.ocr.components.models
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
-import com.google.android.gms.common.api.OptionalModuleApi
-import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_CANCELED
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState.STATE_FAILED
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -94,7 +87,7 @@ class W3WOcrMLKitWrapper(
         )
     }
 
-    val moduleClient: ModuleInstallClient by lazy {
+    private val moduleClient: ModuleInstallClient by lazy {
         ModuleInstall.getClient(context)
     }
 
@@ -141,7 +134,7 @@ class W3WOcrMLKitWrapper(
         val listFound3wa = mutableListOf<Suggestion>()
         recognizer.process(image, 0).addOnSuccessListener { visionText ->
             io(dispatcherProvider) {
-                for (possible3wa in What3WordsV3.findPossible3wa(visionText.text)) {
+                for (possible3wa in What3WordsV3.findPossible3wa(visionText.text.lowercase())) {
                     onDetected.invoke()
                     val autosuggestReq =
                         wrapper.autosuggest(possible3wa)
