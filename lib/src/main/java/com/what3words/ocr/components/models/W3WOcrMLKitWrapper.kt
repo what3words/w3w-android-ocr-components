@@ -134,7 +134,7 @@ class W3WOcrMLKitWrapper(
         val listFound3wa = mutableListOf<Suggestion>()
         recognizer.process(image, 0).addOnSuccessListener { visionText ->
             io(dispatcherProvider) {
-                for (possible3wa in What3WordsV3.findPossible3wa(visionText.text)) {
+                for (possible3wa in What3WordsV3.findPossible3wa(visionText.text.lowercase())) {
                     onDetected.invoke()
                     val autosuggestReq =
                         wrapper.autosuggest(possible3wa)
@@ -143,7 +143,7 @@ class W3WOcrMLKitWrapper(
                     if (autosuggestRes.isSuccessful) {
                         //checks if at least one suggestion words matches the possible3wa from the regex,
                         //this makes our OCR more accurate and avoids getting partial what3words address while focusing the camera.
-                        autosuggestRes.suggestions.firstOrNull { it.words.lowercase() == possible3wa.lowercase() }?.let {
+                        autosuggestRes.suggestions.firstOrNull { it.words == possible3wa }?.let {
                             listFound3wa.add(it)
                         }
                     } else {

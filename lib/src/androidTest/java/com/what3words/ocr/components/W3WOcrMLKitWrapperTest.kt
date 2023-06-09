@@ -71,7 +71,7 @@ class W3WOcrMLKitWrapperTest {
     fun testValid3waSimpleLatinUppercaseOcrScan() = runTest {
         //given
         every {
-            what3WordsAndroidWrapper.autosuggest("FILLED.COUNT.SOAP").execute()
+            what3WordsAndroidWrapper.autosuggest("filled.count.soap").execute()
         }.answers {
             TestData.filledCountSoapAutosuggestResponse
         }
@@ -94,7 +94,7 @@ class W3WOcrMLKitWrapperTest {
         }
 
         //then
-        verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("FILLED.COUNT.SOAP") }
+        verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("filled.count.soap") }
         assertTrue(scanResult.second == null)
         assertEquals(1, scanResult.first.size)
         assertEquals("filled.count.soap", scanResult.first[0].words)
