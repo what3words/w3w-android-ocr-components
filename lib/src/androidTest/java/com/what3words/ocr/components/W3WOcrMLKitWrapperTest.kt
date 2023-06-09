@@ -68,6 +68,41 @@ class W3WOcrMLKitWrapperTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    fun testValid3waSimpleLatinUppercaseOcrScan() = runTest {
+        //given
+        every {
+            what3WordsAndroidWrapper.autosuggest("FILLED.COUNT.SOAP").execute()
+        }.answers {
+            TestData.filledCountSoapAutosuggestResponse
+        }
+
+        val bitmapToScan = BitmapFactory.decodeResource(
+            context.resources,
+            com.what3words.ocr.components.test.R.drawable.simple_valid_english_uppercase_3wa
+        )
+
+        val latinTextRecognizer =
+            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, latinTextRecognizer)
+
+        //when & wait
+        val scanResult = suspendCoroutine { cont ->
+            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+                cont.resume(Pair(suggestions, error))
+            }
+        }
+
+        //then
+        verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("FILLED.COUNT.SOAP") }
+        assertTrue(scanResult.second == null)
+        assertEquals(1, scanResult.first.size)
+        assertEquals("filled.count.soap", scanResult.first[0].words)
+        assertEquals("en", scanResult.first[0].language)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
     fun testValid3waHindiSimpleOcrScan() = runTest {
         //given
         every {
