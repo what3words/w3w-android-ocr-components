@@ -1,14 +1,13 @@
 package com.what3words.ocr.components.models
 
 import android.graphics.Bitmap
-import com.what3words.javawrapper.What3WordsV3.findPossible3wa
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.javawrapper.request.AutosuggestOptions
-import com.what3words.javawrapper.response.Suggestion
-import com.what3words.javawrapper.response.APIResponse.What3WordsError
-import com.what3words.javawrapper.What3WordsV3
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
-import com.what3words.javawrapper.response.APIResponse
+import com.what3words.javawrapper.What3WordsV3
+import com.what3words.javawrapper.What3WordsV3.findPossible3wa
+import com.what3words.javawrapper.request.AutosuggestOptions
+import com.what3words.javawrapper.response.APIResponse.What3WordsError
+import com.what3words.javawrapper.response.Suggestion
 import java.util.concurrent.ExecutorService
 
 interface W3WOcrWrapper {
