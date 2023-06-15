@@ -26,6 +26,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
     protected lateinit var scanStateDetectedTitle: String
     protected lateinit var scanStateValidatingTitle: String
     protected lateinit var scanStateFoundTitle: String
+    protected lateinit var scanStateLoadingTitle: String
     protected var mlKitV2Library: W3WOcrWrapper.MLKitLibraries? = null
     protected var apiKey: String? = null
     protected var languageCode: String? = null
@@ -50,6 +51,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
         const val SCAN_STATE_DETECTED_TITLE_ID = "SCAN_STATE_DETECTED_TITLE"
         const val SCAN_STATE_VALIDATING_TITLE_ID = "SCAN_STATE_VALIDATING_TITLE"
         const val SCAN_STATE_FOUND_TITLE_ID = "SCAN_STATE_FOUND_TITLE"
+        const val SCAN_STATE_LOADING_TITLE_ID = "SCAN_STATE_LOADING_TITLE"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,6 +73,8 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
             ?: getString(R.string.scan_state_validating)
         scanStateFoundTitle = intent.getStringExtra(SCAN_STATE_FOUND_TITLE_ID)
             ?: getString(R.string.scan_state_found)
+        scanStateLoadingTitle = intent.getStringExtra(SCAN_STATE_LOADING_TITLE_ID)
+            ?: getString(R.string.scan_state_loading)
         setContent {
             W3WTheme {
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -97,6 +101,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                     scanStateDetectedTitle = scanStateDetectedTitle,
                     scanStateValidatingTitle = scanStateValidatingTitle,
                     scanStateFoundTitle = scanStateFoundTitle,
+                    scanStateLoadingTitle = scanStateLoadingTitle,
                     onError = {
                         setResult(RESULT_CANCELED)
                         finish()

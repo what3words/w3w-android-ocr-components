@@ -46,7 +46,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
             scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
             scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
-            scanStateFoundTitle: String = context.getString(R.string.scan_state_found)
+            scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
+            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading)
         ): Intent {
             return buildInstance(
                 context,
@@ -59,7 +60,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 scanStateScanningTitle,
                 scanStateDetectedTitle,
                 scanStateValidatingTitle,
-                scanStateFoundTitle
+                scanStateFoundTitle,
+                scanStateLoadingTitle
             )
         }
 
@@ -85,7 +87,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
             scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
             scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
-            scanStateFoundTitle: String = context.getString(R.string.scan_state_found)
+            scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
+            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading)
         ): Intent {
             return buildInstance(
                 context,
@@ -98,7 +101,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 scanStateScanningTitle,
                 scanStateDetectedTitle,
                 scanStateValidatingTitle,
-                scanStateFoundTitle
+                scanStateFoundTitle,
+                scanStateLoadingTitle
             )
         }
 
@@ -113,7 +117,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateScanningTitle: String,
             scanStateDetectedTitle: String,
             scanStateValidatingTitle: String,
-            scanStateFoundTitle: String
+            scanStateFoundTitle: String,
+            scanStateLoadingTitle: String
         ): Intent {
             return Intent(context, MLKitOcrScanActivity::class.java).apply {
                 this.putExtra(DATA_PROVIDER_ID, dataProvider)
@@ -127,6 +132,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 this.putExtra(SCAN_STATE_DETECTED_TITLE_ID, scanStateDetectedTitle)
                 this.putExtra(SCAN_STATE_VALIDATING_TITLE_ID, scanStateValidatingTitle)
                 this.putExtra(SCAN_STATE_FOUND_TITLE_ID, scanStateFoundTitle)
+                this.putExtra(SCAN_STATE_LOADING_TITLE_ID, scanStateLoadingTitle)
             }
         }
     }
