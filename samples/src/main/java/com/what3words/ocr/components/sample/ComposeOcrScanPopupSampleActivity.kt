@@ -3,7 +3,6 @@ package com.what3words.ocr.components.sample
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,7 +11,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Button
@@ -23,18 +21,13 @@ import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
@@ -46,9 +39,7 @@ import com.what3words.design.library.ui.components.NavigationBarScaffold
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.request.Coordinates
-import com.what3words.javawrapper.response.Suggestion
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
-import com.what3words.ocr.components.extensions.decodeBase64
 import com.what3words.ocr.components.extensions.serializable
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper

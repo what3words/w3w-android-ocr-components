@@ -2,7 +2,6 @@ package com.what3words.ocr.components.ui
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.ui.res.stringResource
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
@@ -14,11 +13,11 @@ import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.javawrapper.request.AutosuggestOptions
+import com.what3words.javawrapper.response.Coordinates
+import com.what3words.javawrapper.response.SuggestionWithCoordinates
+import com.what3words.ocr.components.R
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
-import com.what3words.javawrapper.response.SuggestionWithCoordinates
-import com.what3words.javawrapper.response.Coordinates
-import com.what3words.ocr.components.R
 
 class MLKitOcrScanActivity : BaseOcrScanActivity() {
     companion object {
