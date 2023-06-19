@@ -7,7 +7,6 @@ import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +46,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -58,6 +58,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
 import com.what3words.design.library.ui.components.SuggestionWhat3words
+import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
@@ -73,6 +74,129 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+
+object W3WOcrScannerDefaults {
+    data class Colors(
+        val bottomDrawerBackground: Color,
+        val overlayBackground: Color,
+        val stateTextColor: Color,
+        val listHeaderTextColor: Color,
+        val gripColor: Color,
+        val closeIconColor: Color,
+        val logoColor: Color,
+        val shutterInactiveColor: Color,
+        val shutterActiveColor: Color
+    )
+
+    data class TextStyles(
+        val stateTextStyle: TextStyle,
+        val listHeaderTextStyle: TextStyle
+    )
+
+    data class Strings(
+        val scanStateScanningTitle: String,
+        val scanStateDetectedTitle: String,
+        val scanStateValidatingTitle: String,
+        val scanStateFoundTitle: String,
+        val scanStateLoadingTitle: String,
+        val closeButtonContentDescription: String
+    )
+
+    /**
+     * Creates [W3WOcrScannerDefaults.Colors] to be applied to [W3WOcrScanner],
+     * allowing to override any [Color] on [W3WOcrScanner] composable for customization.
+     *
+     * @param bottomDrawerBackground set the background [Color] of the [W3WOcrScanner] [BottomSheetScaffold] sheetContent.
+     * @param overlayBackground set the background [Color] of the camera shutter overlay.
+     * @param stateTextColor set text [Color] of the [W3WOcrScanner] current state [Text] field.
+     * @param listHeaderTextColor set text [Color] of the [W3WOcrScanner] scanned suggestions list header.
+     * @param gripColor set text [Color] of the [W3WOcrScanner] [BottomSheetScaffold] sheetContent grip.
+     * @param closeIconColor the [Color] tint of the [W3WOcrScanner] close button.
+     * @param logoColor the [Color] tint of the [W3WOcrScanner] what3words logo.
+     * @param shutterInactiveColor the [Color] of the camera shutter 4 corners when state is different to found.
+     * @param shutterActiveColor the [Color] of the camera shutter 4 corners when state is found.
+     *
+     * @return [W3WOcrScannerDefaults.Colors] that will be applied to the [W3WOcrScanner] composable.
+     */
+    @Composable
+    fun defaultColors(
+        bottomDrawerBackground: Color = W3WTheme.colors.background,
+        overlayBackground: Color = Color(0x990A3049),
+        stateTextColor: Color = W3WTheme.colors.textPrimary,
+        listHeaderTextColor: Color = W3WTheme.colors.textPlaceholder,
+        gripColor: Color = Color.LightGray,
+        closeIconColor: Color = Color.White,
+        logoColor: Color = Color.White,
+        shutterInactiveColor: Color = Color.White,
+        shutterActiveColor: Color = Color.Green
+    ): Colors {
+        return Colors(
+            bottomDrawerBackground = bottomDrawerBackground,
+            overlayBackground = overlayBackground,
+            stateTextColor = stateTextColor,
+            listHeaderTextColor = listHeaderTextColor,
+            gripColor = gripColor,
+            closeIconColor = closeIconColor,
+            logoColor = logoColor,
+            shutterActiveColor = shutterActiveColor,
+            shutterInactiveColor = shutterInactiveColor
+        )
+    }
+
+    /**
+     * Creates [W3WOcrScannerDefaults.TextStyles] to be applied to [W3WOcrScanner],
+     * allowing to override any [TextStyle] on [W3WOcrScanner] composable for customization.
+     *
+     * @param stateTextStyle set [TextStyle] of the [W3WOcrScanner] current state.
+     * @param listHeaderTextStyle set [TextStyle] of the [W3WOcrScanner] scanned list header.
+     *
+     * @return [W3WOcrScannerDefaults.TextStyles] that will be applied to the [W3WOcrScanner] composable.
+     */
+    @Composable
+    fun defaultTextStyles(
+        stateTextStyle: TextStyle = W3WTheme.typography.headline,
+        listHeaderTextStyle: TextStyle = W3WTheme.typography.caption2
+    ): TextStyles {
+        return TextStyles(
+            stateTextStyle = stateTextStyle,
+            listHeaderTextStyle = listHeaderTextStyle
+        )
+    }
+
+    /**
+     * Creates [W3WOcrScannerDefaults.Strings] to be used on [W3WOcrScanner],
+     * allowing localisation and accessibility to be controlled by developers.
+     *
+     * @param scanStateScanningTitle the text to be displayed when it starts scanning, default: [R.string.scan_state_scanning]
+     * @param scanStateDetectedTitle the text to be displayed when it detects a possible three word address, default: [R.string.scan_state_detecting]
+     * @param scanStateValidatingTitle the text to be displayed when it validates a possible three word address (API/SDK check for validation), default: [R.string.scan_state_validating]
+     * @param scanStateFoundTitle the title to be displayed as the header of the list of scanned and validated three word addresses, default: [R.string.scan_state_found]
+     * @param scanStateLoadingTitle the title to be displayed when it's waiting for permissions to be accepted or any kind of download needed, default: [R.string.scan_state_loading]
+     * @param closeButtonContentDescription the content description of the actionable close button, default: [R.string.scan_state_loading]
+     *
+     * @return [W3WOcrScannerDefaults.Strings] that will be used on [W3WOcrScanner] composable.
+     */
+    @Composable
+    fun defaultStrings(
+        scanStateScanningTitle: String = stringResource(id = R.string.scan_state_scanning),
+        scanStateDetectedTitle: String = stringResource(id = R.string.scan_state_detecting),
+        scanStateValidatingTitle: String = stringResource(id = R.string.scan_state_validating),
+        scanStateFoundTitle: String = stringResource(id = R.string.scan_state_found),
+        scanStateLoadingTitle: String = stringResource(id = R.string.scan_state_loading),
+        closeButtonContentDescription: String = stringResource(id = R.string.cd_close_button),
+    ): Strings {
+        return Strings(
+            scanStateScanningTitle = scanStateScanningTitle,
+            scanStateDetectedTitle = scanStateDetectedTitle,
+            scanStateValidatingTitle = scanStateValidatingTitle,
+            scanStateFoundTitle = scanStateFoundTitle,
+            scanStateLoadingTitle = scanStateLoadingTitle,
+            closeButtonContentDescription = closeButtonContentDescription
+        )
+    }
+}
+
+
 /**
  * Creates a new [W3WOcrScanner] Composable to use CameraX and a [W3WOcrWrapper] to scan what3words address using text recognition.
  *
@@ -83,10 +207,12 @@ import kotlinx.coroutines.launch
  * @param options [AutosuggestOptions] to be applied when using what3words API. (Optional)
  * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not. Default false, if true, it might result in API cost charges.
  * @param displayUnits the [DisplayUnits] that will show on the [SuggestionPicker], by default will be [DisplayUnits.SYSTEM] which will use the system Locale to determinate if Imperial or Metric system.
- * @param scanStateScanningTitle the text to be displayed when it starts scanning, default: [R.string.scan_state_scanning]
- * @param scanStateDetectedTitle the text to be displayed when it detects a possible three word address, default: [R.string.scan_state_detecting]
- * @param scanStateValidatingTitle the text to be displayed when it validates a possible three word address (API/SDK check for validation), default: [R.string.scan_state_validating]
- * @param scanStateFoundTitle the title to be displayed as the header of the list of scanned and validated three word addresses, default: [R.string.scan_state_found]
+ * @param scannerColors the [W3WOcrScannerDefaults.Colors] that will be applied to the [W3WOcrScanner], Default colors are set here [W3WOcrScannerDefaults.defaultColors] and can all be overridden.
+ * @param scannerTextStyles the [W3WOcrScannerDefaults.TextStyles] that will be applied to the [W3WOcrScanner], Default text styles are set here [W3WOcrScannerDefaults.defaultTextStyles] and can all be overridden.
+ * @param scannerStrings the [W3WOcrScannerDefaults.Strings] that will be applied to the [W3WOcrScanner] to allow localisation and accessibility customisation. Default strings are set here [W3WOcrScannerDefaults.defaultStrings] and can all be overridden.
+ * @param suggestionTextStyles the [SuggestionWhat3wordsDefaults.TextStyles] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default text styles are set here [SuggestionWhat3wordsDefaults.defaultTextStyles] and can all be overridden.
+ * @param suggestionColors the [SuggestionWhat3wordsDefaults.Colors] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default colors are set here [SuggestionWhat3wordsDefaults.defaultColors] and can all be overridden.
+ * @param suggestionNearestPlacePrefix the prefix to [SuggestionWhat3words] nearest place. Default prefix is [com.what3words.design.library.R.string.near]
  * @param onSuggestionSelected the callback when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker].
  * @param onError the callback when an error occurs in this composable, expect a [What3WordsError].
  * @param onDismiss when this composable is closed using the close button, meaning no [onError] or [onSuggestionSelected], it was dismissed by the user.
@@ -100,11 +226,12 @@ fun W3WOcrScanner(
     options: AutosuggestOptions? = null,
     returnCoordinates: Boolean = false,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
-    scanStateScanningTitle: String = stringResource(id = R.string.scan_state_scanning),
-    scanStateDetectedTitle: String = stringResource(id = R.string.scan_state_detecting),
-    scanStateValidatingTitle: String = stringResource(id = R.string.scan_state_validating),
-    scanStateFoundTitle: String = stringResource(id = R.string.scan_state_found),
-    scanStateLoadingTitle: String = stringResource(id = R.string.scan_state_loading),
+    scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
+    scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
+    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(),
+    suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
+    suggestionNearestPlacePrefix: String? = stringResource(id = com.what3words.design.library.R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
@@ -192,11 +319,12 @@ fun W3WOcrScanner(
                 scanResultState,
                 heightSheet,
                 displayUnits,
-                scanStateScanningTitle = scanStateScanningTitle,
-                scanStateDetectedTitle = scanStateDetectedTitle,
-                scanStateValidatingTitle = scanStateValidatingTitle,
-                scanStateFoundTitle = scanStateFoundTitle,
-                scanStateLoadingTitle = scanStateLoadingTitle
+                scannerStrings = scannerStrings,
+                suggestionTextStyles = suggestionTextStyles,
+                suggestionColors = suggestionColors,
+                scannerColors = scannerColors,
+                scannerTextStyles = scannerTextStyles,
+                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix
             ) {
                 manager.stop()
                 if (returnCoordinates) {
@@ -221,20 +349,26 @@ fun W3WOcrScanner(
         }
     ) {
         // app UI
-        ScanArea(previewView, scanResultState, {
-            if (scanResultState.state == ScanResultState.State.Idle) {
-                manager.layoutCoordinates = it
-                manager.displayMetrics = context.resources.displayMetrics
-            }
-            val newHeight =
-                ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
-            if (heightSheet != newHeight) {
-                heightSheet = newHeight
-            }
-        }, {
-            manager.stop()
-            onDismiss?.invoke()
-        })
+        ScanArea(
+            previewView,
+            scanResultState,
+            scannerStrings.closeButtonContentDescription,
+            scannerColors,
+            {
+                if (scanResultState.state == ScanResultState.State.Idle) {
+                    manager.layoutCoordinates = it
+                    manager.displayMetrics = context.resources.displayMetrics
+                }
+                val newHeight =
+                    ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
+                if (heightSheet != newHeight) {
+                    heightSheet = newHeight
+                }
+            },
+            {
+                manager.stop()
+                onDismiss?.invoke()
+            })
     }
 }
 
@@ -244,26 +378,28 @@ private fun SuggestionPicker(
     scanResultState: ScanResultState,
     maxHeight: Dp,
     displayUnits: DisplayUnits,
-    scanStateScanningTitle: String,
-    scanStateDetectedTitle: String,
-    scanStateValidatingTitle: String,
-    scanStateFoundTitle: String,
-    scanStateLoadingTitle: String,
+    scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles,
+    scannerColors: W3WOcrScannerDefaults.Colors,
+    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles,
+    suggestionColors: SuggestionWhat3wordsDefaults.Colors,
+    suggestionNearestPlacePrefix: String?,
     onSuggestionSelected: (Suggestion) -> Unit
 ) {
     Column(
         modifier = Modifier
             .clip(shape = RoundedCornerShape(8.dp, 8.dp, 0.dp, 0.dp))
             .heightIn(min = 100.dp, max = maxHeight)
-            .background(W3WTheme.colors.background),
+            .background(scannerColors.bottomDrawerBackground),
     ) {
-        Image(
+        Icon(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
                 .align(CenterHorizontally),
             painter = painterResource(id = R.drawable.grip),
-            contentDescription = stringResource(R.string.grip_content_description)
+            contentDescription = stringResource(R.string.grip_content_description),
+            tint = scannerColors.gripColor
         )
         if (scanResultState.state != ScanResultState.State.Found && scanResultState.foundItems.isEmpty()) {
             Box(
@@ -271,21 +407,21 @@ private fun SuggestionPicker(
                     .fillMaxWidth()
             ) {
                 val title: String? = when (scanResultState.state) {
-                    ScanResultState.State.Detected -> scanStateDetectedTitle
+                    ScanResultState.State.Detected -> scannerStrings.scanStateDetectedTitle
                     is ScanResultState.State.Error -> null
                     ScanResultState.State.Found -> null
-                    ScanResultState.State.Scanning -> scanStateScanningTitle
-                    ScanResultState.State.Validating -> scanStateValidatingTitle
-                    ScanResultState.State.Idle -> scanStateLoadingTitle
+                    ScanResultState.State.Scanning -> scannerStrings.scanStateScanningTitle
+                    ScanResultState.State.Validating -> scannerStrings.scanStateValidatingTitle
+                    ScanResultState.State.Idle -> scannerStrings.scanStateLoadingTitle
                 }
                 if (!title.isNullOrEmpty()) {
                     Text(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(top = 4.dp),
-                        style = W3WTheme.typography.headline,
+                        style = scannerTextStyles.stateTextStyle,
                         text = title,
-                        color = W3WTheme.colors.textPrimary
+                        color = scannerColors.stateTextColor
                     )
                 }
             }
@@ -297,9 +433,9 @@ private fun SuggestionPicker(
                     Text(
                         modifier = Modifier
                             .padding(start = 12.dp),
-                        style = W3WTheme.typography.caption2,
-                        color = W3WTheme.colors.textPlaceholder,
-                        text = scanStateFoundTitle
+                        style = scannerTextStyles.listHeaderTextStyle,
+                        color = scannerColors.listHeaderTextColor,
+                        text = scannerStrings.scanStateFoundTitle
                     )
                 }
             }
@@ -314,9 +450,12 @@ private fun SuggestionPicker(
                     nearestPlace = item.nearestPlace,
                     distance = item.distanceToFocusKm,
                     displayUnits = displayUnits,
+                    textStyles = suggestionTextStyles,
+                    colors = suggestionColors,
+                    nearestPlacePrefix = suggestionNearestPlacePrefix,
                     onClick = {
                         onSuggestionSelected.invoke(item)
-                    }
+                    },
                 )
             }
         }
@@ -327,6 +466,8 @@ private fun SuggestionPicker(
 private fun ScanArea(
     previewView: PreviewView,
     scanResultState: ScanResultState,
+    closeButtonContentDescription: String,
+    scannerColors: W3WOcrScannerDefaults.Colors,
     cropAreaReady: (LayoutCoordinates) -> Unit,
     onDismiss: (() -> Unit)?
 ) {
@@ -361,7 +502,7 @@ private fun ScanArea(
                     height = Dimension.fillToConstraints
                     width = Dimension.value(24.dp)
                 }
-                .background(Color(0x990A3049))
+                .background(scannerColors.overlayBackground)
         )
         Box(
             modifier = Modifier
@@ -372,7 +513,7 @@ private fun ScanArea(
                     height = Dimension.fillToConstraints
                     width = Dimension.value(24.dp)
                 }
-                .background(Color(0x990A3049))
+                .background(scannerColors.overlayBackground)
         )
         Box(
             modifier = Modifier
@@ -383,7 +524,7 @@ private fun ScanArea(
                     width = Dimension.fillToConstraints
                     height = Dimension.value(60.dp)
                 }
-                .background(Color(0x990A3049))
+                .background(scannerColors.overlayBackground)
         )
 
         Box(
@@ -409,9 +550,9 @@ private fun ScanArea(
                     width = Dimension.fillToConstraints
                     height = Dimension.fillToConstraints
                 }
-                .background(Color(0x990A3049))
+                .background(scannerColors.overlayBackground)
         )
-        Image(
+        Icon(
             modifier = Modifier.constrainAs(logo) {
                 top.linkTo(parent.top)
                 start.linkTo(parent.start)
@@ -421,7 +562,8 @@ private fun ScanArea(
                 height = Dimension.wrapContent
             },
             painter = painterResource(id = R.drawable.ic_logo_with_letters),
-            contentDescription = null
+            contentDescription = null,
+            tint = scannerColors.logoColor
         )
         OutlinedIconButton(
             modifier = Modifier.constrainAs(buttonClose) {
@@ -436,15 +578,16 @@ private fun ScanArea(
             onClick = {
                 onDismiss?.invoke()
             },
-            textColor = Color.White
+            textColor = scannerColors.closeIconColor,
+            iconContentDescription = closeButtonContentDescription
         )
         val margin = (-2).dp
-        val color = remember { Animatable(Color.White) }
+        val color = remember { Animatable(scannerColors.shutterInactiveColor) }
 
         if (scanResultState.lastAdded != null) {
             LaunchedEffect(scanResultState.lastAdded) {
-                color.animateTo(Color.Green, animationSpec = tween(500))
-                color.animateTo(Color.White, animationSpec = tween(500))
+                color.animateTo(scannerColors.shutterActiveColor, animationSpec = tween(500))
+                color.animateTo(scannerColors.shutterInactiveColor, animationSpec = tween(500))
             }
         }
         Icon(
@@ -495,6 +638,8 @@ fun ScanAreaScanningMode() {
         ScanArea(
             PreviewView(LocalContext.current.applicationContext),
             ScanResultState().apply { scanning() },
+            "",
+            W3WOcrScannerDefaults.defaultColors(),
             {},
             {})
     }
@@ -509,6 +654,8 @@ fun ScanAreaDetectedMode() {
         ScanArea(
             PreviewView(LocalContext.current.applicationContext),
             ScanResultState().apply { detected() },
+            "",
+            W3WOcrScannerDefaults.defaultColors(),
             {},
             {})
     }
@@ -523,6 +670,8 @@ fun ScanAreaValidatingMode() {
         ScanArea(
             PreviewView(LocalContext.current.applicationContext),
             ScanResultState().apply { validating() },
+            "",
+            W3WOcrScannerDefaults.defaultColors(),
             {},
             {})
     }
@@ -537,6 +686,8 @@ fun ScanAreaFoundMode() {
         ScanArea(
             PreviewView(LocalContext.current.applicationContext),
             ScanResultState().apply { found(emptyList()) },
+            "",
+            W3WOcrScannerDefaults.defaultColors(),
             {},
             {})
     }

@@ -27,6 +27,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
     protected lateinit var scanStateValidatingTitle: String
     protected lateinit var scanStateFoundTitle: String
     protected lateinit var scanStateLoadingTitle: String
+    protected lateinit var closeButtonContentDescription: String
     protected var mlKitV2Library: W3WOcrWrapper.MLKitLibraries? = null
     protected var apiKey: String? = null
     protected var languageCode: String? = null
@@ -52,6 +53,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
         const val SCAN_STATE_VALIDATING_TITLE_ID = "SCAN_STATE_VALIDATING_TITLE"
         const val SCAN_STATE_FOUND_TITLE_ID = "SCAN_STATE_FOUND_TITLE"
         const val SCAN_STATE_LOADING_TITLE_ID = "SCAN_STATE_LOADING_TITLE"
+        const val CLOSE_BUTTON_CD_ID = "CLOSE_BUTTON_CD"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,6 +77,8 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
             ?: getString(R.string.scan_state_found)
         scanStateLoadingTitle = intent.getStringExtra(SCAN_STATE_LOADING_TITLE_ID)
             ?: getString(R.string.scan_state_loading)
+        closeButtonContentDescription = intent.getStringExtra(CLOSE_BUTTON_CD_ID)
+            ?: getString(R.string.cd_close_button)
         setContent {
             W3WTheme {
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -97,11 +101,14 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                     options = autosuggestOptions,
                     returnCoordinates = returnCoordinates,
                     displayUnits = displayUnits,
-                    scanStateScanningTitle = scanStateScanningTitle,
-                    scanStateDetectedTitle = scanStateDetectedTitle,
-                    scanStateValidatingTitle = scanStateValidatingTitle,
-                    scanStateFoundTitle = scanStateFoundTitle,
-                    scanStateLoadingTitle = scanStateLoadingTitle,
+                    scannerStrings = W3WOcrScannerDefaults.defaultStrings(
+                        scanStateScanningTitle = scanStateScanningTitle,
+                        scanStateDetectedTitle = scanStateDetectedTitle,
+                        scanStateValidatingTitle = scanStateValidatingTitle,
+                        scanStateFoundTitle = scanStateFoundTitle,
+                        scanStateLoadingTitle = scanStateLoadingTitle,
+                        closeButtonContentDescription = closeButtonContentDescription
+                    ),
                     onError = {
                         setResult(RESULT_CANCELED)
                         finish()
