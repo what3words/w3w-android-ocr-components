@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
     }
         
     override fun onCreate(savedInstanceState: Bundle?) {
+        //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
         val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
         //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
@@ -116,32 +117,10 @@ class MainActivity : ComponentActivity() {
 
         setContent { 
             YourTheme {
-                //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-
                 W3WOcrScanner(
                     ocrWrapper,
                     options = options,
                     returnCoordinates = returnCoordinates,
-                    //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
-                    scannerStrings = W3WOcrScannerDefaults.defaultStrings(
-                        scanStateFoundTitle = "YOUR_STRING_HERE",
-                    ),
-                    //optional if you want to override any colors of the scanner composable.
-                    scannerColors = W3WOcrScannerDefaults.defaultColors(
-                        bottomDrawerBackground = Color.White
-                    ),
-                    //optional if you want to override any text styles.
-                    scannerTextStyles = W3WOcrScannerDefaults.defaultTextStyles(
-                        stateTextStyle = TextStyle.Default
-                    ),
-                    //optional if you want to override any colors of the scanned list item composable.
-                    suggestionColors = SuggestionWhat3wordsDefaults.defaultColors(
-                        background = Color.White
-                    ),
-                    //optional if you want to override any text styles of the scanned list item composable.
-                    suggestionTextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(
-                        wordsTextStyle = TextStyle.Default
-                    ),
                     onError = { error ->
                         //TODO: Handle error
                     },
@@ -155,4 +134,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+```
+
+### Styling W3WOcrScanner (#2)
+
+```Kotlin
+W3WOcrScanner(
+    ...
+    //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
+    scannerStrings = W3WOcrScannerDefaults.defaultStrings(
+        scanStateFoundTitle = stringResource(id = R.string.scan_state_found),
+    ),
+    //optional if you want to override any colors of the scanner composable.
+    scannerColors = W3WOcrScannerDefaults.defaultColors(
+        bottomDrawerBackground = W3WTheme.colors.background
+    ),
+    //optional if you want to override any text styles.
+    scannerTextStyles = W3WOcrScannerDefaults.defaultTextStyles(
+        stateTextStyle = W3WTheme.typography.headline
+    ),
+    //optional if you want to override any colors of the scanned list item composable.
+    suggestionColors = SuggestionWhat3wordsDefaults.defaultColors(
+        background = W3WTheme.colors.background
+    ),
+    //optional if you want to override any text styles of the scanned list item composable.
+    suggestionTextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(
+        wordsTextStyle = W3WTheme.typography.headline
+    )
+) 
 ```
