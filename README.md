@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 resultLauncher.launch(intent)
             } catch (e: ExceptionInInitializerError) {
-                viewModel.results = e.message
+                //TODO: Handle error.
             }
     }
 }
