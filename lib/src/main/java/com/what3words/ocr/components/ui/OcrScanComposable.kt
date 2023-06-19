@@ -124,7 +124,7 @@ object W3WOcrScannerDefaults {
         overlayBackground: Color = Color(0x990A3049),
         stateTextColor: Color = W3WTheme.colors.textPrimary,
         listHeaderTextColor: Color = W3WTheme.colors.textPlaceholder,
-        gripColor: Color = Color.Gray,
+        gripColor: Color = Color.LightGray,
         closeIconColor: Color = Color.White,
         logoColor: Color = Color.White,
         shutterInactiveColor: Color = Color.White,
