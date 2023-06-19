@@ -34,6 +34,13 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          * @param apiKey the API key to use when querying the what3words API.
          * @param options [AutosuggestOptions] to be applied when using what3words API. (Optional)
          * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not. Default false, if true, it might result in API cost charges.
+         * @param displayUnits the [DisplayUnits] that will show on the [SuggestionPicker], by default will be [DisplayUnits.SYSTEM] which will use the system Locale to determinate if Imperial or Metric system.
+         * @param scanStateScanningTitle the text to be displayed when it starts scanning, default: [R.string.scan_state_scanning]
+         * @param scanStateDetectedTitle the text to be displayed when it detects a possible three word address, default: [R.string.scan_state_detecting]
+         * @param scanStateValidatingTitle the text to be displayed when it validates a possible three word address (API/SDK check for validation), default: [R.string.scan_state_validating]
+         * @param scanStateFoundTitle the title to be displayed as the header of the list of scanned and validated three word addresses, default: [R.string.scan_state_found]
+         * @param scanStateLoadingTitle the title to be displayed when it's waiting for permissions to be accepted or any kind of download needed, default: [R.string.scan_state_loading]
+         * @param closeButtonContentDescription the content description of the actionable close button, default: [R.string.scan_state_loading]
          */
         fun newInstanceWithApi(
             context: Context,
@@ -78,6 +85,13 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          * [W3WOcrWrapper.MLKitLibraries.LatinAndKorean], [W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari], [W3WOcrWrapper.MLKitLibraries.LatinAndJapanese].
          * @param options [AutosuggestOptions] to be applied when using what3words SDK. (Optional)
          * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not.
+         * @param displayUnits the [DisplayUnits] that will show on the [SuggestionPicker], by default will be [DisplayUnits.SYSTEM] which will use the system Locale to determinate if Imperial or Metric system.
+         * @param scanStateScanningTitle the text to be displayed when it starts scanning, default: [R.string.scan_state_scanning]
+         * @param scanStateDetectedTitle the text to be displayed when it detects a possible three word address, default: [R.string.scan_state_detecting]
+         * @param scanStateValidatingTitle the text to be displayed when it validates a possible three word address (API/SDK check for validation), default: [R.string.scan_state_validating]
+         * @param scanStateFoundTitle the title to be displayed as the header of the list of scanned and validated three word addresses, default: [R.string.scan_state_found]
+         * @param scanStateLoadingTitle the title to be displayed when it's waiting for permissions to be accepted or any kind of download needed, default: [R.string.scan_state_loading]
+         * @param closeButtonContentDescription the content description of the actionable close button, default: [R.string.scan_state_loading]
          */
         fun newInstanceWithSdk(
             context: Context,
