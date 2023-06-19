@@ -101,21 +101,22 @@ class MainActivity : ComponentActivity() {
     }
         
     override fun onCreate(savedInstanceState: Bundle?) {
+        val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+        //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
+        val options = AutosuggestOptions().apply { 
+            this.focus = Coordinates(51.23, 0.1)
+        }
+
+        //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
+        val returnCoordinates = true
+
+        val dataProvider = What3WordsV3("YOUR_API_KEY_HERE", this)
+        ocrWrapper = W3WOcrMLKitWrapper(this, dataProvider, textRecognizer)
+
         setContent { 
             YourTheme {
                 //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-                val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
-                //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
-                val options = AutosuggestOptions().apply { 
-                    this.focus = Coordinates(51.23, 0.1)
-                }
-        
-                //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
-                val returnCoordinates = true
-
-                val dataProvider = What3WordsV3("YOUR_API_KEY_HERE", this)
-                ocrWrapper = W3WOcrMLKitWrapper(this, dataProvider, textRecognizer)
 
                 W3WOcrScanner(
                     ocrWrapper,

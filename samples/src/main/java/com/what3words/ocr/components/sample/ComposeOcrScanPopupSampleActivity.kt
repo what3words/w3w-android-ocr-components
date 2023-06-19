@@ -66,7 +66,9 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                         ("${suggestion.words}, ${suggestion.nearestPlace}, ${suggestion.country}\n${suggestion.coordinates?.lat}, ${suggestion.coordinates?.lng}")
                 }
                 //registerForActivityResult canceled with error
-                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(BaseOcrScanActivity.ERROR_RESULT_ID) == true -> {
+                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(
+                    BaseOcrScanActivity.ERROR_RESULT_ID
+                ) == true -> {
                     val error =
                         result.data!!.getStringExtra(BaseOcrScanActivity.ERROR_RESULT_ID)
                     viewModel.results = error
@@ -169,7 +171,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             BuildConfig.W3W_API_KEY,
                             options,
                             true,
-                            scanStateFoundTitle = "YOUR_STRING_HERE"
+                            scanStateFoundTitle = getString(R.string.scan_state_found)
                         )
                         try {
                             resultLauncher.launch(intent)
