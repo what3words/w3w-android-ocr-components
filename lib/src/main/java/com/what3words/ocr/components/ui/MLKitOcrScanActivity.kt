@@ -46,7 +46,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
             scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
             scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
-            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading)
+            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading),
+            closeButtonContentDescription: String = context.getString(R.string.cd_close_button)
         ): Intent {
             return buildInstance(
                 context,
@@ -60,7 +61,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 scanStateDetectedTitle,
                 scanStateValidatingTitle,
                 scanStateFoundTitle,
-                scanStateLoadingTitle
+                scanStateLoadingTitle,
+                closeButtonContentDescription
             )
         }
 
@@ -87,7 +89,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateDetectedTitle: String = context.getString(R.string.scan_state_detecting),
             scanStateValidatingTitle: String = context.getString(R.string.scan_state_validating),
             scanStateFoundTitle: String = context.getString(R.string.scan_state_found),
-            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading)
+            scanStateLoadingTitle: String = context.getString(R.string.scan_state_loading),
+            closeButtonContentDescription: String = context.getString(R.string.cd_close_button)
         ): Intent {
             return buildInstance(
                 context,
@@ -101,7 +104,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 scanStateDetectedTitle,
                 scanStateValidatingTitle,
                 scanStateFoundTitle,
-                scanStateLoadingTitle
+                scanStateLoadingTitle,
+                closeButtonContentDescription
             )
         }
 
@@ -117,7 +121,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             scanStateDetectedTitle: String,
             scanStateValidatingTitle: String,
             scanStateFoundTitle: String,
-            scanStateLoadingTitle: String
+            scanStateLoadingTitle: String,
+            closeButtonContentDescription: String
         ): Intent {
             return Intent(context, MLKitOcrScanActivity::class.java).apply {
                 this.putExtra(DATA_PROVIDER_ID, dataProvider)
@@ -132,6 +137,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                 this.putExtra(SCAN_STATE_VALIDATING_TITLE_ID, scanStateValidatingTitle)
                 this.putExtra(SCAN_STATE_FOUND_TITLE_ID, scanStateFoundTitle)
                 this.putExtra(SCAN_STATE_LOADING_TITLE_ID, scanStateLoadingTitle)
+                this.putExtra(CLOSE_BUTTON_CD_ID, closeButtonContentDescription)
             }
         }
     }
