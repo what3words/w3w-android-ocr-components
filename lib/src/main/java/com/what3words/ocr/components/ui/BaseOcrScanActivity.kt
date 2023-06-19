@@ -6,9 +6,12 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.TextStyle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
@@ -45,7 +48,8 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
         const val API_KEY_ID = "API_KEY"
         const val LANGUAGE_CODE_ID = "LANGUAGE_CODE"
         const val TESS_DATA_PATH_ID = "TESS_DATA_PATH"
-        const val SUGGESTION_RESULT_ID = "SUGGESTION_RESULT"
+        const val SUCCESS_RESULT_ID = "SUCCESS_RESULT"
+        const val ERROR_RESULT_ID = "ERROR_RESULT"
         const val RETURN_COORDINATES_ID = "RETURN_COORDINATES"
         const val DISPLAY_UNITS_ID = "DISPLAY_UNITS"
         const val SCAN_STATE_SCANNING_TITLE_ID = "SCAN_STATE_SCANNING_TITLE"
@@ -94,7 +98,6 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                         lifecycleOwner.lifecycle.removeObserver(observer)
                     }
                 }
-
                 // A surface container using the 'background' color from the theme
                 W3WOcrScanner(
                     ocrWrapper,
@@ -110,7 +113,9 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                         closeButtonContentDescription = closeButtonContentDescription
                     ),
                     onError = {
-                        setResult(RESULT_CANCELED)
+                        setResult(RESULT_CANCELED, Intent().apply {
+                            putExtra(ERROR_RESULT_ID, it.message)
+                        })
                         finish()
                     },
                     onDismiss = {
@@ -119,7 +124,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                     },
                     onSuggestionSelected = {
                         setResult(RESULT_OK, Intent().apply {
-                            putExtra(SUGGESTION_RESULT_ID, it)
+                            putExtra(SUCCESS_RESULT_ID, it)
                         })
                         finish()
                     })
