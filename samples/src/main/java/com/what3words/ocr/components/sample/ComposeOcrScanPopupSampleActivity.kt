@@ -53,20 +53,29 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
     private val resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                // There are no request codes
-                result.data?.let {
+            when {
+                //registerForActivityResult success with result
+                result.resultCode == Activity.RESULT_OK && result.data?.hasExtra(BaseOcrScanActivity.SUCCESS_RESULT_ID) == true -> {
                     val suggestion =
-                        it.serializable<SuggestionWithCoordinates>(BaseOcrScanActivity.SUGGESTION_RESULT_ID)
+                        result.data!!.serializable<SuggestionWithCoordinates>(BaseOcrScanActivity.SUCCESS_RESULT_ID)
                     if (suggestion != null) viewModel.results =
                         ("${suggestion.words}, ${suggestion.nearestPlace}, ${suggestion.country}\n${suggestion.coordinates?.lat}, ${suggestion.coordinates?.lng}")
+                }
+                //registerForActivityResult canceled with error
+                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(BaseOcrScanActivity.ERROR_RESULT_ID) == true -> {
+                    val error =
+                        result.data!!.getStringExtra(BaseOcrScanActivity.ERROR_RESULT_ID)
+                    viewModel.results = error
+                }
+                //registerForActivityResult canceled by user.
+                else -> {
                 }
             }
         }
 
     override fun onDestroy() {
         super.onDestroy()
-        ocrWrapper.stop()
+        if (::ocrWrapper.isInitialized) ocrWrapper.stop()
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -135,7 +144,8 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             viewModel.selectedMLKitLibrary,
                             BuildConfig.W3W_API_KEY,
                             options,
-                            returnCoordinates = true
+                            true,
+                            scanStateFoundTitle = "YOUR_STRING_HERE"
                         )
                         try {
                             resultLauncher.launch(intent)
