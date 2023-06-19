@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
@@ -36,16 +37,19 @@ import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.design.library.ui.components.NavigationBarScaffold
+import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.request.Coordinates
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
+import com.what3words.ocr.components.R
 import com.what3words.ocr.components.extensions.serializable
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
 import com.what3words.ocr.components.ui.BaseOcrScanActivity
 import com.what3words.ocr.components.ui.MLKitOcrScanActivity
 import com.what3words.ocr.components.ui.W3WOcrScanner
+import com.what3words.ocr.components.ui.W3WOcrScannerDefaults
 
 class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     private val viewModel: ComposeOcrScanSamplePopupViewModel by viewModels()
@@ -117,6 +121,26 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             ocrWrapper,
                             options = options,
                             returnCoordinates = true,
+                            //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
+                            scannerStrings = W3WOcrScannerDefaults.defaultStrings(
+                                scanStateFoundTitle = stringResource(id = R.string.scan_state_found),
+                            ),
+                            //optional if you want to override any colors of the scanner composable.
+                            scannerColors = W3WOcrScannerDefaults.defaultColors(
+                                bottomDrawerBackground = W3WTheme.colors.background
+                            ),
+                            //optional if you want to override any text styles.
+                            scannerTextStyles = W3WOcrScannerDefaults.defaultTextStyles(
+                                stateTextStyle = W3WTheme.typography.headline
+                            ),
+                            //optional if you want to override any colors of the scanned list item composable.
+                            suggestionColors = SuggestionWhat3wordsDefaults.defaultColors(
+                                background = W3WTheme.colors.background
+                            ),
+                            //optional if you want to override any text styles of the scanned list item composable.
+                            suggestionTextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(
+                                wordsTextStyle = W3WTheme.typography.headline
+                            ),
                             onError = {
                                 scanScreenVisible = false
                                 viewModel.results =

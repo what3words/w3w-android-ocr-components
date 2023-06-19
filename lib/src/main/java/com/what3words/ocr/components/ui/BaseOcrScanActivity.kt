@@ -112,18 +112,6 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
                         scanStateLoadingTitle = scanStateLoadingTitle,
                         closeButtonContentDescription = closeButtonContentDescription
                     ),
-                    scannerColors = W3WOcrScannerDefaults.defaultColors(
-                        bottomDrawerBackground = Color.White
-                    ),
-                    scannerTextStyles = W3WOcrScannerDefaults.defaultTextStyles(
-                        stateTextStyle = TextStyle.Default
-                    ),
-                    suggestionColors = SuggestionWhat3wordsDefaults.defaultColors(
-                        background = Color.White
-                    ),
-                    suggestionTextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(
-                        wordsTextStyle = TextStyle.Default
-                    ),
                     onError = {
                         setResult(RESULT_CANCELED, Intent().apply {
                             putExtra(ERROR_RESULT_ID, it.message)

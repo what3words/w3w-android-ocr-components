@@ -121,7 +121,6 @@ class MainActivity : ComponentActivity() {
                     ocrWrapper,
                     options = options,
                     returnCoordinates = returnCoordinates,
-                    displayUnits = displayUnits,
                     //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
                     scannerStrings = W3WOcrScannerDefaults.defaultStrings(
                         scanStateFoundTitle = "YOUR_STRING_HERE",
