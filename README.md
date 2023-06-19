@@ -21,14 +21,14 @@ implementation 'com.what3words:w3w-android-ocr-components:1.0.0'
 
 ## Documentation
 
-Before starting to implement our MLKit OCR Component you will need to add the MLKit libraries to our app, to do that please follow this toturial on [MLKit Android before you being steps](https://developers.google.com/ml-kit/vision/text-recognition/v2/android#before_you_begin).
+Before implementing our MLKit OCR Component, you must add the MLKit libraries to our app. To do that, please follow this [MLKit Android setup steps](https://developers.google.com/ml-kit/vision/text-recognition/v2/android#before_you_begin).
 
 
 There are two ways to use our MLKit OCR Component:
 
-1. as an Activity, **MLKitOcrScanActivity** to use as activity for result, which have mininum setup but all lifecycle and scan flow is handled by our library and will return the selected scanned three word address, will allow custom localisation and accessibility but is limited on styling customisation, out of the box uses our what3words design system.
+1. As an Activity, **MLKitOcrScanActivity**, that should be used as an activity for result, which have minimum setup but doesn't allow style customisation. Our library handles all lifecycle and scan flow and will return the selected scanned three word address. Custom localisation and accessibility are available.
 
-2. using our Jetpack Compose Composable **W3WOcrScanner**, this way will allow all the above, but the results are return as a callback (selection and errors) and will allow styling customisation, allowing to override all styles used on our composable with just a couple of extra steps to setup.
+2. Using our Jetpack Compose Composable **W3WOcrScanner**, will allow all the above, but the results are returned as a callback (selection and errors) and will enable styling customisation, allowing to override all styles used on our composable with just a couple of extra steps to setup.
 
 ### Using MLKitOcrScanActivity (#1)
 
