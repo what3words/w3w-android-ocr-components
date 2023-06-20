@@ -128,16 +128,17 @@ class MainActivity : ComponentActivity() {
             YourTheme {
                 W3WOcrScanner(
                     ocrWrapper,
+                    modifier = Modifier.fillMaxSize(),
                     options = options,
                     returnCoordinates = returnCoordinates,
                     onError = { error ->
                         //TODO: Handle error
                     },
                     onDismiss = {
-                        //TODO: Dismissed by user.
+                        //TODO: Dismissed by user, hide W3WOcrScanner using AnimatedVisibility or finish activity.
                     },
                     onSuggestionSelected = { scannedSuggestion ->
-                        //TODO: Use scanned three word address info
+                        //TODO: Use scanned three word address info, hide W3WOcrScanner using AnimatedVisibility or finish activity.
                     }) 
             }
         }
