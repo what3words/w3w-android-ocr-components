@@ -73,6 +73,7 @@ import com.what3words.ocr.components.models.W3WOcrWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 object W3WOcrScannerDefaults {
@@ -328,9 +329,10 @@ fun W3WOcrScanner(
             ) {
                 manager.stop()
                 if (returnCoordinates) {
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val res =
+                    CoroutineScope(Dispatchers.Main).launch {
+                        val res = withContext(Dispatchers.IO) {
                             wrapper.getDataProvider().convertToCoordinates(it.words).execute()
+                        }
                         if (res.isSuccessful) {
                             onSuggestionSelected.invoke(
                                 SuggestionWithCoordinates(

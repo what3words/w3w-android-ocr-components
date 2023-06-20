@@ -79,7 +79,7 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.7.2'
     implementation 'com.google.android.material:material:1.9.0'
     api 'com.what3words:w3w-android-wrapper:3.1.22'
-    api 'com.what3words:w3w-android-design-library:1.0.2'
+    implementation 'com.what3words:w3w-android-design-library:1.0.2'
 
     // CameraX
     implementation "androidx.camera:camera-view:1.2.2"
