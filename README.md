@@ -68,11 +68,10 @@ class MainActivity : AppCompatActivity() {
                     //TODO: Dismissed by user.
                 }
             }
+        }
         
     override fun onCreate(savedInstanceState: Bundle?) {
         ...
-        val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
         //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
         val options = AutosuggestOptions().apply { 
             this.focus = Coordinates(51.23, 0.1)
