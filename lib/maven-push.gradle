@@ -1,0 +1,62 @@
+def ossrhUsername = findProperty('OSSRH_USERNAME')
+def ossrhPassword = findProperty('OSSRH_PASSWORD')
+def signingKey = findProperty('SIGNING_KEY')
+def signingKeyPwd = findProperty('SIGNING_KEY_PWD')
+def libVersion = findProperty('LIBRARY_VERSION') ? findProperty('LIBRARY_VERSION') : "1.0.0"
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                // You can then customize attributes of the publication as shown below.
+                groupId = "com.what3words"
+                artifactId = "w3w-android-ocr-components"
+                version = libVersion
+
+                pom {
+                    name = "w3w-android-ocr-components"
+                    description = 'Android OCR UI Components that work with Google MLKit'
+                    url = 'https://github.com/what3words/w3w-android-ocr-components'
+                    licenses {
+                        license {
+                            name = 'The MIT License (MIT)'
+                            url = 'https://github.com/what3words/w3w-android-ocr-components/blob/master/LICENSE'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'what3words'
+                            name = 'what3words'
+                            email = 'development@what3words.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git://github.com/what3words/w3w-android-ocr-components.git'
+                        developerConnection = 'scm:git:ssh://git@github.com:what3words/w3w-android-ocr-components.git'
+                        url = 'https://github.com/what3words/w3w-android-ocr-components/tree/master'
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                name = "sonatype"
+
+                def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+                credentials {
+                    username ossrhUsername
+                    password ossrhPassword
+                }
+            }
+        }
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(signingKey, signingKeyPwd)
+    sign publishing.publications
+}

@@ -1,0 +1,3 @@
+-keep class com.what3words.ocr.components.models.* { *; }
+-keep class com.what3words.api.sdk.bridge.* { *; }
+-dontwarn com.what3words.javasdk.**

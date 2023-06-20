@@ -1,0 +1,181 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-parcelize'
+    id 'maven-publish'
+    id 'jacoco'
+    id 'signing'
+    id 'org.jetbrains.dokka' version '1.5.0'
+}
+
+apply from: 'maven-push.gradle'
+
+android {
+    namespace 'com.what3words.ocr.components'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 33
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    testOptions {
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        unitTests.returnDefaultValues = true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        compose true
+    }
+    jacoco {
+        version = "0.8.7"
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion '1.4.6'
+    }
+    packagingOptions {
+        resources {
+            excludes += 'META-INF/LICENSE*'
+        }
+    }
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+    implementation 'androidx.activity:activity-ktx:1.7.2'
+    implementation 'com.google.android.material:material:1.9.0'
+    api 'com.what3words:w3w-android-wrapper:3.1.22'
+    api 'com.what3words:w3w-android-design-library:1.0.2'
+
+    // CameraX
+    implementation "androidx.camera:camera-view:1.2.2"
+    implementation "androidx.camera:camera-camera2:1.2.3"
+    implementation "androidx.camera:camera-lifecycle:1.2.3"
+    implementation "androidx.camera:camera-view:1.2.3"
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
+
+    implementation "com.google.accompanist:accompanist-permissions:0.31.2-alpha"
+
+    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
+    testImplementation 'androidx.test:core:1.5.0'
+    testImplementation "androidx.arch.core:core-testing:2.2.0"
+    implementation "androidx.compose.runtime:runtime:1.4.3"
+
+    // To recognize Latin script
+    compileOnly 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
+    // To recognize Chinese script
+    compileOnly 'com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.0'
+    // To recognize Devanagari script
+    compileOnly 'com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.0'
+    // To recognize Japanese script
+    compileOnly 'com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.0'
+    // To recognize Korean script
+    compileOnly 'com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0'
+
+    implementation 'com.what3words:w3w-android-api-sdk-bridge:1.0.2'
+
+    implementation "androidx.compose.ui:ui:1.4.3"
+    implementation "androidx.compose.runtime:runtime:1.4.3"
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.activity:activity-compose:1.7.2'
+    implementation "androidx.compose.ui:ui-tooling-preview:1.4.3"
+    implementation 'androidx.compose.material:material:1.4.3'
+    implementation 'androidx.compose.ui:ui-viewbinding:1.4.3'
+    implementation 'com.google.android.gms:play-services-base:18.2.0'
+
+    debugImplementation "androidx.compose.ui:ui-tooling:1.4.3"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:1.4.3"
+
+    // Test dependencies
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestUtil "androidx.test:orchestrator:1.4.2"
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation "io.mockk:mockk-android:1.13.3"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
+
+    // To recognize Latin script
+    androidTestImplementation 'com.google.mlkit:text-recognition:16.0.0'
+
+    // To recognize Chinese script
+    androidTestImplementation 'com.google.mlkit:text-recognition-chinese:16.0.0'
+
+    // To recognize Devanagari script
+    androidTestImplementation 'com.google.mlkit:text-recognition-devanagari:16.0.0'
+
+    // To recognize Japanese script
+    androidTestImplementation 'com.google.mlkit:text-recognition-japanese:16.0.0'
+
+    // To recognize Korean script
+    androidTestImplementation 'com.google.mlkit:text-recognition-korean:16.0.0'
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['createDebugCoverageReport']) {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports for Debug build"
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    def fileFilter = ['android/databinding/**/*.class',
+                      '**/*databinding.*',
+                      '**/android/databinding/*',
+                      '**/androidx/databinding/*',
+                      '**/BR.*',
+                      '**/R.class',
+                      '**/R$*.class',
+                      '**/BuildConfig.*',
+                      '**/Manifest*.*',
+                      '**/*Test*.*',
+                      'android/**/*.*',
+                      'androidx/**/*.*',
+                      'autosuggestsample/**/*.*']
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files([mainSrc]))
+    classDirectories.setFrom(files([debugTree]))
+    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
+            "jacoco/testDebugUnitTest.exec",
+            "outputs/code-coverage/connected/*coverage.ec"
+    ]))
+}
