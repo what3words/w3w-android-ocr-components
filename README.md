@@ -23,6 +23,17 @@ implementation 'com.what3words:w3w-android-ocr-components:1.0.0'
 
 Before implementing our MLKit OCR Component, you must add the MLKit libraries to our app. To do that, please follow this [MLKit Android setup steps](https://developers.google.com/ml-kit/vision/text-recognition/v2/android#before_you_begin).
 
+Add the following permissions to your AndroidManifest.xml
+
+```XML
+<manifest>
+     ...
+     <uses-feature android:name="android.hardware.camera.any" />
+     <uses-permission android:name="android.permission.CAMERA" />
+     <uses-permission android:name="android.permission.INTERNET" />
+
+     <application ...
+```
 
 There are two ways to use our MLKit OCR Component:
 
@@ -57,12 +68,10 @@ class MainActivity : AppCompatActivity() {
                     //TODO: Dismissed by user.
                 }
             }
+        }
         
     override fun onCreate(savedInstanceState: Bundle?) {
         ...
-        //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-        val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
         //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
         val options = AutosuggestOptions().apply { 
             this.focus = Coordinates(51.23, 0.1)
@@ -71,20 +80,20 @@ class MainActivity : AppCompatActivity() {
         //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
         val returnCoordinates = true
         
-        //This can be called on a button click for example. MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. 
+        //MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. This should be used on a click actions, i.e: button click.
         val intent = MLKitOcrScanActivity.newInstanceWithApi(
-                this,
-                mlKitLibrary,
-                "YOUR_WHAT3WORDS_API_KEY_HERE",
-                options,
-                returnCoordinates,
-                scanStateFoundTitle = "YOUR_STRING_HERE"
-            )
-            try {
-                resultLauncher.launch(intent)
-            } catch (e: ExceptionInInitializerError) {
-                //TODO: Handle error.
-            }
+            this,
+            W3WOcrWrapper.MLKitLibraries.Latin,
+            "YOUR_API_KEY_HERE",
+            options,
+            returnCoordinates,
+            scanStateFoundTitle = "YOUR_STRING_HERE"
+        )
+        try {
+            resultLauncher.launch(intent)
+        } catch (e: ExceptionInInitializerError) {
+            //TODO: Handle error.
+        }
     }
 }
 ```
@@ -102,7 +111,7 @@ class MainActivity : ComponentActivity() {
         
     override fun onCreate(savedInstanceState: Bundle?) {
         //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-        val mlKitLibrary = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
         //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
         val options = AutosuggestOptions().apply { 
@@ -119,16 +128,17 @@ class MainActivity : ComponentActivity() {
             YourTheme {
                 W3WOcrScanner(
                     ocrWrapper,
+                    modifier = Modifier.fillMaxSize(),
                     options = options,
                     returnCoordinates = returnCoordinates,
                     onError = { error ->
                         //TODO: Handle error
                     },
                     onDismiss = {
-                        //TODO: Dismissed by user.
+                        //TODO: Dismissed by user, hide W3WOcrScanner using AnimatedVisibility or finish activity.
                     },
                     onSuggestionSelected = { scannedSuggestion ->
-                        //TODO: Use scanned three word address info
+                        //TODO: Use scanned three word address info, hide W3WOcrScanner using AnimatedVisibility or finish activity.
                     }) 
             }
         }
