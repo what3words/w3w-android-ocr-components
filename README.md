@@ -81,30 +81,19 @@ class MainActivity : AppCompatActivity() {
         //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
         val returnCoordinates = true
         
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Button({
-                //MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. 
-                val intent = MLKitOcrScanActivity.newInstanceWithApi(
-                    this,
-                    W3WOcrWrapper.MLKitLibraries.Latin,
-                    "YOUR_API_KEY_HERE",
-                    options,
-                    returnCoordinates,
-                    scanStateFoundTitle = "YOUR_STRING_HERE"
-                )
-                try {
-                    resultLauncher.launch(intent)
-                } catch (e: ExceptionInInitializerError) {
-                    //TODO: Handle error.
-                }
-            }) {
-                Text(
-                    text = "open scanner"
-                )
-            }
+        //MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. 
+        val intent = MLKitOcrScanActivity.newInstanceWithApi(
+            this,
+            W3WOcrWrapper.MLKitLibraries.Latin,
+            "YOUR_API_KEY_HERE",
+            options,
+            returnCoordinates,
+            scanStateFoundTitle = "YOUR_STRING_HERE"
+        )
+        try {
+            resultLauncher.launch(intent)
+        } catch (e: ExceptionInInitializerError) {
+            //TODO: Handle error.
         }
     }
 }
