@@ -77,7 +77,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
     implementation 'androidx.activity:activity-ktx:1.7.2'
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     api 'com.what3words:w3w-android-wrapper:3.1.22'
     api 'com.what3words:w3w-android-design-library:1.0.2'
 
