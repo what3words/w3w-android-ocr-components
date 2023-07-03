@@ -73,10 +73,6 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
-    implementation 'androidx.activity:activity-ktx:1.7.2'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     api 'com.what3words:w3w-android-wrapper:3.1.22'
     api 'com.what3words:w3w-android-design-library:1.0.3'
@@ -86,11 +82,10 @@ dependencies {
     implementation "androidx.camera:camera-camera2:1.2.3"
     implementation "androidx.camera:camera-lifecycle:1.2.3"
     implementation "androidx.camera:camera-view:1.2.3"
-    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
 
     implementation "com.google.accompanist:accompanist-permissions:0.31.2-alpha"
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.0.1"
 
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:2.6.1"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
@@ -113,11 +108,9 @@ dependencies {
 
     implementation "androidx.compose.ui:ui:1.4.3"
     implementation "androidx.compose.runtime:runtime:1.4.3"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation 'androidx.activity:activity-compose:1.7.2'
     implementation "androidx.compose.ui:ui-tooling-preview:1.4.3"
     implementation 'androidx.compose.material:material:1.4.3'
-    implementation 'androidx.compose.ui:ui-viewbinding:1.4.3'
     implementation 'com.google.android.gms:play-services-base:18.2.0'
 
     debugImplementation "androidx.compose.ui:ui-tooling:1.4.3"

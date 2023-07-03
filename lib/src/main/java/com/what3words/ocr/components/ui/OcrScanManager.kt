@@ -12,10 +12,6 @@ import androidx.camera.core.Preview
 import androidx.camera.core.UseCaseGroup
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.camera.view.TransformExperimental
-import androidx.camera.view.transform.CoordinateTransform
-import androidx.camera.view.transform.ImageProxyTransformFactory
-import androidx.camera.view.transform.OutputTransform
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import androidx.core.content.ContextCompat
@@ -31,8 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-
-@TransformExperimental
 @ExperimentalGetImage
 internal class OcrScanManager(
     private val wrapper: W3WOcrWrapper,
@@ -108,7 +102,6 @@ internal class OcrScanManager(
         if (::imageAnalyzer.isInitialized) imageAnalyzer.clearAnalyzer()
     }
 
-    @TransformExperimental
     @ExperimentalGetImage
     private class OcrAnalyzer(
         wrapper: W3WOcrWrapper,
@@ -134,8 +127,6 @@ internal class OcrScanManager(
         }
     }
 
-
-    @TransformExperimental
     @ExperimentalGetImage
     private class OcrRecognizer(
         private val wrapper: W3WOcrWrapper,
