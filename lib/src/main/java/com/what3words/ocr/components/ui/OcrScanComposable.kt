@@ -234,6 +234,7 @@ fun W3WOcrScanner(
     suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = com.what3words.design.library.R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
+    onSuggestionDetected: ((SuggestionWithCoordinates) -> Unit)?,
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
 ) {
@@ -261,6 +262,9 @@ fun W3WOcrScanner(
             }
 
             override fun onFound(result: List<Suggestion>) {
+                if (onSuggestionDetected != null) {
+                    result.forEach { onSuggestionDetected.invoke(SuggestionWithCoordinates(it)) }
+                }
                 scanResultState.found(result)
             }
         })
@@ -694,6 +698,3 @@ fun ScanAreaFoundMode() {
             {})
     }
 }
-
-
-
