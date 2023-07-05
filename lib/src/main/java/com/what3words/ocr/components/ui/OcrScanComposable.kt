@@ -235,9 +235,9 @@ fun W3WOcrScanner(
     suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = com.what3words.design.library.R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
-    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)?,
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
+    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)?
 ) {
     val context = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
