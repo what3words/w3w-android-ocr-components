@@ -73,7 +73,6 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
     api 'com.what3words:w3w-android-wrapper:3.1.22'
     api 'com.what3words:w3w-android-design-library:1.0.3'
 

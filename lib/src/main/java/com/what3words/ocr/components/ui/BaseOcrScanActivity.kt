@@ -1,26 +1,21 @@
 package com.what3words.ocr.components.ui
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.TextStyle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.ocr.components.R
 import com.what3words.ocr.components.extensions.serializable
-import com.what3words.ocr.components.models.*
+import com.what3words.ocr.components.models.W3WOcrWrapper
 
-@SuppressLint("UnsafeOptInUsageError")
-abstract class BaseOcrScanActivity : AppCompatActivity() {
+abstract class BaseOcrScanActivity : ComponentActivity() {
 
     protected lateinit var dataProvider: W3WOcrWrapper.DataProvider
     protected lateinit var ocrProvider: W3WOcrWrapper.OcrProvider
@@ -63,6 +58,9 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // we can assume here that is not null due to the checks and exceptions thrown on the Builder.build()
+        if (!intent.hasExtra(DATA_PROVIDER_ID) || !intent.hasExtra(OCR_PROVIDER_ID)) {
+            throw IllegalAccessException("Missing data provider or ocr provider, please use newInstanceWithApi or newInstanceWithSdk to create a new a specific instance of our OCR Activities.")
+        }
         dataProvider = intent.serializable(DATA_PROVIDER_ID)!!
         ocrProvider = intent.serializable(OCR_PROVIDER_ID)!!
         mlKitV2Library = intent.serializable(MLKIT_LIBRARY_ID)
@@ -70,7 +68,7 @@ abstract class BaseOcrScanActivity : AppCompatActivity() {
         languageCode = intent.getStringExtra(LANGUAGE_CODE_ID)
         tessDataPath = intent.getStringExtra(TESS_DATA_PATH_ID)
         autosuggestOptions = intent.serializable(AUTOSUGGEST_OPTIONS_ID)
-        displayUnits = intent.serializable(DISPLAY_UNITS_ID)!!
+        displayUnits = intent.serializable(DISPLAY_UNITS_ID) ?: DisplayUnits.SYSTEM
         scanStateScanningTitle = intent.getStringExtra(SCAN_STATE_SCANNING_TITLE_ID)
             ?: getString(R.string.scan_state_scanning)
         scanStateDetectedTitle = intent.getStringExtra(SCAN_STATE_DETECTED_TITLE_ID)
