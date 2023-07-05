@@ -215,6 +215,7 @@ object W3WOcrScannerDefaults {
  * @param suggestionColors the [SuggestionWhat3wordsDefaults.Colors] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default colors are set here [SuggestionWhat3wordsDefaults.defaultColors] and can all be overridden.
  * @param suggestionNearestPlacePrefix the prefix to [SuggestionWhat3words] nearest place. Default prefix is [com.what3words.design.library.R.string.near]
  * @param onSuggestionSelected the callback when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker].
+ * @param onSuggestionFound the callback when a [SuggestionWithCoordinates] is detected and validated and displayed in the [SuggestionPicker].
  * @param onError the callback when an error occurs in this composable, expect a [What3WordsError].
  * @param onDismiss when this composable is closed using the close button, meaning no [onError] or [onSuggestionSelected], it was dismissed by the user.
  */
@@ -234,7 +235,7 @@ fun W3WOcrScanner(
     suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = com.what3words.design.library.R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
-    onSuggestionDetected: ((SuggestionWithCoordinates) -> Unit)?,
+    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)?,
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
 ) {
@@ -262,8 +263,8 @@ fun W3WOcrScanner(
             }
 
             override fun onFound(result: List<Suggestion>) {
-                if (onSuggestionDetected != null) {
-                    result.forEach { onSuggestionDetected.invoke(SuggestionWithCoordinates(it)) }
+                if (onSuggestionFound != null) {
+                    result.forEach { onSuggestionFound.invoke(SuggestionWithCoordinates(it)) }
                 }
                 scanResultState.found(result)
             }
