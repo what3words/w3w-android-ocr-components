@@ -237,7 +237,7 @@ fun W3WOcrScanner(
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
-    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)?
+    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)? = null
 ) {
     val context = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
