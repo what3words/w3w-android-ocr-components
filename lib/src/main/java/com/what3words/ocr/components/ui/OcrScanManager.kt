@@ -57,7 +57,7 @@ internal class OcrScanManager(
             ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetAspectRatio(AspectRatio.RATIO_16_9).build().also { imageAnalysis ->
                     imageAnalysis.setAnalyzer(
-                        wrapper.getExecutor(),
+                        wrapper.executor(),
                         OcrAnalyzer(
                             wrapper,
                             options,

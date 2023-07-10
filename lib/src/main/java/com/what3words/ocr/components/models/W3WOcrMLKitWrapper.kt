@@ -38,49 +38,23 @@ class W3WOcrMLKitWrapper(
     private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
 ) : W3WOcrWrapper {
 
-    companion object {
-        /**
-         * Static method to check if this implementation of [W3WOcrWrapper] allows to set a specific language.
-         *
-         * @return true if allows to set language, false if this wrapper is language agnostic.
-         **/
-        fun allowsToSetLanguage(): Boolean {
-            return false
-        }
-
-        /**
-         * Static method to check if [languageCode] is supported by this [W3WOcrWrapper], it will throw [UnsupportedOperationException] if [allowsToSetLanguage] is false.
-         *
-         * @param languageCode the ISO 639-1 two letter code language code to check for support.
-         * @return true if supports this [languageCode], false if not.
-         *
-         * @throws [UnsupportedOperationException] if [allowsToSetLanguage] is false.
-         */
-        fun supportsLanguage(languageCode: String): Boolean {
-            throw java.lang.UnsupportedOperationException(
-                "MLKit doesn't support language selection, , will try to scan all available languages listed here:" +
-                        "https://developers.google.com/ml-kit/vision/text-recognition/languages"
-            )
-        }
-
-        /**
-         * Static method to get the list of languages (ISO 639-1 two letter code language code) supported by this wrapper, it will throw [UnsupportedOperationException] if [allowsToSetLanguage] is false.
-         *
-         * @return list of ISO 639-1 two letter code language codes supported by this wrapper.
-         *
-         * @throws [UnsupportedOperationException] if [allowsToSetLanguage] is false.
-         */
-        fun availableLanguages(): List<String> {
-            throw java.lang.UnsupportedOperationException(
-                "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
-                        "https://developers.google.com/ml-kit/vision/text-recognition/languages"
-            )
-        }
-    }
-
     private val imageAnalyzerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
-    override fun language(languageCode: String) {
+    override fun changeLanguage(languageCode: String) {
+        throw java.lang.UnsupportedOperationException(
+            "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
+                    "https://developers.google.com/ml-kit/vision/text-recognition/languages"
+        )
+    }
+
+    override fun currentLanguage(): String {
+        throw java.lang.UnsupportedOperationException(
+            "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
+                    "https://developers.google.com/ml-kit/vision/text-recognition/languages"
+        )
+    }
+
+    override fun supportsLanguage(languageCode: String): Boolean {
         throw java.lang.UnsupportedOperationException(
             "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
                     "https://developers.google.com/ml-kit/vision/text-recognition/languages"
@@ -162,11 +136,11 @@ class W3WOcrMLKitWrapper(
         }
     }
 
-    override fun getExecutor(): ExecutorService {
+    override fun executor(): ExecutorService {
         return imageAnalyzerExecutor
     }
 
-    override fun getDataProvider(): What3WordsAndroidWrapper {
+    override fun dataProvider(): What3WordsAndroidWrapper {
         return wrapper
     }
 

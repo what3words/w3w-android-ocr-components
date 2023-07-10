@@ -336,7 +336,7 @@ fun W3WOcrScanner(
                 if (returnCoordinates) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val res = withContext(Dispatchers.IO) {
-                            wrapper.getDataProvider().convertToCoordinates(it.words).execute()
+                            wrapper.dataProvider().convertToCoordinates(it.words).execute()
                         }
                         if (res.isSuccessful) {
                             onSuggestionSelected.invoke(

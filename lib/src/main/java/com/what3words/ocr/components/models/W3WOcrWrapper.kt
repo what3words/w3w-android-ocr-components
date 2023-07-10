@@ -19,7 +19,13 @@ interface W3WOcrWrapper {
      * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */
     @Throws(java.lang.UnsupportedOperationException::class)
-    fun language(languageCode: String)
+    fun changeLanguage(languageCode: String)
+
+    @Throws(java.lang.UnsupportedOperationException::class)
+    fun currentLanguage() : String
+
+    @Throws(java.lang.UnsupportedOperationException::class)
+    fun supportsLanguage(languageCode: String) : Boolean
 
     @Throws(java.lang.Exception::class)
     fun moduleInstalled(result: ((Boolean) -> Unit))
@@ -54,14 +60,14 @@ interface W3WOcrWrapper {
      *
      * @return [ExecutorService] this wrapper runs on.
      */
-    fun getExecutor(): ExecutorService
+    fun executor(): ExecutorService
 
     /**
      * Get the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
      *
      * @return [ExecutorService] this wrapper runs on.
      */
-    fun getDataProvider(): What3WordsAndroidWrapper
+    fun dataProvider(): What3WordsAndroidWrapper
 
     /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
