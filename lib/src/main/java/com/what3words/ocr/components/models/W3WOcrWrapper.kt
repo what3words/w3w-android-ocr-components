@@ -19,11 +19,45 @@ interface W3WOcrWrapper {
      * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */
     @Throws(java.lang.UnsupportedOperationException::class)
-    fun language(languageCode: String)
+    fun changeLanguage(languageCode: String)
 
-    @Throws(java.lang.Exception::class)
+    /**
+     * Get current ISO 639-1 two letter code language code.
+     *
+     * @return ISO 639-1 two letter code language code.
+     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     */
+    @Throws(java.lang.UnsupportedOperationException::class)
+    fun currentLanguage() : String
+
+
+    /**
+     * Check if ISO 639-1 two letter code language code is supported by this wrapper implementation.
+     *
+     * @param languageCode the ISO 639-1 two letter code language to check.
+     *
+     * @return [Boolean] true if supported, false if not.
+     *
+     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     */
+    @Throws(java.lang.UnsupportedOperationException::class)
+    fun supportsLanguage(languageCode: String) : Boolean
+
+
+    /**
+     * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.
+     *
+     * @return a callback with a [Boolean] true if all modules are installed or no modules needed to install, false if not installed and wrapper needs to download modules.
+     */
     fun moduleInstalled(result: ((Boolean) -> Unit))
 
+
+    /**
+     * Request to download modules that this wrapper depend on.
+     *
+     * @return a callback with a [Boolean] or [What3WordsError], if successful true, if some issues were found while trying to download dependency will be false,
+     * if false the [What3WordsError] should contain the information related to the download error.
+     */
     fun installModule(
         onDownloaded: ((Boolean, What3WordsError?) -> Unit)
     )
@@ -54,14 +88,14 @@ interface W3WOcrWrapper {
      *
      * @return [ExecutorService] this wrapper runs on.
      */
-    fun getExecutor(): ExecutorService
+    fun executor(): ExecutorService
 
     /**
      * Get the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
      *
      * @return [ExecutorService] this wrapper runs on.
      */
-    fun getDataProvider(): What3WordsAndroidWrapper
+    fun dataProvider(): What3WordsAndroidWrapper
 
     /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
