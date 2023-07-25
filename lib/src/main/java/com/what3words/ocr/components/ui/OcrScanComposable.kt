@@ -55,12 +55,15 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.what3words.androidwrapper.What3WordsAndroidWrapper
+import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
 import com.what3words.design.library.ui.components.SuggestionWhat3words
 import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
+import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
@@ -70,6 +73,7 @@ import com.what3words.ocr.components.R
 import com.what3words.ocr.components.models.ScanResultState
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -289,6 +293,10 @@ fun W3WOcrScanner(
         }
     }
 
+    /** This [LaunchedEffect] will run once and check if modules installed to go to next check which is camera permissions,
+     * if not installed to request to install missing modules and when installed go to next step which is camera permissions,
+     * if fails calls [onError] callback saying that was a problem installing required modules.
+     */
     LaunchedEffect(key1 = true, block = {
         wrapper.moduleInstalled {
             if (it) {
@@ -308,6 +316,9 @@ fun W3WOcrScanner(
         }
     })
 
+    /** This [LaunchedEffect] will run when a new scanned what3words address is added to [SuggestionPicker],
+     * and if list is not empty change the size of the peek and set it to expanded.
+     */
     LaunchedEffect(key1 = scanResultState.lastAdded, block = {
         if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
             scaffoldState.bottomSheetState.expand()
