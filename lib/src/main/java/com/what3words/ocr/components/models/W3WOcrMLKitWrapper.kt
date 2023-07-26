@@ -144,7 +144,17 @@ class W3WOcrMLKitWrapper(
         return wrapper
     }
 
+    /**
+     * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
+     **/
     override fun stop() {
         recognizer.close()
     }
+
+
+    /**
+     * This method should be called when wrapper is fully disposed, i.e: App.onDestroy.
+     * In this implementation there's no native libraries to be destroyed.
+     **/
+    override fun destroy() { }
 }

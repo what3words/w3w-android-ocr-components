@@ -102,6 +102,11 @@ interface W3WOcrWrapper {
      **/
     fun stop()
 
+    /**
+     * This method should be called when wrapper is fully disposed, i.e: App.onDestroy
+     **/
+    fun destroy()
+
     enum class OcrProvider {
         MLKit,
         Hybrid,
