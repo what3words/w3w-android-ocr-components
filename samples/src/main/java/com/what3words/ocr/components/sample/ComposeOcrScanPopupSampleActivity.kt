@@ -21,12 +21,14 @@ import androidx.compose.material.ExposedDropdownMenuDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import com.google.mlkit.vision.text.TextRecognition
@@ -228,17 +230,21 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
             ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {
                 expanded = !expanded
             }) {
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("MLKit Language library")
-                    },
-                    value = viewModel.selectedMLKitLibrary.name,
-                    onValueChange = {
-                    },
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                )
+                CompositionLocalProvider(
+                    LocalTextInputService provides null
+                ) {
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = {
+                            Text("MLKit Language library")
+                        },
+                        value = viewModel.selectedMLKitLibrary.name,
+                        onValueChange = {
+                        },
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    )
+                }
 
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     viewModel.availableMLKitLanguages.forEach { item ->
