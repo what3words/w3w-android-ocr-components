@@ -65,24 +65,19 @@ android {
 }
 
 dependencies {
+    // compose
+    implementation "androidx.activity:activity-compose:$compose_activity_version"
+    implementation "androidx.compose.material:material:$compose_version"
+
+    // what3words
     implementation project(":lib")
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.activity:activity-compose:1.7.2'
-    implementation 'androidx.compose.material:material:1.4.3'
+    implementation "com.what3words:w3w-android-design-library:$what3words_android_design_version"
+    implementation "com.what3words:w3w-android-wrapper:$what3words_android_wrapper_version"
 
-    implementation 'com.what3words:w3w-android-design-library:1.0.3'
-    implementation 'com.what3words:w3w-android-wrapper:3.1.22'
-
-    // To recognize Latin script
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
-    // To recognize Chinese script
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.0'
-    // To recognize Devanagari script
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.0'
-    // To recognize Japanese script
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.0'
-    // To recognize Korean script
-    implementation 'com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0'
+    // mlkit
+    implementation "com.google.android.gms:play-services-mlkit-text-recognition:$mlkit_core_version"
+    implementation "com.google.android.gms:play-services-mlkit-text-recognition-chinese:$mlkit_languages_version"
+    implementation "com.google.android.gms:play-services-mlkit-text-recognition-devanagari:$mlkit_languages_version"
+    implementation "com.google.android.gms:play-services-mlkit-text-recognition-japanese:$mlkit_languages_version"
+    implementation "com.google.android.gms:play-services-mlkit-text-recognition-korean:$mlkit_languages_version"
 }
