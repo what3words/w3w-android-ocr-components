@@ -7,6 +7,7 @@ import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.helpers.DefaultDispatcherProvider
@@ -28,17 +29,28 @@ import kotlinx.coroutines.withContext
  *
  * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
  * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
- * @param recognizer the MLKit V2 [TextRecognizer] to be used to scan text from a [Bitmap], by default will be [com.google.mlkit.vision.text.latin] check [this](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
+ * @param recognizerOptions the MLKit V2 [TextRecognizerOptionsInterface] to be used to scan text from a [Bitmap], by default will be [com.google.mlkit.vision.text.latin] check [this](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
  * @param dispatcherProvider [DispatcherProvider] to handle Coroutines threading, by default uses [DefaultDispatcherProvider]
  */
 class W3WOcrMLKitWrapper(
     private val context: Context,
     private val wrapper: What3WordsAndroidWrapper,
-    private val recognizer: TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS),
+    private val recognizerOptions: TextRecognizerOptionsInterface = TextRecognizerOptions.DEFAULT_OPTIONS,
     private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
 ) : W3WOcrWrapper {
 
+    private var isStopped: Boolean = false
     private val imageAnalyzerExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+    private lateinit var mlkitRecognizer: TextRecognizer
+
+    /**
+     * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated
+     **/
+    override fun start() {
+        isStopped = false
+        mlkitRecognizer = TextRecognition.getClient(recognizerOptions)
+    }
+
 
     override fun changeLanguage(languageCode: String) {
         throw java.lang.UnsupportedOperationException(
@@ -67,7 +79,7 @@ class W3WOcrMLKitWrapper(
 
     override fun moduleInstalled(result: (Boolean) -> Unit) {
         moduleClient
-            .areModulesAvailable(recognizer)
+            .areModulesAvailable(mlkitRecognizer)
             .addOnSuccessListener { response ->
                 result.invoke(response.areModulesAvailable())
             }
@@ -81,7 +93,7 @@ class W3WOcrMLKitWrapper(
     ) {
         val moduleInstallRequest =
             ModuleInstallRequest.newBuilder()
-                .addApi(recognizer)
+                .addApi(mlkitRecognizer)
                 .build()
         moduleClient
             .installModules(moduleInstallRequest)
@@ -103,10 +115,16 @@ class W3WOcrMLKitWrapper(
         onValidating: () -> Unit,
         onFinished: (List<Suggestion>, What3WordsError?) -> Unit
     ) {
+        if (!::mlkitRecognizer.isInitialized || isStopped) {
+            onFinished.invoke(emptyList(), What3WordsError.SDK_ERROR.apply {
+                message = "Please call start() before scan()"
+            })
+            return
+        }
         onScanning.invoke()
         var error: What3WordsError? = null
         val listFound3wa = mutableListOf<Suggestion>()
-        recognizer.process(image, 0).addOnSuccessListener { visionText ->
+        mlkitRecognizer.process(image, 0).addOnSuccessListener { visionText ->
             io(dispatcherProvider) {
                 for (possible3wa in What3WordsV3.findPossible3wa(visionText.text.lowercase())) {
                     onDetected.invoke()
@@ -148,13 +166,7 @@ class W3WOcrMLKitWrapper(
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
      **/
     override fun stop() {
-        recognizer.close()
+        isStopped = true
+        mlkitRecognizer.close()
     }
-
-
-    /**
-     * This method should be called when wrapper is fully disposed, i.e: App.onDestroy.
-     * In this implementation there's no native libraries to be destroyed.
-     **/
-    override fun destroy() { }
 }

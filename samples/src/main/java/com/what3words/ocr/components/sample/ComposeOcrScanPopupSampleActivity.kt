@@ -22,15 +22,19 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
@@ -105,6 +109,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
                     LaunchedEffect(key1 = viewModel.selectedMLKitLibrary, block = {
                         ocrWrapper = getOcrWrapper()
+                        ocrWrapper.start()
                     })
 
                     AnimatedVisibility(
@@ -193,7 +198,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     }
 
     private fun getOcrWrapper(): W3WOcrWrapper {
-        val textRecognizer = TextRecognition.getClient(
+        val textRecognizerOptions =
             when (viewModel.selectedMLKitLibrary) {
                 W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
                 W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari -> DevanagariTextRecognizerOptions.Builder()
@@ -208,14 +213,13 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                 W3WOcrWrapper.MLKitLibraries.LatinAndChinese -> ChineseTextRecognizerOptions.Builder()
                     .build()
             }
-        )
         return W3WOcrMLKitWrapper(
             this,
             What3WordsV3(
                 BuildConfig.W3W_API_KEY,
                 this@ComposeOcrScanPopupSampleActivity
             ),
-            textRecognizer
+            textRecognizerOptions
         )
     }
 

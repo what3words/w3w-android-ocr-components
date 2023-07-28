@@ -174,8 +174,11 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         }
     }
 
-    private fun buildMLKit(context: Context, dataProvider: What3WordsAndroidWrapper): W3WOcrMLKitWrapper {
-        val textRecognizer = TextRecognition.getClient(
+    private fun buildMLKit(
+        context: Context,
+        dataProvider: What3WordsAndroidWrapper
+    ): W3WOcrMLKitWrapper {
+        val textRecognizerOptions =
             when (mlKitV2Library) {
                 W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
                 W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari -> DevanagariTextRecognizerOptions.Builder()
@@ -194,7 +197,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                     "MLKitOcrScanActivity needs a valid MLKit Language Library"
                 )
             }
-        )
-        return W3WOcrMLKitWrapper(context, dataProvider, textRecognizer)
+        return W3WOcrMLKitWrapper(context, dataProvider, textRecognizerOptions)
     }
 }
