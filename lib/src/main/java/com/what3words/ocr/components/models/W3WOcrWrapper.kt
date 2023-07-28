@@ -98,14 +98,14 @@ interface W3WOcrWrapper {
     fun dataProvider(): What3WordsAndroidWrapper
 
     /**
+     * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated
+     **/
+    fun start()
+
+    /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
      **/
     fun stop()
-
-    /**
-     * This method should be called when wrapper is fully disposed, i.e: App.onDestroy
-     **/
-    fun destroy()
 
     enum class OcrProvider {
         MLKit,

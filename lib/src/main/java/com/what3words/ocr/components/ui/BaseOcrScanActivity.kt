@@ -55,6 +55,11 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
         const val CLOSE_BUTTON_CD_ID = "CLOSE_BUTTON_CD"
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        ocrWrapper.stop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // we can assume here that is not null due to the checks and exceptions thrown on the Builder.build()
@@ -81,21 +86,9 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
             ?: getString(R.string.scan_state_loading)
         closeButtonContentDescription = intent.getStringExtra(CLOSE_BUTTON_CD_ID)
             ?: getString(R.string.cd_close_button)
+        ocrWrapper.start()
         setContent {
             W3WTheme {
-                val lifecycleOwner = LocalLifecycleOwner.current
-                DisposableEffect(LocalLifecycleOwner.current) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_DESTROY) {
-                            ocrWrapper.stop()
-                        }
-                    }
-
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose {
-                        lifecycleOwner.lifecycle.removeObserver(observer)
-                    }
-                }
                 // A surface container using the 'background' color from the theme
                 W3WOcrScanner(
                     ocrWrapper,
