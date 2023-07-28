@@ -68,6 +68,7 @@ dependencies {
     // compose
     implementation "androidx.activity:activity-compose:$compose_activity_version"
     implementation "androidx.compose.material:material:$compose_version"
+    implementation "com.google.android.material:material:$material_version"
 
     // what3words
     implementation project(":lib")
