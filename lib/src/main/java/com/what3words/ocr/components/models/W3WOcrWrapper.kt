@@ -11,25 +11,6 @@ import com.what3words.javawrapper.response.Suggestion
 import java.util.concurrent.ExecutorService
 
 interface W3WOcrWrapper {
-    /**
-     * Change current scanning language of the wrapper using a ISO 639-1 two letter code language code.
-     *
-     * @param languageCode the ISO 639-1 two letter code language code to change the wrapper too (it will ignore scanned three word address in other languages)
-     *
-     * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
-     */
-    @Throws(java.lang.UnsupportedOperationException::class)
-    fun changeLanguage(languageCode: String)
-
-    /**
-     * Get current ISO 639-1 two letter code language code.
-     *
-     * @return ISO 639-1 two letter code language code.
-     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
-     */
-    @Throws(java.lang.UnsupportedOperationException::class)
-    fun currentLanguage() : String
-
 
     /**
      * Check if ISO 639-1 two letter code language code is supported by this wrapper implementation.
@@ -42,7 +23,6 @@ interface W3WOcrWrapper {
      */
     @Throws(java.lang.UnsupportedOperationException::class)
     fun supportsLanguage(languageCode: String) : Boolean
-
 
     /**
      * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.

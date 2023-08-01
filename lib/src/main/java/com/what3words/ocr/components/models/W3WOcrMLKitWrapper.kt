@@ -12,7 +12,6 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.helpers.DefaultDispatcherProvider
 import com.what3words.androidwrapper.helpers.DispatcherProvider
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
@@ -48,20 +47,6 @@ class W3WOcrMLKitWrapper(
     override fun start(languageCode: String?, secondaryLanguageCode: String?) {
         isStopped = false
         mlkitRecognizer = TextRecognition.getClient(recognizerOptions)
-    }
-
-    override fun changeLanguage(languageCode: String) {
-        throw java.lang.UnsupportedOperationException(
-            "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
-                    "https://developers.google.com/ml-kit/vision/text-recognition/languages"
-        )
-    }
-
-    override fun currentLanguage(): String {
-        throw java.lang.UnsupportedOperationException(
-            "MLKit doesn't support language selection, will try to scan all available languages listed here:" +
-                    "https://developers.google.com/ml-kit/vision/text-recognition/languages"
-        )
     }
 
     override fun supportsLanguage(languageCode: String): Boolean {
