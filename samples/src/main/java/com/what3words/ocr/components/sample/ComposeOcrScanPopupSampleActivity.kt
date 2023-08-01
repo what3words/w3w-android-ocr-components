@@ -41,6 +41,7 @@ import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.design.library.ui.components.NavigationBarScaffold
 import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
@@ -60,6 +61,12 @@ import com.what3words.ocr.components.ui.W3WOcrScannerDefaults
 class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     private val viewModel: ComposeOcrScanSamplePopupViewModel by viewModels()
     private lateinit var ocrWrapper: W3WOcrWrapper
+    private val dataProvider: What3WordsAndroidWrapper by lazy {
+        What3WordsV3(
+            BuildConfig.W3W_API_KEY,
+            this@ComposeOcrScanPopupSampleActivity
+        )
+    }
 
     private val resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -128,6 +135,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                     ) {
                         W3WOcrScanner(
                             ocrWrapper,
+                            dataProvider = dataProvider,
                             options = options,
                             returnCoordinates = true,
                             //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
@@ -215,10 +223,6 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
             }
         return W3WOcrMLKitWrapper(
             this,
-            What3WordsV3(
-                BuildConfig.W3W_API_KEY,
-                this@ComposeOcrScanPopupSampleActivity
-            ),
             textRecognizerOptions
         )
     }

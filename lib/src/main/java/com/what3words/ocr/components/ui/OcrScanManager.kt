@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 @ExperimentalGetImage
 internal class OcrScanManager(
     private val wrapper: W3WOcrWrapper,
+    private val dataProvider: What3WordsAndroidWrapper,
     private val options: AutosuggestOptions? = null,
     private val ocrScanResultCallback: OcrScanResultCallback
 ) {
@@ -81,6 +82,7 @@ internal class OcrScanManager(
                         wrapper.executor(),
                         OcrAnalyzer(
                             wrapper,
+                            dataProvider,
                             options,
                             layoutCoordinates!!,
                             displayMetrics!!,
@@ -141,6 +143,7 @@ internal class OcrScanManager(
     @ExperimentalGetImage
     private class OcrAnalyzer(
         wrapper: W3WOcrWrapper,
+        dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions?,
         layoutCoordinates: LayoutCoordinates,
         displayMetrics: DisplayMetrics,
@@ -149,7 +152,7 @@ internal class OcrScanManager(
     ) :
         ImageAnalysis.Analyzer {
         private val textRecognizer =
-            OcrRecognizer(wrapper, options, layoutCoordinates, displayMetrics)
+            OcrRecognizer(wrapper, dataProvider, options, layoutCoordinates, displayMetrics)
 
         @ExperimentalGetImage
         override fun analyze(imageProxy: ImageProxy) {
@@ -176,6 +179,7 @@ internal class OcrScanManager(
     @ExperimentalGetImage
     private class OcrRecognizer(
         private val wrapper: W3WOcrWrapper,
+        private val dataProvider: What3WordsAndroidWrapper,
         private val options: AutosuggestOptions?,
         private val layoutCoordinates: LayoutCoordinates,
         private val displayMetrics: DisplayMetrics
@@ -214,6 +218,7 @@ internal class OcrScanManager(
                 try {
                     wrapper.scan(
                         bitmapToBeScanned,
+                        dataProvider,
                         options,
                         onScanning = { ocrScanResultCallback.onScanning() },
                         onDetected = { ocrScanResultCallback.onDetected() },

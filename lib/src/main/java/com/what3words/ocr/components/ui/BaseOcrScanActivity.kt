@@ -4,10 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.javawrapper.request.AutosuggestOptions
@@ -17,8 +14,8 @@ import com.what3words.ocr.components.models.W3WOcrWrapper
 
 abstract class BaseOcrScanActivity : ComponentActivity() {
 
-    protected lateinit var dataProvider: W3WOcrWrapper.DataProvider
-    protected lateinit var ocrProvider: W3WOcrWrapper.OcrProvider
+    protected lateinit var dataProviderType: W3WOcrWrapper.DataProvider
+    protected lateinit var ocrProviderType: W3WOcrWrapper.OcrProvider
     protected lateinit var displayUnits: DisplayUnits
     protected lateinit var scanStateScanningTitle: String
     protected lateinit var scanStateDetectedTitle: String
@@ -34,6 +31,7 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
     protected var returnCoordinates: Boolean = false
 
     abstract val ocrWrapper: W3WOcrWrapper
+    abstract val dataProvider: What3WordsAndroidWrapper
 
     companion object {
         const val OCR_PROVIDER_ID = "OCR_PROVIDER"
@@ -66,8 +64,8 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
         if (!intent.hasExtra(DATA_PROVIDER_ID) || !intent.hasExtra(OCR_PROVIDER_ID)) {
             throw IllegalAccessException("Missing data provider or ocr provider, please use newInstanceWithApi or newInstanceWithSdk to create a new a specific instance of our OCR Activities.")
         }
-        dataProvider = intent.serializable(DATA_PROVIDER_ID)!!
-        ocrProvider = intent.serializable(OCR_PROVIDER_ID)!!
+        dataProviderType = intent.serializable(DATA_PROVIDER_ID)!!
+        ocrProviderType = intent.serializable(OCR_PROVIDER_ID)!!
         mlKitV2Library = intent.serializable(MLKIT_LIBRARY_ID)
         apiKey = intent.getStringExtra(API_KEY_ID)
         languageCode = intent.getStringExtra(LANGUAGE_CODE_ID)
@@ -92,6 +90,7 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 W3WOcrScanner(
                     ocrWrapper,
+                    dataProvider = dataProvider,
                     options = autosuggestOptions,
                     returnCoordinates = returnCoordinates,
                     displayUnits = displayUnits,

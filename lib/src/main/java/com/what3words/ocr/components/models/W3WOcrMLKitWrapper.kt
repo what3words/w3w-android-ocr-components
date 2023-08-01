@@ -34,7 +34,6 @@ import kotlinx.coroutines.withContext
  */
 class W3WOcrMLKitWrapper(
     private val context: Context,
-    private val wrapper: What3WordsAndroidWrapper,
     private val recognizerOptions: TextRecognizerOptionsInterface = TextRecognizerOptions.DEFAULT_OPTIONS,
     private val dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
 ) : W3WOcrWrapper {
@@ -109,6 +108,7 @@ class W3WOcrMLKitWrapper(
 
     override fun scan(
         image: Bitmap,
+        dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions?,
         onScanning: () -> Unit,
         onDetected: () -> Unit,
@@ -129,7 +129,7 @@ class W3WOcrMLKitWrapper(
                 for (possible3wa in What3WordsV3.findPossible3wa(visionText.text.lowercase())) {
                     onDetected.invoke()
                     val autosuggestReq =
-                        wrapper.autosuggest(possible3wa)
+                        dataProvider.autosuggest(possible3wa)
                     if (options != null) autosuggestReq.options(options)
                     val autosuggestRes = autosuggestReq.execute()
                     if (autosuggestRes.isSuccessful) {
@@ -156,10 +156,6 @@ class W3WOcrMLKitWrapper(
 
     override fun executor(): ExecutorService {
         return imageAnalyzerExecutor
-    }
-
-    override fun dataProvider(): What3WordsAndroidWrapper {
-        return wrapper
     }
 
     /**
