@@ -2,7 +2,6 @@ package com.what3words.ocr.components.ui
 
 import android.content.Context
 import android.content.Intent
-import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
@@ -156,16 +155,18 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         }
     }
 
+    override val dataProvider: What3WordsAndroidWrapper by lazy {
+        if (dataProviderType == W3WOcrWrapper.DataProvider.SDK) {
+            What3WordsSdk(this, "")
+        } else {
+            What3WordsV3(apiKey!!, this)
+        }
+    }
+
     override val ocrWrapper: W3WOcrWrapper by lazy {
-        val dataProvider: What3WordsAndroidWrapper =
-            if (dataProvider == W3WOcrWrapper.DataProvider.SDK) {
-                What3WordsSdk(this, "")
-            } else {
-                What3WordsV3(apiKey!!, this)
-            }
-        when (ocrProvider) {
+        when (ocrProviderType) {
             W3WOcrWrapper.OcrProvider.MLKit -> {
-                buildMLKit(this, dataProvider)
+                buildMLKit(this)
             }
 
             else -> {
@@ -175,8 +176,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
     }
 
     private fun buildMLKit(
-        context: Context,
-        dataProvider: What3WordsAndroidWrapper
+        context: Context
     ): W3WOcrMLKitWrapper {
         val textRecognizerOptions =
             when (mlKitV2Library) {
@@ -197,6 +197,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
                     "MLKitOcrScanActivity needs a valid MLKit Language Library"
                 )
             }
-        return W3WOcrMLKitWrapper(context, dataProvider, textRecognizerOptions)
+        return W3WOcrMLKitWrapper(context, textRecognizerOptions)
     }
 }

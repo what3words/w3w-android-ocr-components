@@ -66,16 +66,17 @@ interface W3WOcrWrapper {
      * Scan [image] [Bitmap] for one or more three word addresses.
      *
      * @param image the [Bitmap] that the scanner should use to find possible three word addresses.
+     * @param dataProvider the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
      * @param options the [AutosuggestOptions] to be applied when validating a possible three word address,
      * i.e: country clipping, check [AutosuggestOptions] for possible filters/clippings.
      * @param onScanning the callback when it starts to scan image for text.
      * @param onDetected the callback when our [findPossible3wa] regex finds possible matches on the scanned text.
      * @param onValidating the callback when we start validating the results of [findPossible3wa] against our API/SDK to check if valid (it will take into account [options] if provided).
-     * @param onFinished the callback with the [OcrScanResult] that can contain a list of [Suggestion] or a [What3WordsError]
-     * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     * @param onFinished the callback with a [List] of [Suggestion] or a [What3WordsError] in case an error was found while scanning.
      */
     fun scan(
         image: Bitmap,
+        dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions? = null,
         onScanning: (() -> Unit),
         onDetected: (() -> Unit),
@@ -89,13 +90,6 @@ interface W3WOcrWrapper {
      * @return [ExecutorService] this wrapper runs on.
      */
     fun executor(): ExecutorService
-
-    /**
-     * Get the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
-     *
-     * @return [ExecutorService] this wrapper runs on.
-     */
-    fun dataProvider(): What3WordsAndroidWrapper
 
     /**
      * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated

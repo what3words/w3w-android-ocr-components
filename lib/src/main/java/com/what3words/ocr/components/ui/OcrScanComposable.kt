@@ -229,6 +229,7 @@ object W3WOcrScannerDefaults {
 fun W3WOcrScanner(
     wrapper: W3WOcrWrapper,
     modifier: Modifier = Modifier,
+    dataProvider: What3WordsAndroidWrapper,
     options: AutosuggestOptions? = null,
     returnCoordinates: Boolean = false,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
@@ -249,7 +250,7 @@ fun W3WOcrScanner(
     val previewView = remember { PreviewView(context) }
     val scanResultState = remember { ScanResultState() }
     val manager = remember {
-        OcrScanManager(wrapper, options, object : OcrScanManager.OcrScanResultCallback {
+        OcrScanManager(wrapper, dataProvider, options, object : OcrScanResultCallback {
             override fun onScanning() {
                 scanResultState.scanning()
             }
@@ -347,7 +348,7 @@ fun W3WOcrScanner(
                 if (returnCoordinates) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val res = withContext(Dispatchers.IO) {
-                            wrapper.dataProvider().convertToCoordinates(it.words).execute()
+                            dataProvider.convertToCoordinates(it.words).execute()
                         }
                         if (res.isSuccessful) {
                             onSuggestionSelected.invoke(
