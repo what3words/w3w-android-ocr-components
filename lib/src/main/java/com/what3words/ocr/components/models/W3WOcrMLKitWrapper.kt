@@ -27,8 +27,6 @@ import kotlinx.coroutines.withContext
  *
  * @sample com.what3words.ocr.components.sample.ComposeOcrScanPopupSampleActivity.getOcrWrapper
  *
- * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
- * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
  * @param recognizerOptions the MLKit V2 [TextRecognizerOptionsInterface] to be used to scan text from a [Bitmap], by default will be [com.google.mlkit.vision.text.latin] check [this](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
  * @param dispatcherProvider [DispatcherProvider] to handle Coroutines threading, by default uses [DefaultDispatcherProvider]
  */
@@ -44,12 +42,13 @@ class W3WOcrMLKitWrapper(
 
     /**
      * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated
+     * @param languageCode ignored because MLKit doesn't support languages
+     * @param secondaryLanguageCode ignored because MLKit doesn't support languages
      **/
-    override fun start() {
+    override fun start(languageCode: String?, secondaryLanguageCode: String?) {
         isStopped = false
         mlkitRecognizer = TextRecognition.getClient(recognizerOptions)
     }
-
 
     override fun changeLanguage(languageCode: String) {
         throw java.lang.UnsupportedOperationException(

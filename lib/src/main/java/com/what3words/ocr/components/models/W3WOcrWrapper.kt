@@ -94,7 +94,7 @@ interface W3WOcrWrapper {
     /**
      * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated
      **/
-    fun start()
+    fun start(languageCode: String? = null, secondaryLanguageCode: String? = null)
 
     /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
