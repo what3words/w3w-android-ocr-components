@@ -84,7 +84,7 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
             ?: getString(R.string.scan_state_loading)
         closeButtonContentDescription = intent.getStringExtra(CLOSE_BUTTON_CD_ID)
             ?: getString(R.string.cd_close_button)
-        ocrWrapper.start()
+        ocrWrapper.start(languageCode)
         setContent {
             W3WTheme {
                 // A surface container using the 'background' color from the theme
