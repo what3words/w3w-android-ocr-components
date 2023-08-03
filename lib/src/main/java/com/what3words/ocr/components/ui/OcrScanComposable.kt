@@ -56,14 +56,12 @@ import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
 import com.what3words.design.library.ui.components.SuggestionWhat3words
 import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
-import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
@@ -299,19 +297,13 @@ fun W3WOcrScanner(
      * if fails calls [onError] callback saying that was a problem installing required modules.
      */
     LaunchedEffect(key1 = true, block = {
-        wrapper.moduleInstalled {
-            if (it) {
+        wrapper.start { isReady, error ->
+            if (isReady) {
                 cameraPermissionState.launchPermissionRequest()
             } else {
-                wrapper.installModule(onDownloaded = { installed, error ->
-                    if (installed) {
-                        cameraPermissionState.launchPermissionRequest()
-                    } else {
-                        onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
-                            message =
-                                "Error installing MLKit modules, check if you have Google Play Services in your device"
-                        })
-                    }
+                onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
+                    message =
+                        "Error installing MLKit modules, check if you have Google Play Services in your device"
                 })
             }
         }

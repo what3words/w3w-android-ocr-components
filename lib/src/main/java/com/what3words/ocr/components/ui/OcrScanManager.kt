@@ -25,6 +25,7 @@ import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Suggestion
 import com.what3words.ocr.components.extensions.BitmapUtils
 import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

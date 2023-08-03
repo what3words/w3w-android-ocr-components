@@ -22,25 +22,7 @@ interface W3WOcrWrapper {
      * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */
     @Throws(java.lang.UnsupportedOperationException::class)
-    fun supportsLanguage(languageCode: String) : Boolean
-
-    /**
-     * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.
-     *
-     * @return a callback with a [Boolean] true if all modules are installed or no modules needed to install, false if not installed and wrapper needs to download modules.
-     */
-    fun moduleInstalled(result: ((Boolean) -> Unit))
-
-
-    /**
-     * Request to download modules that this wrapper depend on.
-     *
-     * @return a callback with a [Boolean] or [What3WordsError], if successful true, if some issues were found while trying to download dependency will be false,
-     * if false the [What3WordsError] should contain the information related to the download error.
-     */
-    fun installModule(
-        onDownloaded: ((Boolean, What3WordsError?) -> Unit)
-    )
+    fun supportsLanguage(languageCode: String): Boolean
 
     /**
      * Scan [image] [Bitmap] for one or more three word addresses.
@@ -72,9 +54,30 @@ interface W3WOcrWrapper {
     fun executor(): ExecutorService
 
     /**
-     * This method should be called when wrapper needs to be ready to start scanning i.e: Activity.onCreated
+     * Starts the wrapper to start receiving images to [scan], this will check if modules are installed and if not download the needed
+     * modules to be able to perform a [scan].
+     *
+     * @param readyListener will return true/false if started successfully and if it fails it will return a [What3WordsError] with an error message.
      **/
-    fun start(languageCode: String? = null, secondaryLanguageCode: String? = null)
+    fun start(
+        readyListener: (Boolean, What3WordsError?) -> Unit
+    )
+
+    /**
+     * Set ISO 639-1 two letter code language code to be used by the wrapper before [start], this is only supported by
+     * wrappers that support ISO 639-1 [languageCode]
+     *
+     * @param languageCode the ISO 639-1 two letter code language to check.
+     * @param secondaryLanguageCode the ISO 639-1 two letter code language to check.
+     *
+     * @return [Boolean] true if supported, false if not.
+     *
+     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     */
+    fun setLanguage(
+        languageCode: String,
+        secondaryLanguageCode: String? = null
+    )
 
     /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
@@ -85,14 +88,6 @@ interface W3WOcrWrapper {
         MLKit,
         Hybrid,
         Tesseract
-    }
-
-    enum class MLKitLibraries {
-        Latin,
-        LatinAndDevanagari,
-        LatinAndKorean,
-        LatinAndJapanese,
-        LatinAndChinese
     }
 
     enum class DataProvider {

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
@@ -23,7 +24,7 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
     protected lateinit var scanStateFoundTitle: String
     protected lateinit var scanStateLoadingTitle: String
     protected lateinit var closeButtonContentDescription: String
-    protected var mlKitV2Library: W3WOcrWrapper.MLKitLibraries? = null
+    protected var mlKitV2Library: Int? = null
     protected var apiKey: String? = null
     protected var languageCode: String? = null
     protected var tessDataPath: String? = null
@@ -66,7 +67,10 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
         }
         dataProviderType = intent.serializable(DATA_PROVIDER_ID)!!
         ocrProviderType = intent.serializable(OCR_PROVIDER_ID)!!
-        mlKitV2Library = intent.serializable(MLKIT_LIBRARY_ID)
+        mlKitV2Library = if (intent.hasExtra(MLKIT_LIBRARY_ID)) intent.getIntExtra(
+            MLKIT_LIBRARY_ID,
+            LATIN
+        ) else null
         apiKey = intent.getStringExtra(API_KEY_ID)
         languageCode = intent.getStringExtra(LANGUAGE_CODE_ID)
         tessDataPath = intent.getStringExtra(TESS_DATA_PATH_ID)
@@ -84,7 +88,10 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
             ?: getString(R.string.scan_state_loading)
         closeButtonContentDescription = intent.getStringExtra(CLOSE_BUTTON_CD_ID)
             ?: getString(R.string.cd_close_button)
-        ocrWrapper.start(languageCode)
+
+        //this setLanguage will just be called in OCRProviderTypes that are aware of languageCodes.
+        languageCode?.let { ocrWrapper.setLanguage(it) }
+
         setContent {
             W3WTheme {
                 // A surface container using the 'background' color from the theme

@@ -22,25 +22,15 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalTextInputService
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
-import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
-import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
-import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.What3WordsV3
 import com.what3words.design.library.ui.components.NavigationBarScaffold
@@ -116,7 +106,6 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
                     LaunchedEffect(key1 = viewModel.selectedMLKitLibrary, block = {
                         ocrWrapper = getOcrWrapper()
-                        ocrWrapper.start()
                     })
 
                     AnimatedVisibility(
@@ -206,24 +195,9 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     }
 
     private fun getOcrWrapper(): W3WOcrWrapper {
-        val textRecognizerOptions =
-            when (viewModel.selectedMLKitLibrary) {
-                W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
-                W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari -> DevanagariTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndKorean -> KoreanTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndJapanese -> JapaneseTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndChinese -> ChineseTextRecognizerOptions.Builder()
-                    .build()
-            }
         return W3WOcrMLKitWrapper(
             this,
-            textRecognizerOptions
+            viewModel.selectedMLKitLibrary
         )
     }
 
@@ -246,7 +220,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                         label = {
                             Text("MLKit Language library")
                         },
-                        value = viewModel.selectedMLKitLibrary.name,
+                        value = viewModel.getLibName(viewModel.selectedMLKitLibrary),
                         onValueChange = {
                         },
                         readOnly = true,
@@ -260,7 +234,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             viewModel.selectedMLKitLibrary = item
                             expanded = false
                         }) {
-                            Text(text = item.name)
+                            Text(text = viewModel.getLibName(item))
                         }
                     }
                 }
