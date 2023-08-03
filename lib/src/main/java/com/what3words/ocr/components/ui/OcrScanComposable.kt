@@ -299,19 +299,13 @@ fun W3WOcrScanner(
      * if fails calls [onError] callback saying that was a problem installing required modules.
      */
     LaunchedEffect(key1 = true, block = {
-        wrapper.moduleInstalled {
-            if (it) {
+        wrapper.start { isReady, error ->
+            if (isReady) {
                 cameraPermissionState.launchPermissionRequest()
             } else {
-                wrapper.installModule(onDownloaded = { installed, error ->
-                    if (installed) {
-                        cameraPermissionState.launchPermissionRequest()
-                    } else {
-                        onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
-                            message =
-                                "Error installing MLKit modules, check if you have Google Play Services in your device"
-                        })
-                    }
+                onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
+                    message =
+                        "Error installing MLKit modules, check if you have Google Play Services in your device"
                 })
             }
         }

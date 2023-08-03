@@ -43,7 +43,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          */
         fun newInstanceWithApi(
             context: Context,
-            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            mlKitLibrary: Int,
             apiKey: String,
             options: AutosuggestOptions? = null,
             returnCoordinates: Boolean = false,
@@ -94,7 +94,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          */
         fun newInstanceWithSdk(
             context: Context,
-            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            mlKitLibrary: Int,
             options: AutosuggestOptions? = null,
             returnCoordinates: Boolean = false,
             displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
@@ -124,7 +124,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
 
         private fun buildInstance(
             context: Context,
-            mlKitLibrary: W3WOcrWrapper.MLKitLibraries,
+            mlKitLibrary: Int,
             dataProvider: W3WOcrWrapper.DataProvider,
             apiKey: String? = null,
             options: AutosuggestOptions? = null,
@@ -178,25 +178,9 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
     private fun buildMLKit(
         context: Context
     ): W3WOcrMLKitWrapper {
-        val textRecognizerOptions =
-            when (mlKitV2Library) {
-                W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
-                W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari -> DevanagariTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndKorean -> KoreanTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndJapanese -> JapaneseTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndChinese -> ChineseTextRecognizerOptions.Builder()
-                    .build()
-
-                null -> throw ExceptionInInitializerError(
-                    "MLKitOcrScanActivity needs a valid MLKit Language Library"
-                )
-            }
-        return W3WOcrMLKitWrapper(context, textRecognizerOptions)
+        if(mlKitV2Library == null) throw ExceptionInInitializerError(
+            "MLKitOcrScanActivity needs a valid MLKit Language Library"
+        )
+        return W3WOcrMLKitWrapper(context, mlKitV2Library!!)
     }
 }

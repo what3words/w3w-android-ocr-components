@@ -116,7 +116,6 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
 
                     LaunchedEffect(key1 = viewModel.selectedMLKitLibrary, block = {
                         ocrWrapper = getOcrWrapper()
-                        ocrWrapper.start()
                     })
 
                     AnimatedVisibility(
@@ -206,24 +205,9 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
     }
 
     private fun getOcrWrapper(): W3WOcrWrapper {
-        val textRecognizerOptions =
-            when (viewModel.selectedMLKitLibrary) {
-                W3WOcrWrapper.MLKitLibraries.Latin -> TextRecognizerOptions.DEFAULT_OPTIONS
-                W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari -> DevanagariTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndKorean -> KoreanTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndJapanese -> JapaneseTextRecognizerOptions.Builder()
-                    .build()
-
-                W3WOcrWrapper.MLKitLibraries.LatinAndChinese -> ChineseTextRecognizerOptions.Builder()
-                    .build()
-            }
         return W3WOcrMLKitWrapper(
             this,
-            textRecognizerOptions
+            viewModel.selectedMLKitLibrary
         )
     }
 
@@ -246,7 +230,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                         label = {
                             Text("MLKit Language library")
                         },
-                        value = viewModel.selectedMLKitLibrary.name,
+                        value = viewModel.getLibName(viewModel.selectedMLKitLibrary),
                         onValueChange = {
                         },
                         readOnly = true,
@@ -260,7 +244,7 @@ class ComposeOcrScanPopupSampleActivity : ComponentActivity() {
                             viewModel.selectedMLKitLibrary = item
                             expanded = false
                         }) {
-                            Text(text = item.name)
+                            Text(text = viewModel.getLibName(item))
                         }
                     }
                 }
