@@ -56,14 +56,12 @@ import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
 import com.what3words.design.library.ui.components.SuggestionWhat3words
 import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
-import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
