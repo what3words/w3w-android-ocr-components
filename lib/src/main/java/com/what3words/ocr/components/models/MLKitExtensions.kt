@@ -7,6 +7,11 @@ import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
 import com.google.mlkit.vision.text.TextRecognizer
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.androidwrapper.helpers.DefaultDispatcherProvider
 import com.what3words.androidwrapper.helpers.DispatcherProvider

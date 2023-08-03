@@ -52,37 +52,39 @@ class W3WOcrMLKitWrapper(
     override fun start(
         readyListener: (Boolean, What3WordsError?) -> Unit
     ) {
-        imageAnalyzerExecutor.submit {
-            isStopped = false
-            mlkitRecognizer = TextRecognition.getClient(
-                when (recognizerOptions) {
-                    TextRecognizerOptions.LATIN_AND_CHINESE -> {
-                        ChineseTextRecognizerOptions.Builder().setExecutor(executor()).build()
-                    }
-                    TextRecognizerOptions.LATIN_AND_DEVANAGARI -> {
-                        DevanagariTextRecognizerOptions.Builder().setExecutor(executor()).build()
-                    }
-                    TextRecognizerOptions.LATIN_AND_KOREAN -> {
-                        KoreanTextRecognizerOptions.Builder().setExecutor(executor()).build()
-                    }
-                    TextRecognizerOptions.LATIN_AND_JAPANESE -> {
-                        JapaneseTextRecognizerOptions.Builder().setExecutor(executor()).build()
-                    }
-                    else -> {
-                        TextRecognizerOptions.Builder().setExecutor(executor()).build()
-                    }
+        isStopped = false
+        mlkitRecognizer = TextRecognition.getClient(
+            when (recognizerOptions) {
+                TextRecognizerOptions.LATIN_AND_CHINESE -> {
+                    ChineseTextRecognizerOptions.Builder().setExecutor(executor()).build()
                 }
-            )
-            mlkitRecognizer.isModuleInstalled(moduleClient, TAG) { isInstalled ->
-                if (isInstalled) {
-                    readyListener.invoke(true, null)
-                } else {
-                    mlkitRecognizer.installModule(moduleClient, TAG) { isDownloaded, error ->
-                        if (isDownloaded) {
-                            readyListener.invoke(true, null)
-                        } else {
-                            readyListener.invoke(false, error)
-                        }
+
+                TextRecognizerOptions.LATIN_AND_DEVANAGARI -> {
+                    DevanagariTextRecognizerOptions.Builder().setExecutor(executor()).build()
+                }
+
+                TextRecognizerOptions.LATIN_AND_KOREAN -> {
+                    KoreanTextRecognizerOptions.Builder().setExecutor(executor()).build()
+                }
+
+                TextRecognizerOptions.LATIN_AND_JAPANESE -> {
+                    JapaneseTextRecognizerOptions.Builder().setExecutor(executor()).build()
+                }
+
+                else -> {
+                    TextRecognizerOptions.Builder().setExecutor(executor()).build()
+                }
+            }
+        )
+        mlkitRecognizer.isModuleInstalled(moduleClient, TAG) { isInstalled ->
+            if (isInstalled) {
+                readyListener.invoke(true, null)
+            } else {
+                mlkitRecognizer.installModule(moduleClient, TAG) { isDownloaded, error ->
+                    if (isDownloaded) {
+                        readyListener.invoke(true, null)
+                    } else {
+                        readyListener.invoke(false, error)
                     }
                 }
             }
