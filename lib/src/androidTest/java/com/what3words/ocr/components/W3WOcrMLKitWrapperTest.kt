@@ -3,11 +3,10 @@ package com.what3words.ocr.components
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
-import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
-import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
-import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN_AND_DEVANAGARI
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN_AND_JAPANESE
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN_AND_KOREAN
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
@@ -46,17 +45,22 @@ class W3WOcrMLKitWrapperTest {
             com.what3words.ocr.components.test.R.drawable.simple_filled_count_soap
         )
 
-        val latinTextRecognizer =
-            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, latinTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, LATIN)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("filled.count.soap") }
@@ -81,17 +85,22 @@ class W3WOcrMLKitWrapperTest {
             com.what3words.ocr.components.test.R.drawable.simple_valid_english_uppercase_3wa
         )
 
-        val latinTextRecognizer =
-            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
-
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, latinTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, LATIN)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) { what3WordsAndroidWrapper.autosuggest("filled.count.soap") }
@@ -111,22 +120,27 @@ class W3WOcrMLKitWrapperTest {
             TestData.hindiAutosuggestResponse
         }
 
-        val devanagariTextRecognizer =
-            TextRecognition.getClient(DevanagariTextRecognizerOptions.Builder().build())
-
         val bitmapToScan = BitmapFactory.decodeResource(
             context.resources,
             com.what3words.ocr.components.test.R.drawable.simple_valid_hindi_3wa
         )
 
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, devanagariTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, LATIN_AND_DEVANAGARI)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) {
@@ -152,17 +166,23 @@ class W3WOcrMLKitWrapperTest {
             context.resources,
             com.what3words.ocr.components.test.R.drawable.simple_valid_japanese_3wa
         )
-        val japaneseTextRecognizer =
-            TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, japaneseTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, LATIN_AND_JAPANESE)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) {
@@ -188,17 +208,23 @@ class W3WOcrMLKitWrapperTest {
             context.resources,
             com.what3words.ocr.components.test.R.drawable.simple_valid_korean_3wa
         )
-        val koreanTextRecognizer =
-            TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, koreanTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, LATIN_AND_KOREAN)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) {
@@ -224,17 +250,23 @@ class W3WOcrMLKitWrapperTest {
             context.resources,
             com.what3words.ocr.components.test.R.drawable.simple_valid_chinese_3wa
         )
-        val chineseTextRecognizer =
-            TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
 
-        mlKitWrapper = W3WOcrMLKitWrapper(context, what3WordsAndroidWrapper, chineseTextRecognizer)
+        mlKitWrapper = W3WOcrMLKitWrapper(context, TextRecognizerOptions.LATIN_AND_CHINESE)
 
         //when & wait
+        mlKitWrapper.start { _, _ -> }
         val scanResult = suspendCoroutine { cont ->
-            mlKitWrapper.scan(bitmapToScan, null, {}, {}, {}) { suggestions, error ->
+            mlKitWrapper.scan(
+                bitmapToScan,
+                what3WordsAndroidWrapper,
+                null,
+                {},
+                {},
+                {}) { suggestions, error ->
                 cont.resume(Pair(suggestions, error))
             }
         }
+        mlKitWrapper.stop()
 
         //then
         verify(exactly = 1) {

@@ -17,20 +17,34 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
+import com.what3words.androidwrapper.What3WordsAndroidWrapper
+import com.what3words.api.sdk.bridge.models.What3WordsSdk
+import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Suggestion
 import com.what3words.ocr.components.extensions.BitmapUtils
 import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-
+/**
+ * Manager that uses [androidx.camera.view.PreviewView] and [androidx.camera.core.ImageAnalysis] to analise captured frames
+ * from devices camera, creating a queue of frames to be cropped and sent to the [wrapper] provided for Text scan, working as an helper
+ * to be used internally by our [W3WOcrScanner], for separation of concerns.
+ *
+ * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
+ * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
+ * @param options optional [AutosuggestOptions] to filter OCR scan results.
+ * @param ocrScanResultCallback a [OcrScanResultCallback] called in different stages of the OCR scanning process.
+ */
 @ExperimentalGetImage
 internal class OcrScanManager(
     private val wrapper: W3WOcrWrapper,
+    private val dataProvider: What3WordsAndroidWrapper,
     private val options: AutosuggestOptions? = null,
     private val ocrScanResultCallback: OcrScanResultCallback
 ) {
@@ -49,6 +63,14 @@ internal class OcrScanManager(
     internal var layoutCoordinates: LayoutCoordinates? = null
     internal var displayMetrics: DisplayMetrics? = null
 
+    /**
+     * This method will start all the camera logic, bind [PreviewView] to [LifecycleOwner] provided and create a [UseCaseGroup] using [PreviewView.getViewPort]
+     * At this point permissions should have been handled already.
+     *
+     * @param context the [Context] where the [PreviewView] will be running.
+     * @param lifecycleOwner the lifecycle owner of the [PreviewView] to allows us to bind a [UseCaseGroup] it.
+     * @param previewView the [PreviewView] that will be used to capture frames to be scanned.
+     */
     fun startCamera(
         context: Context,
         lifecycleOwner: LifecycleOwner,
@@ -58,9 +80,10 @@ internal class OcrScanManager(
             ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setTargetAspectRatio(AspectRatio.RATIO_16_9).build().also { imageAnalysis ->
                     imageAnalysis.setAnalyzer(
-                        wrapper.getExecutor(),
+                        wrapper.executor(),
                         OcrAnalyzer(
                             wrapper,
+                            dataProvider,
                             options,
                             layoutCoordinates!!,
                             displayMetrics!!,
@@ -77,7 +100,6 @@ internal class OcrScanManager(
                         }
                     )
                 }
-
         cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         val runnable = Runnable {
             val preview = Preview.Builder().build()
@@ -99,14 +121,30 @@ internal class OcrScanManager(
         cameraProviderFuture.addListener(runnable, ContextCompat.getMainExecutor(context))
     }
 
+    /**
+     * This method will stop all the camera logic, unbind [PreviewView] to [LifecycleOwner] provided and clear [imageAnalyzer] frames that are currently in the queue.
+     */
     fun stop() {
         if (::cameraProviderFuture.isInitialized) cameraProviderFuture.get().unbindAll()
         if (::imageAnalyzer.isInitialized) imageAnalyzer.clearAnalyzer()
     }
 
+    /**
+     * [OcrAnalyzer] is a custom [ImageAnalysis.Analyzer] that will get the frames from [imageAnalyzer] and will send them to [OcrRecognizer]
+     * which will compute the [ImageProxy] returned by [ImageAnalysis.Analyzer.analyze] and call [onResult] when [OcrRecognizer] finishes.
+     *
+     * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
+     * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
+     * @param options optional [AutosuggestOptions] to filter OCR scan results.
+     * @param layoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
+     * @param displayMetrics the [DisplayMetrics] of the device to gives necessary information to crop the [ImageProxy] to the desired camera shutter size.
+     * @param ocrScanResultCallback a [OcrScanResultCallback] called in different stages of the OCR scanning process, provided by the [W3WOcrScanner].
+     * @param onResult a callback that will be called when a result was found, which is either [List] of [Suggestion] or, in case of an error, a [What3WordsError] with all error details.
+     */
     @ExperimentalGetImage
     private class OcrAnalyzer(
         wrapper: W3WOcrWrapper,
+        dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions?,
         layoutCoordinates: LayoutCoordinates,
         displayMetrics: DisplayMetrics,
@@ -115,7 +153,7 @@ internal class OcrScanManager(
     ) :
         ImageAnalysis.Analyzer {
         private val textRecognizer =
-            OcrRecognizer(wrapper, options, layoutCoordinates, displayMetrics)
+            OcrRecognizer(wrapper, dataProvider, options, layoutCoordinates, displayMetrics)
 
         @ExperimentalGetImage
         override fun analyze(imageProxy: ImageProxy) {
@@ -129,10 +167,20 @@ internal class OcrScanManager(
         }
     }
 
-
+    /**
+     * [OcrRecognizer] will get the [ImageProxy] convert it to a [Bitmap], crop the bitmap with [LayoutCoordinates] and [DisplayMetrics] information
+     * and send the cropped [Bitmap] to our [wrapper].
+     *
+     * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
+     * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
+     * @param options optional [AutosuggestOptions] to filter OCR scan results.
+     * @param layoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
+     * @param displayMetrics the [DisplayMetrics] of the device to gives necessary information to crop the [ImageProxy] to the desired camera shutter size.
+     */
     @ExperimentalGetImage
     private class OcrRecognizer(
         private val wrapper: W3WOcrWrapper,
+        private val dataProvider: What3WordsAndroidWrapper,
         private val options: AutosuggestOptions?,
         private val layoutCoordinates: LayoutCoordinates,
         private val displayMetrics: DisplayMetrics
@@ -171,6 +219,7 @@ internal class OcrScanManager(
                 try {
                     wrapper.scan(
                         bitmapToBeScanned,
+                        dataProvider,
                         options,
                         onScanning = { ocrScanResultCallback.onScanning() },
                         onDetected = { ocrScanResultCallback.onDetected() },

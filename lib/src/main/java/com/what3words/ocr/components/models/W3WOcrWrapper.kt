@@ -11,37 +11,34 @@ import com.what3words.javawrapper.response.Suggestion
 import java.util.concurrent.ExecutorService
 
 interface W3WOcrWrapper {
+
     /**
-     * Change current scanning language of the wrapper using a ISO 639-1 two letter code language code.
+     * Check if ISO 639-1 two letter code language code is supported by this wrapper implementation.
      *
-     * @param languageCode the ISO 639-1 two letter code language code to change the wrapper too (it will ignore scanned three word address in other languages)
+     * @param languageCode the ISO 639-1 two letter code language to check.
      *
-     * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     * @return [Boolean] true if supported, false if not.
+     *
+     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */
     @Throws(java.lang.UnsupportedOperationException::class)
-    fun language(languageCode: String)
-
-    @Throws(java.lang.Exception::class)
-    fun moduleInstalled(result: ((Boolean) -> Unit))
-
-    fun installModule(
-        onDownloaded: ((Boolean, What3WordsError?) -> Unit)
-    )
+    fun supportsLanguage(languageCode: String): Boolean
 
     /**
      * Scan [image] [Bitmap] for one or more three word addresses.
      *
      * @param image the [Bitmap] that the scanner should use to find possible three word addresses.
+     * @param dataProvider the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
      * @param options the [AutosuggestOptions] to be applied when validating a possible three word address,
      * i.e: country clipping, check [AutosuggestOptions] for possible filters/clippings.
      * @param onScanning the callback when it starts to scan image for text.
      * @param onDetected the callback when our [findPossible3wa] regex finds possible matches on the scanned text.
      * @param onValidating the callback when we start validating the results of [findPossible3wa] against our API/SDK to check if valid (it will take into account [options] if provided).
-     * @param onFinished the callback with the [OcrScanResult] that can contain a list of [Suggestion] or a [What3WordsError]
-     * @throws [UnsupportedOperationException] if [languageCode] is not supported by this wrapper implementation or this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
+     * @param onFinished the callback with a [List] of [Suggestion] or a [What3WordsError] in case an error was found while scanning.
      */
     fun scan(
         image: Bitmap,
+        dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions? = null,
         onScanning: (() -> Unit),
         onDetected: (() -> Unit),
@@ -54,14 +51,33 @@ interface W3WOcrWrapper {
      *
      * @return [ExecutorService] this wrapper runs on.
      */
-    fun getExecutor(): ExecutorService
+    fun executor(): ExecutorService
 
     /**
-     * Get the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
+     * Starts the wrapper to start receiving images to [scan], this will check if modules are installed and if not download the needed
+     * modules to be able to perform a [scan].
      *
-     * @return [ExecutorService] this wrapper runs on.
+     * @param readyListener will return true/false if started successfully and if it fails it will return a [What3WordsError] with an error message.
+     **/
+    fun start(
+        readyListener: (Boolean, What3WordsError?) -> Unit
+    )
+
+    /**
+     * Set ISO 639-1 two letter code language code to be used by the wrapper before [start], this is only supported by
+     * wrappers that support ISO 639-1 [languageCode]
+     *
+     * @param languageCode the ISO 639-1 two letter code language to check.
+     * @param secondaryLanguageCode the ISO 639-1 two letter code language to check.
+     *
+     * @return [Boolean] true if supported, false if not.
+     *
+     * @throws [UnsupportedOperationException] if this wrapper is language agnostic, i.e [W3WOcrMLKitWrapper].
      */
-    fun getDataProvider(): What3WordsAndroidWrapper
+    fun setLanguage(
+        languageCode: String,
+        secondaryLanguageCode: String? = null
+    )
 
     /**
      * This method should be called when all the work from this wrapper is finished i.e: Activity.onDestroy
@@ -72,14 +88,6 @@ interface W3WOcrWrapper {
         MLKit,
         Hybrid,
         Tesseract
-    }
-
-    enum class MLKitLibraries {
-        Latin,
-        LatinAndDevanagari,
-        LatinAndKorean,
-        LatinAndJapanese,
-        LatinAndChinese
     }
 
     enum class DataProvider {

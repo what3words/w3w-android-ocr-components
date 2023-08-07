@@ -55,6 +55,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.what3words.androidwrapper.What3WordsAndroidWrapper
 import com.what3words.design.library.ui.components.IconButtonSize
 import com.what3words.design.library.ui.components.OutlinedIconButton
 import com.what3words.design.library.ui.components.SuggestionWhat3words
@@ -70,6 +71,7 @@ import com.what3words.ocr.components.R
 import com.what3words.ocr.components.models.ScanResultState
 import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
 import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -215,6 +217,7 @@ object W3WOcrScannerDefaults {
  * @param suggestionColors the [SuggestionWhat3wordsDefaults.Colors] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default colors are set here [SuggestionWhat3wordsDefaults.defaultColors] and can all be overridden.
  * @param suggestionNearestPlacePrefix the prefix to [SuggestionWhat3words] nearest place. Default prefix is [com.what3words.design.library.R.string.near]
  * @param onSuggestionSelected the callback when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker].
+ * @param onSuggestionFound the callback when a [SuggestionWithCoordinates] is detected and validated and displayed in the [SuggestionPicker].
  * @param onError the callback when an error occurs in this composable, expect a [What3WordsError].
  * @param onDismiss when this composable is closed using the close button, meaning no [onError] or [onSuggestionSelected], it was dismissed by the user.
  */
@@ -224,6 +227,7 @@ object W3WOcrScannerDefaults {
 fun W3WOcrScanner(
     wrapper: W3WOcrWrapper,
     modifier: Modifier = Modifier,
+    dataProvider: What3WordsAndroidWrapper,
     options: AutosuggestOptions? = null,
     returnCoordinates: Boolean = false,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
@@ -236,6 +240,7 @@ fun W3WOcrScanner(
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
+    onSuggestionFound: ((SuggestionWithCoordinates) -> Unit)? = null
 ) {
     val context = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -243,7 +248,7 @@ fun W3WOcrScanner(
     val previewView = remember { PreviewView(context) }
     val scanResultState = remember { ScanResultState() }
     val manager = remember {
-        OcrScanManager(wrapper, options, object : OcrScanManager.OcrScanResultCallback {
+        OcrScanManager(wrapper, dataProvider, options, object : OcrScanResultCallback {
             override fun onScanning() {
                 scanResultState.scanning()
             }
@@ -261,6 +266,9 @@ fun W3WOcrScanner(
             }
 
             override fun onFound(result: List<Suggestion>) {
+                if (onSuggestionFound != null) {
+                    result.forEach { onSuggestionFound.invoke(SuggestionWithCoordinates(it)) }
+                }
                 scanResultState.found(result)
             }
         })
@@ -284,25 +292,26 @@ fun W3WOcrScanner(
         }
     }
 
+    /** This [LaunchedEffect] will run once and check if modules installed to go to next check which is camera permissions,
+     * if not installed to request to install missing modules and when installed go to next step which is camera permissions,
+     * if fails calls [onError] callback saying that was a problem installing required modules.
+     */
     LaunchedEffect(key1 = true, block = {
-        wrapper.moduleInstalled {
-            if (it) {
+        wrapper.start { isReady, error ->
+            if (isReady) {
                 cameraPermissionState.launchPermissionRequest()
             } else {
-                wrapper.installModule(onDownloaded = { installed, error ->
-                    if (installed) {
-                        cameraPermissionState.launchPermissionRequest()
-                    } else {
-                        onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
-                            message =
-                                "Error installing MLKit modules, check if you have Google Play Services in your device"
-                        })
-                    }
+                onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
+                    message =
+                        "Error installing MLKit modules, check if you have Google Play Services in your device"
                 })
             }
         }
     })
 
+    /** This [LaunchedEffect] will run when a new scanned what3words address is added to [SuggestionPicker],
+     * and if list is not empty change the size of the peek and set it to expanded.
+     */
     LaunchedEffect(key1 = scanResultState.lastAdded, block = {
         if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
             scaffoldState.bottomSheetState.expand()
@@ -331,7 +340,7 @@ fun W3WOcrScanner(
                 if (returnCoordinates) {
                     CoroutineScope(Dispatchers.Main).launch {
                         val res = withContext(Dispatchers.IO) {
-                            wrapper.getDataProvider().convertToCoordinates(it.words).execute()
+                            dataProvider.convertToCoordinates(it.words).execute()
                         }
                         if (res.isSuccessful) {
                             onSuggestionSelected.invoke(
@@ -694,6 +703,3 @@ fun ScanAreaFoundMode() {
             {})
     }
 }
-
-
-
