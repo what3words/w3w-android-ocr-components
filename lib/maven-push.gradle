@@ -2,7 +2,7 @@ def ossrhUsername = findProperty('OSSRH_USERNAME')
 def ossrhPassword = findProperty('OSSRH_PASSWORD')
 def signingKey = findProperty('SIGNING_KEY')
 def signingKeyPwd = findProperty('SIGNING_KEY_PWD')
-def libVersion = findProperty('LIBRARY_VERSION') ? findProperty('LIBRARY_VERSION') : "1.0.1"
+def libVersion = findProperty('LIBRARY_VERSION') ? findProperty('LIBRARY_VERSION') : "1.0.2"
 
 afterEvaluate {
     publishing {

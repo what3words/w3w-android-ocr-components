@@ -138,6 +138,9 @@ fun TextRecognizer.installModule(
                     onDownloaded.invoke(true, null)
                 } else if (update.installState == ModuleInstallStatusUpdate.InstallState.STATE_FAILED) {
                     Log.d(tag, "*** Download failed with errorCode: ${update.errorCode} ***")
+                    onDownloaded.invoke(false, What3WordsError.SDK_ERROR.apply {
+                        message = "Download failed with errorCode: ${update.errorCode}"
+                    })
                 }
             }
         }
