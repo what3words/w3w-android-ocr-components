@@ -372,20 +372,24 @@ fun W3WOcrScanner(
             scanResultState,
             scannerStrings.closeButtonContentDescription,
             scannerColors,
-            {
+            cropAreaReady = {
                 if (scanResultState.state == ScanResultState.State.Idle) {
-                    manager.layoutCoordinates = it
-                    manager.displayMetrics = context.resources.displayMetrics
+                    manager.cropLayoutCoordinates = it
                 }
             },
-            {
+            bottomAreaReady = {
                 val newHeight =
                     ((it.size.height - 60.dp.value) / context.resources.displayMetrics.density).dp
                 if (heightSheet != newHeight) {
                     heightSheet = newHeight
                 }
             },
-            {
+            previewAreaReady = {
+                if (scanResultState.state == ScanResultState.State.Idle) {
+                    manager.cameraLayoutCoordinates = it
+                }
+            },
+            onDismiss = {
                 manager.stop()
                 onDismiss?.invoke()
             })
@@ -490,6 +494,7 @@ private fun ScanArea(
     scannerColors: W3WOcrScannerDefaults.Colors,
     cropAreaReady: (LayoutCoordinates) -> Unit,
     bottomAreaReady: (LayoutCoordinates) -> Unit,
+    previewAreaReady: (LayoutCoordinates) -> Unit,
     onDismiss: (() -> Unit)?
 ) {
     val orientation = LocalConfiguration.current.orientation
@@ -505,6 +510,8 @@ private fun ScanArea(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     bottom.linkTo(parent.bottom)
+                }.onGloballyPositioned {
+                    previewAreaReady.invoke(it)
                 },
             factory = {
                 previewView.apply {
@@ -668,6 +675,7 @@ fun ScanAreaScanningMode() {
             W3WOcrScannerDefaults.defaultColors(),
             {},
             {},
+            {},
             {})
     }
 }
@@ -683,6 +691,7 @@ fun ScanAreaDetectedMode() {
             ScanResultState().apply { detected() },
             "",
             W3WOcrScannerDefaults.defaultColors(),
+            {},
             {},
             {},
             {})
@@ -702,6 +711,7 @@ fun ScanAreaValidatingMode() {
             W3WOcrScannerDefaults.defaultColors(),
             {},
             {},
+            {},
             {})
     }
 }
@@ -717,6 +727,7 @@ fun ScanAreaFoundMode() {
             ScanResultState().apply { found(emptyList()) },
             "",
             W3WOcrScannerDefaults.defaultColors(),
+            {},
             {},
             {},
             {})
