@@ -2,6 +2,7 @@ package com.what3words.ocr.components.ui
 
 import android.Manifest
 import android.content.res.Configuration
+import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.view.ViewGroup
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
@@ -39,8 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -298,12 +299,18 @@ fun W3WOcrScanner(
      */
     LaunchedEffect(key1 = true, block = {
         wrapper.start { isReady, error ->
-            if (isReady) {
-                cameraPermissionState.launchPermissionRequest()
-            } else {
+            try {
+                if (isReady) {
+                    cameraPermissionState.launchPermissionRequest()
+                } else {
+                    onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
+                        message =
+                            "Error installing MLKit modules, check if you have Google Play Services in your device"
+                    })
+                }
+            } catch (e: Exception) {
                 onError?.invoke(error ?: What3WordsError.SDK_ERROR.apply {
-                    message =
-                        "Error installing MLKit modules, check if you have Google Play Services in your device"
+                    message = e.message
                 })
             }
         }
@@ -365,18 +372,24 @@ fun W3WOcrScanner(
             scanResultState,
             scannerStrings.closeButtonContentDescription,
             scannerColors,
-            {
+            cropAreaReady = {
                 if (scanResultState.state == ScanResultState.State.Idle) {
-                    manager.layoutCoordinates = it
-                    manager.displayMetrics = context.resources.displayMetrics
+                    manager.cropLayoutCoordinates = it
                 }
+            },
+            bottomAreaReady = {
                 val newHeight =
-                    ((context.resources.displayMetrics.heightPixels / context.resources.displayMetrics.density) - (it.boundsInRoot().bottom / context.resources.displayMetrics.density)).dp - 60.dp
+                    ((it.size.height - 60.dp.value) / context.resources.displayMetrics.density).dp
                 if (heightSheet != newHeight) {
                     heightSheet = newHeight
                 }
             },
-            {
+            previewAreaReady = {
+                if (scanResultState.state == ScanResultState.State.Idle) {
+                    manager.cameraLayoutCoordinates = it
+                }
+            },
+            onDismiss = {
                 manager.stop()
                 onDismiss?.invoke()
             })
@@ -480,8 +493,11 @@ private fun ScanArea(
     closeButtonContentDescription: String,
     scannerColors: W3WOcrScannerDefaults.Colors,
     cropAreaReady: (LayoutCoordinates) -> Unit,
+    bottomAreaReady: (LayoutCoordinates) -> Unit,
+    previewAreaReady: (LayoutCoordinates) -> Unit,
     onDismiss: (() -> Unit)?
 ) {
+    val orientation = LocalConfiguration.current.orientation
     ConstraintLayout(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -494,6 +510,8 @@ private fun ScanArea(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     bottom.linkTo(parent.bottom)
+                }.onGloballyPositioned {
+                    previewAreaReady.invoke(it)
                 },
             factory = {
                 previewView.apply {
@@ -545,7 +563,8 @@ private fun ScanArea(
                     end.linkTo(endBackground.start)
                     top.linkTo(topBackground.bottom)
                     width = Dimension.fillToConstraints
-                    height = Dimension.ratio("1:1")
+                    height =
+                        Dimension.ratio(if (orientation == ORIENTATION_PORTRAIT) "1:1" else "3.1")
                 }
                 .onGloballyPositioned {
                     cropAreaReady.invoke(it)
@@ -562,6 +581,9 @@ private fun ScanArea(
                     height = Dimension.fillToConstraints
                 }
                 .background(scannerColors.overlayBackground)
+                .onGloballyPositioned {
+                    bottomAreaReady.invoke(it)
+                }
         )
         Icon(
             modifier = Modifier.constrainAs(logo) {
@@ -652,6 +674,8 @@ fun ScanAreaScanningMode() {
             "",
             W3WOcrScannerDefaults.defaultColors(),
             {},
+            {},
+            {},
             {})
     }
 }
@@ -667,6 +691,8 @@ fun ScanAreaDetectedMode() {
             ScanResultState().apply { detected() },
             "",
             W3WOcrScannerDefaults.defaultColors(),
+            {},
+            {},
             {},
             {})
     }
@@ -684,6 +710,8 @@ fun ScanAreaValidatingMode() {
             "",
             W3WOcrScannerDefaults.defaultColors(),
             {},
+            {},
+            {},
             {})
     }
 }
@@ -699,6 +727,8 @@ fun ScanAreaFoundMode() {
             ScanResultState().apply { found(emptyList()) },
             "",
             W3WOcrScannerDefaults.defaultColors(),
+            {},
+            {},
             {},
             {})
     }

@@ -3,6 +3,7 @@ package com.what3words.ocr.components.ui
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.DisplayMetrics
+import android.util.Log
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -60,8 +61,8 @@ internal class OcrScanManager(
     private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
 
     private lateinit var imageAnalyzer: ImageAnalysis
-    internal var layoutCoordinates: LayoutCoordinates? = null
-    internal var displayMetrics: DisplayMetrics? = null
+    internal var cropLayoutCoordinates: LayoutCoordinates? = null
+    internal var cameraLayoutCoordinates: LayoutCoordinates? = null
 
     /**
      * This method will start all the camera logic, bind [PreviewView] to [LifecycleOwner] provided and create a [UseCaseGroup] using [PreviewView.getViewPort]
@@ -85,8 +86,8 @@ internal class OcrScanManager(
                             wrapper,
                             dataProvider,
                             options,
-                            layoutCoordinates!!,
-                            displayMetrics!!,
+                            cropLayoutCoordinates!!,
+                            cameraLayoutCoordinates!!,
                             ocrScanResultCallback
                         ) { suggestions, error ->
                             CoroutineScope(Dispatchers.Main).launch {
@@ -136,7 +137,8 @@ internal class OcrScanManager(
      * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
      * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
      * @param options optional [AutosuggestOptions] to filter OCR scan results.
-     * @param layoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
+     * @param cropLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
+     * @param cameraLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
      * @param displayMetrics the [DisplayMetrics] of the device to gives necessary information to crop the [ImageProxy] to the desired camera shutter size.
      * @param ocrScanResultCallback a [OcrScanResultCallback] called in different stages of the OCR scanning process, provided by the [W3WOcrScanner].
      * @param onResult a callback that will be called when a result was found, which is either [List] of [Suggestion] or, in case of an error, a [What3WordsError] with all error details.
@@ -146,14 +148,14 @@ internal class OcrScanManager(
         wrapper: W3WOcrWrapper,
         dataProvider: What3WordsAndroidWrapper,
         options: AutosuggestOptions?,
-        layoutCoordinates: LayoutCoordinates,
-        displayMetrics: DisplayMetrics,
+        cropLayoutCoordinates: LayoutCoordinates,
+        cameraLayoutCoordinates: LayoutCoordinates,
         private val ocrScanResultCallback: OcrScanResultCallback,
         private val onResult: (List<Suggestion>, What3WordsError?) -> Unit
     ) :
         ImageAnalysis.Analyzer {
         private val textRecognizer =
-            OcrRecognizer(wrapper, dataProvider, options, layoutCoordinates, displayMetrics)
+            OcrRecognizer(wrapper, dataProvider, options, cropLayoutCoordinates, cameraLayoutCoordinates)
 
         @ExperimentalGetImage
         override fun analyze(imageProxy: ImageProxy) {
@@ -174,17 +176,21 @@ internal class OcrScanManager(
      * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
      * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
      * @param options optional [AutosuggestOptions] to filter OCR scan results.
-     * @param layoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
-     * @param displayMetrics the [DisplayMetrics] of the device to gives necessary information to crop the [ImageProxy] to the desired camera shutter size.
+     * @param cropLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
+     * @param cameraLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
      */
     @ExperimentalGetImage
     private class OcrRecognizer(
         private val wrapper: W3WOcrWrapper,
         private val dataProvider: What3WordsAndroidWrapper,
         private val options: AutosuggestOptions?,
-        private val layoutCoordinates: LayoutCoordinates,
-        private val displayMetrics: DisplayMetrics
+        private val cropLayoutCoordinates: LayoutCoordinates,
+        private val cameraLayoutCoordinates: LayoutCoordinates
     ) {
+        companion object {
+            const val TAG = "OcrRecognizer"
+        }
+
         fun recognizeImageText(
             imageProxy: ImageProxy,
             ocrScanResultCallback: OcrScanResultCallback,
@@ -192,15 +198,15 @@ internal class OcrScanManager(
         ) {
             BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
                 val bitmapToBeScanned = try {
-                    if (layoutCoordinates.isAttached) {
+                    if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
                         val x1: Float =
-                            (layoutCoordinates.positionInRoot().x * bitmap.width) / displayMetrics.widthPixels
+                            (cropLayoutCoordinates.positionInRoot().x * bitmap.width) / cameraLayoutCoordinates.size.width
                         val y1: Float =
-                            (layoutCoordinates.positionInRoot().y * bitmap.height) / displayMetrics.heightPixels
+                            (cropLayoutCoordinates.positionInRoot().y * bitmap.height) / cameraLayoutCoordinates.size.height
                         val width1: Int =
-                            (layoutCoordinates.size.width * bitmap.width) / displayMetrics.widthPixels
+                            (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
                         val height1: Int =
-                            (layoutCoordinates.size.height * bitmap.height) / displayMetrics.heightPixels
+                            (cropLayoutCoordinates.size.height * bitmap.height) / cameraLayoutCoordinates.size.height
                         Bitmap.createBitmap(
                             bitmap,
                             x1.roundToInt(),
@@ -212,6 +218,7 @@ internal class OcrScanManager(
                         bitmap
                     }
                 } catch (e: Exception) {
+                    Log.e(TAG, e.message ?: "")
                     //ignore frame if any cropping issues.
                     onResult(emptyList(), null)
                     return
