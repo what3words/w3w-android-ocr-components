@@ -476,6 +476,7 @@ private fun SuggestionPicker(
                     displayUnits = displayUnits,
                     textStyles = suggestionTextStyles,
                     colors = suggestionColors,
+                    isLand = item.country != "ZZ",
                     nearestPlacePrefix = suggestionNearestPlacePrefix,
                     onClick = {
                         onSuggestionSelected.invoke(item)
