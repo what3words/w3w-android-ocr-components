@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">Bouton Fermer</string>
+    <string name="grip_content_description">Appuyez et maintenez enfoncé pour déplacer la liste d\'adresses what3words vers le haut ou vers le bas</string>
+    <string name="near">près de</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">Détection en cours...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">Scannée</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">Chargement en cours...</string>
+    <string name="scan_state_scanning">Scanner une adresse what3words</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">Validation en cours...</string>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">כפתור סגירה</string>
+    <string name="grip_content_description">יש ללחוץ לחיצה ארוכה על רשימת כתובות what3words כדי להזיז אותה מעלה או מטה</string>
+    <string name="near">ליד</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">מזהה...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">נסרק</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">בטעינה...</string>
+    <string name="scan_state_scanning">סרקו כתובת של 3 מילים</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">מבצע אימות...</string>
+</resources>
