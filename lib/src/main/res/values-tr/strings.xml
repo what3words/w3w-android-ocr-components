@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">Kapatma düğmesi</string>
+    <string name="grip_content_description">what3words adres listesini yukarı veya aşağı taşımak için dokunun ve basılı tutun</string>
+    <string name="near">yakın</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">İşleniyor...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">Tarandı</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">Yükleniyor...</string>
+    <string name="scan_state_scanning">Bir what3words adresi tarayın</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">Doğrulanıyor...</string>
+</resources>

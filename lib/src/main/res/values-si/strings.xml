@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">බොත්තම වසන්න</string>
+    <string name="grip_content_description">what3words ලිපින ලැයිස්තුව ඉහළට හෝ පහළට ගෙන යාමට තට්ටු කර අල්ලාගෙන සිටින්න</string>
+    <string name="near">අසල</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">හඳුනා ගනිමින්...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">ස්කෑන් කරන ලදී</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">පූරණය වෙමින්...</string>
+    <string name="scan_state_scanning">what3words ලිපිනයක් ස්කෑන් කරන්න</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">වලංගු කරමින්...</string>
+</resources>

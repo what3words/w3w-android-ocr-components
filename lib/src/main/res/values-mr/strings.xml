@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">बटण बंद करा</string>
+    <string name="grip_content_description">what3words पत्ता सूची वर किंवा खाली हलवण्यासाठी टॅप करा आणि धरून ठेवा</string>
+    <string name="near">जवळ</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">शोधत आहे...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">स्कॅन केले</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">लोड करत आहे...</string>
+    <string name="scan_state_scanning">3 शब्दांचा पत्ता स्कॅन करा</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">प्रमाणित करत आहे...</string>
+</resources>

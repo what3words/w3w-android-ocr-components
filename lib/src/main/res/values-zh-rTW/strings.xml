@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">關閉按鈕</string>
+    <string name="grip_content_description">點擊長按可上下移動三詞地址</string>
+    <string name="near">地點</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">偵測中⋯⋯</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">已掃描</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">載入中⋯⋯</string>
+    <string name="scan_state_scanning">掃描三詞地址</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">驗證中⋯⋯</string>
+</resources>

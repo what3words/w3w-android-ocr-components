@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">닫기 버튼</string>
+    <string name="grip_content_description">what3words 주소 목록을 길게 눌러서 위나 아래로 이동할 수 있습니다</string>
+    <string name="near">근처</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">인식 중...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">스캔 완료</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">로딩 중…</string>
+    <string name="scan_state_scanning">what3words 주소를 스캔하세요</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">확인 중...</string>
+</resources>

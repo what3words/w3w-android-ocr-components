@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">tutup butang</string>
+    <string name="grip_content_description">Tekan dan tahan untuk mengalihkan senarai alamat what3words ke atas atau bawah</string>
+    <string name="near">hampir</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">sedang mengesan</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">telah diimbas</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">memuatkan</string>
+    <string name="scan_state_scanning">Mengimbas satu alamat what3words</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">sedang mengesah</string>
+</resources>

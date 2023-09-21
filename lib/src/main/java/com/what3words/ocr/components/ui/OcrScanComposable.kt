@@ -238,7 +238,7 @@ fun W3WOcrScanner(
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
     suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(),
     suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
-    suggestionNearestPlacePrefix: String? = stringResource(id = com.what3words.design.library.R.string.near),
+    suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
     onDismiss: (() -> Unit)?,
