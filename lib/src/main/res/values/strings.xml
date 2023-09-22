@@ -1,5 +1,5 @@
 <resources>
-    <string name="title_activity_ocr_scan">OcrScanActivity</string>
+    <string name="title_activity_ocr_scan" translatable="false">OcrScanActivity</string>
     <string name="grip_content_description">Grip to move the bottom sheet up and down</string>
     <string name="scan_state_detecting">Detecting…</string>
     <string name="scan_state_scanning">Scan a what3words address</string>
@@ -7,4 +7,5 @@
     <string name="scan_state_found">Scanned</string>
     <string name="scan_state_loading">Loading…</string>
     <string name="cd_close_button">Close button</string>
+    <string name="near">near</string>
 </resources>

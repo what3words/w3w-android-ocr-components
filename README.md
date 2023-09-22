@@ -16,7 +16,7 @@ The artifact is available through [![Maven Central](https://img.shields.io/maven
 ### Gradle
 
 ```
-implementation 'com.what3words:w3w-android-ocr-components:1.0.0'
+implementation 'com.what3words:w3w-android-ocr-components:1.0.5'
 ```
 
 ## Documentation
@@ -46,26 +46,25 @@ There are two ways to use our MLKit OCR Component:
 ```Kotlin
 class MainActivity : AppCompatActivity() {
 
-     private val resultLauncher =
+      private val resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             when {
                 //registerForActivityResult success with result
                 result.resultCode == Activity.RESULT_OK && result.data?.hasExtra(BaseOcrScanActivity.SUCCESS_RESULT_ID) == true -> {
-                    val suggestion = result.data!!.serializable<SuggestionWithCoordinates>(BaseOcrScanActivity.SUCCESS_RESULT_ID)
-                    if (suggestion != null) {
-                        //TODO: Use scanned three word address info
-                    }
+                    val suggestion =
+                        result.data!!.serializable<SuggestionWithCoordinates>(BaseOcrScanActivity.SUCCESS_RESULT_ID)
+                    //TODO: Handle suggestion scanned
                 }
                 //registerForActivityResult canceled with error
-                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(BaseOcrScanActivity.ERROR_RESULT_ID) == true -> {
-                    val error = result.data!!.getStringExtra(BaseOcrScanActivity.ERROR_RESULT_ID)
-                    if(error != null) {
-                        //TODO: Handle error.
-                    }
+                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(
+                    BaseOcrScanActivity.ERROR_RESULT_ID
+                ) == true -> {
+                    val error =
+                        result.data!!.getStringExtra(BaseOcrScanActivity.ERROR_RESULT_ID)
+                    //TODO: Handle error
                 }
                 //registerForActivityResult canceled by user.
                 else -> {
-                    //TODO: Dismissed by user.
                 }
             }
         }
@@ -82,17 +81,17 @@ class MainActivity : AppCompatActivity() {
         
         //MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. This should be used on a click actions, i.e: button click.
         val intent = MLKitOcrScanActivity.newInstanceWithApi(
-            this,
-            W3WOcrWrapper.MLKitLibraries.Latin,
-            "YOUR_API_KEY_HERE",
-            options,
-            returnCoordinates,
-            scanStateFoundTitle = "YOUR_STRING_HERE"
+            context = this,
+            mlKitLibrary = com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN,
+            apiKey = "YOUR_API_KEY_HERE",
+            options = options,
+            returnCoordinates = returnCoordinates,
+            scanStateFoundTitle = "Custom found title"
         )
         try {
             resultLauncher.launch(intent)
         } catch (e: ExceptionInInitializerError) {
-            //TODO: Handle error.
+            //TODO: Handle Error
         }
     }
 }
@@ -111,7 +110,7 @@ class MainActivity : ComponentActivity() {
         
     override fun onCreate(savedInstanceState: Bundle?) {
         //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-        val textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        val textRecognizer = com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN
 
         //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
         val options = AutosuggestOptions().apply { 
@@ -122,12 +121,13 @@ class MainActivity : ComponentActivity() {
         val returnCoordinates = true
 
         val dataProvider = What3WordsV3("YOUR_API_KEY_HERE", this)
-        ocrWrapper = W3WOcrMLKitWrapper(this, dataProvider, textRecognizer)
+        ocrWrapper = W3WOcrMLKitWrapper(this, textRecognizer)
 
         setContent { 
             YourTheme {
                 W3WOcrScanner(
                     ocrWrapper,
+                    dataProvider = dataProvider,
                     modifier = Modifier.fillMaxSize(),
                     options = options,
                     returnCoordinates = returnCoordinates,
@@ -139,7 +139,8 @@ class MainActivity : ComponentActivity() {
                     },
                     onSuggestionSelected = { scannedSuggestion ->
                         //TODO: Use scanned three word address info, hide W3WOcrScanner using AnimatedVisibility or finish activity.
-                    }) 
+                    }
+                ) 
             }
         }
     }

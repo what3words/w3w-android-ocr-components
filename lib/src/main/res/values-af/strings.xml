@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <!-- this is for accessibility 'read aloud' purposes - helping people with visual impairments to locate where the 'close' button is on the screen. so it will not be seen as text, just as spoken word for people using that feature -->
+    <string name="cd_close_button">Toemaak-knoppie</string>
+    <string name="grip_content_description">Tik en hou jou vinger op die what3words-adres lys om dit op of af te beweeg</string>
+    <string name="near">naby</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is processing the information before suggesting results -->
+    <string name="scan_state_detecting">Net \'n oomblik...</string>
+    <!-- it is a what3words address that is being scanned -->
+    <string name="scan_state_found">Klaar geskandeer</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is loading the results -->
+    <string name="scan_state_loading">Besig om te laai...</string>
+    <string name="scan_state_scanning">Skandeer \'n what3words-adres</string>
+    <!-- This text shows up when the user is scanning a what3words address and the system is validating the information before displaying results -->
+    <string name="scan_state_validating">Besig om te valideer...</string>
+</resources>
