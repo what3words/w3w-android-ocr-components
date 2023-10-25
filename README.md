@@ -2,7 +2,7 @@
 
 An Android library to scan what3words address using [MLKit V2](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
 
-<img src="https://github.com/what3words/w3w-android-ocr-components/blob/documentation/assets/ocr-component-demo.gif" width=40% height=40%>
+<img src="https://github.com/what3words/w3w-android-ocr-components/blob/main/assets/ocr-component-demo.gif" width=40% height=40%>
 
 To obtain an API key, please visit [https://what3words.com/select-plan](https://what3words.com/select-plan) and sign up for an account.
 
