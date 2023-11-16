@@ -354,7 +354,7 @@ fun W3WOcrScanner(
                             onSuggestionSelected.invoke(
                                 SuggestionWithCoordinates(
                                     it,
-                                    res.coordinates
+                                    res
                                 )
                             )
                         } else {
