@@ -39,13 +39,8 @@ jobs:
           max-tries: 3
       - android/save-gradle-cache:
           cache-prefix: v2a
-      - run:
-          name: Assemble sample release build
-          command: ./gradlew samples:assembleRelease
       - store_test_results:
           path: lib/build/outputs/androidTest-results
-      - store_artifacts:
-          path: samples/build/outputs/apk/release
   deploy-to-sonatype:
     docker:
       - image: cimg/android:2023.05-browsers
@@ -97,4 +92,4 @@ workflows:
           filters:
             branches:
               only:
-                - dev
+                - staging
