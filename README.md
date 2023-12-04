@@ -16,7 +16,7 @@ The artifact is available through [![Maven Central](https://img.shields.io/maven
 ### Gradle
 
 ```
-implementation 'com.what3words:w3w-android-ocr-components:1.0.5'
+implementation 'com.what3words:w3w-android-ocr-components:1.0.7'
 ```
 
 ## Documentation
