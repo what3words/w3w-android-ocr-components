@@ -2,8 +2,8 @@ buildscript {
     ext {
         mlkit_core_version = "19.0.0"
         mlkit_languages_version = "16.0.0"
-        what3words_android_wrapper_version = "3.1.26"
-        what3words_android_bridge_version = "1.0.3"
+        what3words_android_wrapper_version = "3.2.0"
+        what3words_android_bridge_version = "1.0.5"
         what3words_android_design_version = "1.0.3"
         compose_version = "1.4.3"
         compose_activity_version = "1.7.2"
