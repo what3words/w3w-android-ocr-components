@@ -17,15 +17,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetValue
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.rememberBottomSheetScaffoldState
-import androidx.compose.material.rememberBottomSheetState
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -58,12 +59,12 @@ import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.design.library.ui.components.IconButtonSize
-import com.what3words.design.library.ui.components.OutlinedIconButton
-import com.what3words.design.library.ui.components.SuggestionWhat3words
-import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
+import com.what3words.design.library.ui.components.What3wordsAddressListItem
+import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
+import com.what3words.design.library.ui.theme.successColors
+import com.what3words.design.library.ui.theme.surfaceVariationsColors
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
@@ -125,15 +126,15 @@ object W3WOcrScannerDefaults {
      */
     @Composable
     fun defaultColors(
-        bottomDrawerBackground: Color = W3WTheme.colors.background,
+        bottomDrawerBackground: Color = MaterialTheme.surfaceVariationsColors.surfaceContainerLowest,
         overlayBackground: Color = Color(0x990A3049),
-        stateTextColor: Color = W3WTheme.colors.textPrimary,
-        listHeaderTextColor: Color = W3WTheme.colors.textPlaceholder,
-        gripColor: Color = Color.LightGray,
+        stateTextColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+        listHeaderTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+        gripColor: Color = MaterialTheme.colorScheme.outline,
         closeIconColor: Color = Color.White,
         logoColor: Color = Color.White,
         shutterInactiveColor: Color = Color.White,
-        shutterActiveColor: Color = Color.Green
+        shutterActiveColor: Color =  MaterialTheme.successColors.onSuccess,
     ): Colors {
         return Colors(
             bottomDrawerBackground = bottomDrawerBackground,
@@ -159,8 +160,8 @@ object W3WOcrScannerDefaults {
      */
     @Composable
     fun defaultTextStyles(
-        stateTextStyle: TextStyle = W3WTheme.typography.headline,
-        listHeaderTextStyle: TextStyle = W3WTheme.typography.caption2
+        stateTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
+        listHeaderTextStyle: TextStyle = MaterialTheme.typography.titleSmall
     ): TextStyles {
         return TextStyles(
             stateTextStyle = stateTextStyle,
@@ -223,7 +224,7 @@ object W3WOcrScannerDefaults {
  * @param onError the callback when an error occurs in this composable, expect a [What3WordsError].
  * @param onDismiss when this composable is closed using the close button, meaning no [onError] or [onSuggestionSelected], it was dismissed by the user.
  */
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
 @Composable
 fun W3WOcrScanner(
@@ -236,8 +237,8 @@ fun W3WOcrScanner(
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
-    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(),
-    suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
+    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
@@ -277,7 +278,7 @@ fun W3WOcrScanner(
     }
 
     val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = rememberBottomSheetState(BottomSheetValue.Collapsed)
+        bottomSheetState = rememberStandardBottomSheetState(SheetValue.PartiallyExpanded)
     )
 
     var heightSheet by remember { mutableStateOf(78.dp) }
@@ -321,7 +322,7 @@ fun W3WOcrScanner(
      * and if list is not empty change the size of the peek and set it to expanded.
      */
     LaunchedEffect(key1 = scanResultState.lastAdded, block = {
-        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
+        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.hasPartiallyExpandedState) {
             scaffoldState.bottomSheetState.expand()
             heightSheetPeek = 100.dp
         }
@@ -331,7 +332,6 @@ fun W3WOcrScanner(
         modifier = modifier,
         scaffoldState = scaffoldState,
         sheetPeekHeight = heightSheetPeek,
-        sheetBackgroundColor = Color.Transparent,
         sheetContent = {
             SuggestionPicker(
                 scanResultState,
@@ -406,8 +406,8 @@ private fun SuggestionPicker(
     scannerStrings: W3WOcrScannerDefaults.Strings,
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles,
     scannerColors: W3WOcrScannerDefaults.Colors,
-    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles,
-    suggestionColors: SuggestionWhat3wordsDefaults.Colors,
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles,
+    suggestionColors: What3wordsAddressListItemDefaults.Colors,
     suggestionNearestPlacePrefix: String?,
     onSuggestionSelected: (Suggestion) -> Unit
 ) {
@@ -469,7 +469,7 @@ private fun SuggestionPicker(
                 key = { scanResultState.foundItems[it].words },
             ) {
                 val item = scanResultState.foundItems[it]
-                SuggestionWhat3words(
+                What3wordsAddressListItem(
                     modifier = Modifier.testTag("itemOCR ${item.words}").animateItemPlacement(),
                     words = item.words,
                     nearestPlace = item.nearestPlace,
@@ -600,7 +600,7 @@ private fun ScanArea(
             contentDescription = null,
             tint = scannerColors.logoColor
         )
-        OutlinedIconButton(
+        IconButton(
             modifier = Modifier.constrainAs(buttonClose) {
                 top.linkTo(parent.top)
                 end.linkTo(parent.end)
@@ -608,14 +608,12 @@ private fun ScanArea(
                 width = Dimension.wrapContent
                 height = Dimension.wrapContent
             },
-            icon = rememberVectorPainter(image = Icons.Default.Close),
-            buttonSize = IconButtonSize.Medium,
             onClick = {
                 onDismiss?.invoke()
-            },
-            textColor = scannerColors.closeIconColor,
-            iconContentDescription = closeButtonContentDescription
-        )
+            }
+        ) {
+            Icon(imageVector = Icons.Default.Close, contentDescription = closeButtonContentDescription)
+        }
         val margin = (-2).dp
         val color = remember { Animatable(scannerColors.shutterInactiveColor) }
 

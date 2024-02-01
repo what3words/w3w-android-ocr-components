@@ -1,11 +1,12 @@
 buildscript {
     ext {
+        compose_bom_version = '2023.06.01'
         mlkit_core_version = "19.0.0"
         mlkit_languages_version = "16.0.0"
-        what3words_android_wrapper_version = "3.2.0"
-        what3words_android_bridge_version = "1.0.5"
+        what3words_android_wrapper_version = '3.2.1'
+        what3words_android_bridge_version = '1.0.6'
         what3words_android_design_version = "1.0.3"
-        compose_version = "1.4.3"
+        material3_android_version = "1.1.2"
         compose_activity_version = "1.7.2"
         compose_constraint_layout_version = "1.0.1"
         androidx_camera_version = "1.2.3"
