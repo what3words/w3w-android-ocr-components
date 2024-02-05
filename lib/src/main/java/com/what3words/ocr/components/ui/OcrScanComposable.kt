@@ -423,7 +423,7 @@ private fun SuggestionPicker(
 ) {
     Column(
         modifier = Modifier
-            .heightIn(min = 100.dp, max = maxHeight),
+            .heightIn(min = 90.dp, max = maxHeight),
     ) {
         if (scanResultState.state != ScanResultState.State.Found && scanResultState.foundItems.isEmpty()) {
             Box(
