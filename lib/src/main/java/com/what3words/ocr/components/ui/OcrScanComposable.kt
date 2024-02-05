@@ -390,7 +390,7 @@ fun W3WOcrScanner(
             },
             bottomAreaReady = {
                 val newHeight =
-                    (it.size.height / context.resources.displayMetrics.density).dp - 100.dp
+                    (it.size.height / context.resources.displayMetrics.density).dp - 90.dp
                 if (heightSheet != newHeight) {
                     heightSheet = newHeight
                 }
