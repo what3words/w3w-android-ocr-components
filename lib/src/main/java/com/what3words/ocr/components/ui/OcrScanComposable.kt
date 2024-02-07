@@ -61,8 +61,8 @@ import com.what3words.design.library.ui.components.What3wordsAddressListItem
 import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
-import com.what3words.design.library.ui.theme.successColors
 import com.what3words.design.library.ui.theme.surfaceVariationsColors
+import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
@@ -131,7 +131,7 @@ object W3WOcrScannerDefaults {
         closeIconColor: Color = Color.White,
         logoColor: Color = Color.White,
         shutterInactiveColor: Color = Color.White,
-        shutterActiveColor: Color = MaterialTheme.successColors.success,
+        shutterActiveColor: Color = MaterialTheme.w3wColorScheme.success,
     ): Colors {
         return Colors(
             bottomDrawerBackground = bottomDrawerBackground,
