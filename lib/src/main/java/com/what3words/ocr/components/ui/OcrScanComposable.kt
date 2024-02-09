@@ -482,6 +482,7 @@ private fun SuggestionPicker(
                     onClick = {
                         onSuggestionSelected.invoke(item)
                     },
+                    showDivider = scanResultState.foundItems.lastIndex != it
                 )
             }
         }
