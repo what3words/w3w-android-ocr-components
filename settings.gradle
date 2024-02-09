@@ -11,7 +11,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven {
-            url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1327"
+            url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1330"
         }
     }
 }
