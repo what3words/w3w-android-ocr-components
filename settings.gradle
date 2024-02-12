@@ -10,9 +10,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url "https://s01.oss.sonatype.org/content/repositories/comwhat3words-1330"
-        }
     }
 }
 rootProject.name = "ocr-components-sample"
