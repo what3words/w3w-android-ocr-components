@@ -2,7 +2,6 @@ package com.what3words.ocr.components.models
 
 import android.graphics.Bitmap
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
 import com.what3words.javawrapper.What3WordsV3
 import com.what3words.javawrapper.What3WordsV3.findPossible3wa
 import com.what3words.javawrapper.request.AutosuggestOptions

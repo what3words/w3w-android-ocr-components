@@ -16,16 +16,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetValue
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.rememberBottomSheetScaffoldState
-import androidx.compose.material.rememberBottomSheetState
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,12 +35,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -58,12 +57,12 @@ import androidx.constraintlayout.compose.Dimension
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.design.library.ui.components.IconButtonSize
-import com.what3words.design.library.ui.components.OutlinedIconButton
-import com.what3words.design.library.ui.components.SuggestionWhat3words
-import com.what3words.design.library.ui.components.SuggestionWhat3wordsDefaults
+import com.what3words.design.library.ui.components.What3wordsAddressListItem
+import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
+import com.what3words.design.library.ui.theme.surfaceVariationsColors
+import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.Coordinates
@@ -108,32 +107,31 @@ object W3WOcrScannerDefaults {
     )
 
     /**
-     * Creates [W3WOcrScannerDefaults.Colors] to be applied to [W3WOcrScanner],
-     * allowing to override any [Color] on [W3WOcrScanner] composable for customization.
+     * Factory function for creating a default [Colors] instance for [W3WOcrScanner].
+     * This function allows customization of various color properties used in the OCR scanner UI components.
      *
-     * @param bottomDrawerBackground set the background [Color] of the [W3WOcrScanner] [BottomSheetScaffold] sheetContent.
-     * @param overlayBackground set the background [Color] of the camera shutter overlay.
-     * @param stateTextColor set text [Color] of the [W3WOcrScanner] current state [Text] field.
-     * @param listHeaderTextColor set text [Color] of the [W3WOcrScanner] scanned suggestions list header.
-     * @param gripColor set text [Color] of the [W3WOcrScanner] [BottomSheetScaffold] sheetContent grip.
-     * @param closeIconColor the [Color] tint of the [W3WOcrScanner] close button.
-     * @param logoColor the [Color] tint of the [W3WOcrScanner] what3words logo.
-     * @param shutterInactiveColor the [Color] of the camera shutter 4 corners when state is different to found.
-     * @param shutterActiveColor the [Color] of the camera shutter 4 corners when state is found.
-     *
-     * @return [W3WOcrScannerDefaults.Colors] that will be applied to the [W3WOcrScanner] composable.
+     * @param bottomDrawerBackground The background color of the bottom sheet in the OCR scanner.
+     * @param overlayBackground The background color of the camera shutter overlay.
+     * @param stateTextColor Color for the text displaying the current scanner state.
+     * @param listHeaderTextColor Color for the text in the header of the scanned suggestions list.
+     * @param gripColor Color of the grip in the bottom sheet content.
+     * @param closeIconColor Color of the close icon.
+     * @param logoColor Color of the what3words logo.
+     * @param shutterInactiveColor Color of the camera shutter corners when the state is scanning.
+     * @param shutterActiveColor Color of the camera shutter corners when the state is 'found'.
+     * @return A [Colors] object with the specified or default color properties.
      */
     @Composable
     fun defaultColors(
-        bottomDrawerBackground: Color = W3WTheme.colors.background,
+        bottomDrawerBackground: Color = MaterialTheme.surfaceVariationsColors.surfaceContainerLowest,
         overlayBackground: Color = Color(0x990A3049),
-        stateTextColor: Color = W3WTheme.colors.textPrimary,
-        listHeaderTextColor: Color = W3WTheme.colors.textPlaceholder,
-        gripColor: Color = Color.LightGray,
+        stateTextColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+        listHeaderTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+        gripColor: Color = MaterialTheme.colorScheme.outline,
         closeIconColor: Color = Color.White,
         logoColor: Color = Color.White,
         shutterInactiveColor: Color = Color.White,
-        shutterActiveColor: Color = Color.Green
+        shutterActiveColor: Color = MaterialTheme.w3wColorScheme.success,
     ): Colors {
         return Colors(
             bottomDrawerBackground = bottomDrawerBackground,
@@ -149,18 +147,17 @@ object W3WOcrScannerDefaults {
     }
 
     /**
-     * Creates [W3WOcrScannerDefaults.TextStyles] to be applied to [W3WOcrScanner],
-     * allowing to override any [TextStyle] on [W3WOcrScanner] composable for customization.
+     * Factory function for creating a default [TextStyles] instance for [W3WOcrScanner].
+     * This function allows customization of various text style properties used in the OCR scanner UI components.
      *
-     * @param stateTextStyle set [TextStyle] of the [W3WOcrScanner] current state.
-     * @param listHeaderTextStyle set [TextStyle] of the [W3WOcrScanner] scanned list header.
-     *
-     * @return [W3WOcrScannerDefaults.TextStyles] that will be applied to the [W3WOcrScanner] composable.
+     * @param stateTextStyle The text style for the text displaying the current scanner state.
+     * @param listHeaderTextStyle The text style for the header of the scanned suggestions list.
+     * @return A [TextStyles] object with the specified or default text style properties.
      */
     @Composable
     fun defaultTextStyles(
-        stateTextStyle: TextStyle = W3WTheme.typography.headline,
-        listHeaderTextStyle: TextStyle = W3WTheme.typography.caption2
+        stateTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
+        listHeaderTextStyle: TextStyle = MaterialTheme.typography.titleSmall
     ): TextStyles {
         return TextStyles(
             stateTextStyle = stateTextStyle,
@@ -169,17 +166,16 @@ object W3WOcrScannerDefaults {
     }
 
     /**
-     * Creates [W3WOcrScannerDefaults.Strings] to be used on [W3WOcrScanner],
-     * allowing localisation and accessibility to be controlled by developers.
+     * Factory function for creating a default [Strings] instance for [W3WOcrScanner].
+     * This function allows customization and localization of various text string properties used in the OCR scanner UI components.
      *
-     * @param scanStateScanningTitle the text to be displayed when it starts scanning, default: [R.string.scan_state_scanning]
-     * @param scanStateDetectedTitle the text to be displayed when it detects a possible three word address, default: [R.string.scan_state_detecting]
-     * @param scanStateValidatingTitle the text to be displayed when it validates a possible three word address (API/SDK check for validation), default: [R.string.scan_state_validating]
-     * @param scanStateFoundTitle the title to be displayed as the header of the list of scanned and validated three word addresses, default: [R.string.scan_state_found]
-     * @param scanStateLoadingTitle the title to be displayed when it's waiting for permissions to be accepted or any kind of download needed, default: [R.string.scan_state_loading]
-     * @param closeButtonContentDescription the content description of the actionable close button, default: [R.string.scan_state_loading]
-     *
-     * @return [W3WOcrScannerDefaults.Strings] that will be used on [W3WOcrScanner] composable.
+     * @param scanStateScanningTitle The title text displayed when scanning starts.
+     * @param scanStateDetectedTitle The title text displayed when a possible three-word address is detected.
+     * @param scanStateValidatingTitle The title text displayed during validation of a detected what3words address.
+     * @param scanStateFoundTitle The title text displayed for the header of the list of validated what3words addresses.
+     * @param scanStateLoadingTitle The title text displayed during waiting periods, such as permission acceptance or downloading.
+     * @param closeButtonContentDescription The content description for the close button, supporting accessibility features.
+     * @return A [Strings] object with the specified or default string properties.
      */
     @Composable
     fun defaultStrings(
@@ -203,27 +199,36 @@ object W3WOcrScannerDefaults {
 
 
 /**
- * Creates a new [W3WOcrScanner] Composable to use CameraX and a [W3WOcrWrapper] to scan what3words address using text recognition.
+ * Creates a new [W3WOcrScanner] Composable to utilize CameraX and a [W3WOcrWrapper] for scanning what3words addresses using text recognition.
+ * This component integrates camera functionality with OCR (Optical Character Recognition) to detect and validate three-word addresses in real-time.
  *
- * @sample com.what3words.ocr.components.sample.ComposeOcrScanPopupSampleActivity.onCreate
- *
- * @param wrapper the [W3WOcrWrapper] to be used when scanning for text, i.e: [W3WOcrMLKitWrapper].
- * @param modifier an optional [Modifier] for the root [BottomSheetScaffold].
- * @param options [AutosuggestOptions] to be applied when using what3words API. (Optional)
- * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not. Default false, if true, it might result in API cost charges.
- * @param displayUnits the [DisplayUnits] that will show on the [SuggestionPicker], by default will be [DisplayUnits.SYSTEM] which will use the system Locale to determinate if Imperial or Metric system.
- * @param scannerColors the [W3WOcrScannerDefaults.Colors] that will be applied to the [W3WOcrScanner], Default colors are set here [W3WOcrScannerDefaults.defaultColors] and can all be overridden.
- * @param scannerTextStyles the [W3WOcrScannerDefaults.TextStyles] that will be applied to the [W3WOcrScanner], Default text styles are set here [W3WOcrScannerDefaults.defaultTextStyles] and can all be overridden.
- * @param scannerStrings the [W3WOcrScannerDefaults.Strings] that will be applied to the [W3WOcrScanner] to allow localisation and accessibility customisation. Default strings are set here [W3WOcrScannerDefaults.defaultStrings] and can all be overridden.
- * @param suggestionTextStyles the [SuggestionWhat3wordsDefaults.TextStyles] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default text styles are set here [SuggestionWhat3wordsDefaults.defaultTextStyles] and can all be overridden.
- * @param suggestionColors the [SuggestionWhat3wordsDefaults.Colors] that will be applied to the [W3WOcrScanner] list of scanned three word address. Default colors are set here [SuggestionWhat3wordsDefaults.defaultColors] and can all be overridden.
- * @param suggestionNearestPlacePrefix the prefix to [SuggestionWhat3words] nearest place. Default prefix is [com.what3words.design.library.R.string.near]
- * @param onSuggestionSelected the callback when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker].
- * @param onSuggestionFound the callback when a [SuggestionWithCoordinates] is detected and validated and displayed in the [SuggestionPicker].
- * @param onError the callback when an error occurs in this composable, expect a [What3WordsError].
- * @param onDismiss when this composable is closed using the close button, meaning no [onError] or [onSuggestionSelected], it was dismissed by the user.
+ * @param wrapper The [W3WOcrWrapper] instance used for text scanning, such as [W3WOcrMLKitWrapper].
+ * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
+ * @param dataProvider The [What3WordsAndroidWrapper] instance used for additional data handling.
+ * @param options Optional [AutosuggestOptions] applied when using the what3words API for suggestions.
+ * @param returnCoordinates A flag to determine whether to return [Coordinates] along with a selected [SuggestionWithCoordinates].
+ *                          Set to false by default. Enabling it may incur API costs.
+ * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
+ *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
+ * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
+ *                      Defaults are provided by [W3WOcrScannerDefaults.defaultColors] and can be overridden.
+ * @param scannerTextStyles The text styles ([W3WOcrScannerDefaults.TextStyles]) applied to the [W3WOcrScanner].
+ *                          Defaults are provided by [W3WOcrScannerDefaults.defaultTextStyles] and can be overridden.
+ * @param scannerStrings Localized strings ([W3WOcrScannerDefaults.Strings]) used in the [W3WOcrScanner] for customization
+ *                       and accessibility. Defaults are provided by [W3WOcrScannerDefaults.defaultStrings] and can be overridden.
+ * @param suggestionTextStyles Text styles ([What3wordsAddressListItemDefaults.TextStyles]) applied to the list of scanned
+ *                             three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultTextStyles]
+ *                             and can be overridden.
+ * @param suggestionColors Color scheme ([What3wordsAddressListItemDefaults.Colors]) applied to the list of scanned
+ *                         three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultColors]
+ *                         and can be overridden.
+ * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
+ * @param onSuggestionSelected Callback invoked when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker]
+ * @param onSuggestionFound Callback invoked when a [SuggestionWithCoordinates] is detected, validated, and displayed in the [SuggestionPicker].
+ * @param onError Callback invoked when an error occurs within this composable, providing a [What3WordsError].
+ * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
  */
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
 @Composable
 fun W3WOcrScanner(
@@ -236,8 +241,8 @@ fun W3WOcrScanner(
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
-    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(),
-    suggestionColors: SuggestionWhat3wordsDefaults.Colors = SuggestionWhat3wordsDefaults.defaultColors(),
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
+    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
     onSuggestionSelected: ((SuggestionWithCoordinates) -> Unit),
     onError: ((What3WordsError) -> Unit)?,
@@ -277,11 +282,11 @@ fun W3WOcrScanner(
     }
 
     val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = rememberBottomSheetState(BottomSheetValue.Collapsed)
+        bottomSheetState = rememberStandardBottomSheetState(SheetValue.PartiallyExpanded)
     )
 
-    var heightSheet by remember { mutableStateOf(78.dp) }
-    var heightSheetPeek by remember { mutableStateOf(78.dp) }
+    var heightSheet by remember { mutableStateOf(90.dp) }
+    var heightSheetPeek by remember { mutableStateOf(90.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) {
@@ -321,7 +326,7 @@ fun W3WOcrScanner(
      * and if list is not empty change the size of the peek and set it to expanded.
      */
     LaunchedEffect(key1 = scanResultState.lastAdded, block = {
-        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.isCollapsed) {
+        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.hasPartiallyExpandedState) {
             scaffoldState.bottomSheetState.expand()
             heightSheetPeek = 100.dp
         }
@@ -331,7 +336,12 @@ fun W3WOcrScanner(
         modifier = modifier,
         scaffoldState = scaffoldState,
         sheetPeekHeight = heightSheetPeek,
-        sheetBackgroundColor = Color.Transparent,
+        sheetDragHandle = {
+            BottomSheetDefaults.DragHandle(
+                color = scannerColors.gripColor
+            )
+        },
+        sheetContainerColor = scannerColors.bottomDrawerBackground,
         sheetContent = {
             SuggestionPicker(
                 scanResultState,
@@ -380,7 +390,7 @@ fun W3WOcrScanner(
             },
             bottomAreaReady = {
                 val newHeight =
-                    ((it.size.height - 60.dp.value) / context.resources.displayMetrics.density).dp
+                    (it.size.height / context.resources.displayMetrics.density).dp - 90.dp
                 if (heightSheet != newHeight) {
                     heightSheet = newHeight
                 }
@@ -406,26 +416,15 @@ private fun SuggestionPicker(
     scannerStrings: W3WOcrScannerDefaults.Strings,
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles,
     scannerColors: W3WOcrScannerDefaults.Colors,
-    suggestionTextStyles: SuggestionWhat3wordsDefaults.TextStyles,
-    suggestionColors: SuggestionWhat3wordsDefaults.Colors,
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles,
+    suggestionColors: What3wordsAddressListItemDefaults.Colors,
     suggestionNearestPlacePrefix: String?,
     onSuggestionSelected: (Suggestion) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .clip(shape = RoundedCornerShape(8.dp, 8.dp, 0.dp, 0.dp))
-            .heightIn(min = 100.dp, max = maxHeight)
-            .background(scannerColors.bottomDrawerBackground),
+            .heightIn(min = 90.dp, max = maxHeight),
     ) {
-        Icon(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .align(CenterHorizontally),
-            painter = painterResource(id = R.drawable.grip),
-            contentDescription = stringResource(R.string.grip_content_description),
-            tint = scannerColors.gripColor
-        )
         if (scanResultState.state != ScanResultState.State.Found && scanResultState.foundItems.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -442,8 +441,7 @@ private fun SuggestionPicker(
                 if (!title.isNullOrEmpty()) {
                     Text(
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(top = 4.dp),
+                            .align(Alignment.Center),
                         style = scannerTextStyles.stateTextStyle,
                         text = title,
                         color = scannerColors.stateTextColor
@@ -451,13 +449,13 @@ private fun SuggestionPicker(
                 }
             }
         }
-        LazyColumn(modifier = Modifier.padding(8.dp)) {
+        LazyColumn(modifier = Modifier) {
             // the first item that is visible
             item {
                 if (scanResultState.foundItems.isNotEmpty()) {
                     Text(
                         modifier = Modifier
-                            .padding(start = 12.dp),
+                            .padding(start = 18.dp),
                         style = scannerTextStyles.listHeaderTextStyle,
                         color = scannerColors.listHeaderTextColor,
                         text = scannerStrings.scanStateFoundTitle
@@ -469,8 +467,10 @@ private fun SuggestionPicker(
                 key = { scanResultState.foundItems[it].words },
             ) {
                 val item = scanResultState.foundItems[it]
-                SuggestionWhat3words(
-                    modifier = Modifier.testTag("itemOCR ${item.words}").animateItemPlacement(),
+                What3wordsAddressListItem(
+                    modifier = Modifier
+                        .testTag("itemOCR ${item.words}")
+                        .animateItemPlacement(),
                     words = item.words,
                     nearestPlace = item.nearestPlace,
                     distance = item.distanceToFocusKm,
@@ -482,6 +482,7 @@ private fun SuggestionPicker(
                     onClick = {
                         onSuggestionSelected.invoke(item)
                     },
+                    showDivider = scanResultState.foundItems.lastIndex != it
                 )
             }
         }
@@ -512,7 +513,8 @@ private fun ScanArea(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     bottom.linkTo(parent.bottom)
-                }.onGloballyPositioned {
+                }
+                .onGloballyPositioned {
                     previewAreaReady.invoke(it)
                 },
             factory = {
@@ -600,7 +602,7 @@ private fun ScanArea(
             contentDescription = null,
             tint = scannerColors.logoColor
         )
-        OutlinedIconButton(
+        IconButton(
             modifier = Modifier.constrainAs(buttonClose) {
                 top.linkTo(parent.top)
                 end.linkTo(parent.end)
@@ -608,14 +610,16 @@ private fun ScanArea(
                 width = Dimension.wrapContent
                 height = Dimension.wrapContent
             },
-            icon = rememberVectorPainter(image = Icons.Default.Close),
-            buttonSize = IconButtonSize.Medium,
             onClick = {
                 onDismiss?.invoke()
-            },
-            textColor = scannerColors.closeIconColor,
-            iconContentDescription = closeButtonContentDescription
-        )
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                tint = scannerColors.closeIconColor,
+                contentDescription = closeButtonContentDescription
+            )
+        }
         val margin = (-2).dp
         val color = remember { Animatable(scannerColors.shutterInactiveColor) }
 

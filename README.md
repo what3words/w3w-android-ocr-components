@@ -1,17 +1,16 @@
 # <img src="https://what3words.com/assets/images/w3w_square_red.png" width="64" height="64" alt="what3words">&nbsp;w3w-android-ocr-components
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.what3words/w3w-android-ocr-components.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.what3words%22%20AND%20a:%22w3w-android-ocr-components%22)
+
+### Android minumum SDK support
+[![Generic badge](https://img.shields.io/badge/minSdk-24-green.svg)](https://developer.android.com/about/versions/marshmallow/android-7.0/)
+
+
 An Android library to scan what3words address using [MLKit V2](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
 
 <img src="https://github.com/what3words/w3w-android-ocr-components/blob/main/assets/ocr-component-demo.gif" width=40% height=40%>
 
 To obtain an API key, please visit [https://what3words.com/select-plan](https://what3words.com/select-plan) and sign up for an account.
-
-## Installation
-
-The artifact is available through [![Maven Central](https://img.shields.io/maven-central/v/com.what3words/w3w-android-ocr-components.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.what3words%22%20AND%20a:%22w3w-android-ocr-components%22)
-
-### Android minumum SDK support
-[![Generic badge](https://img.shields.io/badge/minSdk-24-green.svg)](https://developer.android.com/about/versions/marshmallow/android-7.0/)
 
 ### Gradle
 
@@ -19,21 +18,11 @@ The artifact is available through [![Maven Central](https://img.shields.io/maven
 implementation 'com.what3words:w3w-android-ocr-components:1.0.7'
 ```
 
-## Documentation
+## Sample using w3w-android-wrapper library
 
-Before implementing our MLKit OCR Component, you must add the MLKit libraries to our app. To do that, please follow this [MLKit Android setup steps](https://developers.google.com/ml-kit/vision/text-recognition/v2/android#before_you_begin).
+[ocr-sample](https://github.com/what3words/w3w-android-samples/tree/main/ocr-sample)
 
-Add the following permissions to your AndroidManifest.xml
-
-```XML
-<manifest>
-     ...
-     <uses-feature android:name="android.hardware.camera.any" />
-     <uses-permission android:name="android.permission.CAMERA" />
-     <uses-permission android:name="android.permission.INTERNET" />
-
-     <application ...
-```
+## Usage
 
 There are two ways to use our MLKit OCR Component:
 
