@@ -95,4 +95,4 @@ workflows:
             - mobile
           filters:
             branches:
-              only: /^(beta)\/.*/
+              only: /^(epic)\/.*/
