@@ -61,7 +61,6 @@ import com.what3words.design.library.ui.components.What3wordsAddressListItem
 import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
-import com.what3words.design.library.ui.theme.surfaceVariationsColors
 import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
@@ -123,7 +122,7 @@ object W3WOcrScannerDefaults {
      */
     @Composable
     fun defaultColors(
-        bottomDrawerBackground: Color = MaterialTheme.surfaceVariationsColors.surfaceContainerLowest,
+        bottomDrawerBackground: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
         overlayBackground: Color = Color(0x990A3049),
         stateTextColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
         listHeaderTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,

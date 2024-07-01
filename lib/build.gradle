@@ -12,11 +12,11 @@ apply from: 'maven-push.gradle'
 
 android {
     namespace 'com.what3words.ocr.components'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdk 24
-        targetSdk 33
+        targetSdk 34
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
