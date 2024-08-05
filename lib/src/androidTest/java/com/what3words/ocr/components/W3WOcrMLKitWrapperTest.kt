@@ -30,7 +30,6 @@ class W3WOcrMLKitWrapperTest {
 
     private val what3WordsAndroidWrapper: What3WordsAndroidWrapper = mockk()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testValid3waSimpleLatinOcrScan() = runTest {
         //given
@@ -70,7 +69,6 @@ class W3WOcrMLKitWrapperTest {
         assertEquals("en", scanResult.first[0].language)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testValid3waSimpleLatinUppercaseOcrScan() = runTest {
         //given
@@ -110,7 +108,6 @@ class W3WOcrMLKitWrapperTest {
         assertEquals("en", scanResult.first[0].language)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testValid3waHindiSimpleOcrScan() = runTest {
         //given
@@ -152,7 +149,6 @@ class W3WOcrMLKitWrapperTest {
         assertEquals("hi", scanResult.first[0].language)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testValid3waJapaneseSimpleOcrScan() = runTest {
         //given
@@ -194,7 +190,6 @@ class W3WOcrMLKitWrapperTest {
         assertEquals("ja", scanResult.first[0].language)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     // @Test
     fun testValid3waKoreanSimpleOcrScan() = runTest {
         //given
@@ -236,7 +231,6 @@ class W3WOcrMLKitWrapperTest {
         assertEquals("ko", scanResult.first[0].language)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     // @Test
     fun testValid3waChineseSimpleOcrScan() = runTest {
         //given
