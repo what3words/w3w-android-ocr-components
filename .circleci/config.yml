@@ -35,7 +35,7 @@ jobs:
           no-window: true
           restore-gradle-cache-prefix: v2a
       - android/run-tests:
-          test-command: ./gradlew lib:jacocoTestReport
+          test-command: ./gradlew lib:connectedDebugAndroidTest
           max-tries: 3
       - android/save-gradle-cache:
           cache-prefix: v2a
