@@ -12,7 +12,7 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: jars2-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
       - run:
           name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
           command: sudo chmod +x ./gradlew
@@ -25,7 +25,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: jars2-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
       - android/create-avd:
           avd-name: testDevice
           system-image: system-images;android-30;google_apis;x86
@@ -35,21 +35,21 @@ jobs:
           no-window: true
           restore-gradle-cache-prefix: v2a
       - android/run-tests:
-          test-command: ./gradlew lib:jacocoTestReport
+          test-command: ./gradlew lib:connectedDebugAndroidTest
           max-tries: 3
       - android/save-gradle-cache:
           cache-prefix: v2a
       - store_test_results:
           path: lib/build/outputs/androidTest-results
   deploy-to-sonatype:
-    docker:
-      - image: cimg/android:2023.05-browsers
-    environment:
-      JVM_OPTS: -Xmx3200m
+    executor:
+      name: android/android-machine
+      resource-class: large
+      tag: 2023.05.1
     steps:
       - checkout
       - restore_cache:
-          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
       - run:
           name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
           command: sudo chmod +x ./gradlew
@@ -62,7 +62,7 @@ jobs:
       - save_cache:
           paths:
             - ~/.gradle
-          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "lib/build.gradle" }}
+          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
       - run:
           name: Force break line gradle properties
           command: echo -e '\n' >> gradle.properties
