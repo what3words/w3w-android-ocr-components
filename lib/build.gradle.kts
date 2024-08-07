@@ -100,7 +100,7 @@ dependencies {
 
     // what3words
     implementation("com.what3words:w3w-android-api-sdk-bridge:1.0.8-SNAPSHOT")
-    api("com.what3words:w3w-android-wrapper:4.0.1")
+    api("com.what3words:w3w-android-wrapper:4.0.2")
     api("com.what3words:w3w-android-design-library:2.0.2")
 
     //compose
