@@ -102,6 +102,7 @@ dependencies {
     implementation("com.what3words:w3w-android-api-sdk-bridge:1.0.8")
     api("com.what3words:w3w-android-wrapper:4.0.2")
     api("com.what3words:w3w-android-design-library:2.0.2")
+    api(project(":what3words", configuration = "default"))
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))

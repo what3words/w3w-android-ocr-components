@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "ocr-components-sample"
 include(":lib")
+include(":what3words")
