@@ -15,7 +15,7 @@ To obtain an API key, please visit [https://what3words.com/select-plan](https://
 ### Gradle
 
 ```
-implementation 'com.what3words:w3w-android-ocr-components:1.0.7'
+implementation 'com.what3words:w3w-android-ocr-components:$latest'
 ```
 
 ## Sample using w3w-android-wrapper library
