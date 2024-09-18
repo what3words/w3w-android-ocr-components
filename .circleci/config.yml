@@ -95,4 +95,6 @@ workflows:
             - mobile
           filters:
             branches:
-              only: /^(epic)\/.*/
+              only:
+                - /^(epic)\/.*/
+                - staging
