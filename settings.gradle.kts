@@ -11,7 +11,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")
-        maven(url="https://s01.oss.sonatype.org/content/repositories/comwhat3words-1446")
     }
 }
 rootProject.name = "ocr-components-sample"
