@@ -112,6 +112,7 @@ class W3WMLKitImageDataSource internal constructor(
     }
 
     companion object {
+        @JvmStatic
         fun create(
             context: Context,
             recognizerOptions: Int,

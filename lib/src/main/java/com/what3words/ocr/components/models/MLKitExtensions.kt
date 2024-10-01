@@ -31,12 +31,11 @@ fun TextRecognizer.scan(
     onError: (W3WError) -> Unit,
     onCompleted: () -> Unit,
     coroutineScope: CoroutineScope,
-    rotation: Int = 0
+    rotation: Int = 0,
+    throttleTimeout: Long = 250L
 ) {
     require(image.width > 0 && image.height > 0) { "Invalid image dimensions" }
     require(rotation in 0..359) { "Rotation must be between 0 and 359 degrees" }
-
-    val throttleTimeout = 250L
 
     onScanning.invoke()
 
