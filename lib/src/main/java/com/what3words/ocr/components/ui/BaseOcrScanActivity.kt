@@ -5,18 +5,23 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN
-import com.what3words.androidwrapper.What3WordsAndroidWrapper
+import com.what3words.core.datasource.image.W3WImageDataSource
+import com.what3words.core.datasource.image.W3WLanguageSupportImageDataSource
+import com.what3words.core.datasource.text.W3WTextDataSource
+import com.what3words.core.types.language.W3WLanguage
+import com.what3words.core.types.language.W3WRFC5646Language
+import com.what3words.core.types.language.getLanguageCode
+import com.what3words.core.types.options.W3WAutosuggestOptions
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
-import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.ocr.components.R
 import com.what3words.ocr.components.extensions.serializable
-import com.what3words.ocr.components.models.W3WOcrWrapper
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 abstract class BaseOcrScanActivity : ComponentActivity() {
 
-    protected lateinit var dataProviderType: W3WOcrWrapper.DataProvider
-    protected lateinit var ocrProviderType: W3WOcrWrapper.OcrProvider
+    protected lateinit var dataProviderType: DataProvider
     protected lateinit var displayUnits: DisplayUnits
     protected lateinit var scanStateScanningTitle: String
     protected lateinit var scanStateDetectedTitle: String
@@ -26,16 +31,14 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
     protected lateinit var closeButtonContentDescription: String
     protected var mlKitV2Library: Int? = null
     protected var apiKey: String? = null
-    protected var languageCode: String? = null
+    protected var language: W3WLanguage? = null
     protected var tessDataPath: String? = null
-    protected var autosuggestOptions: AutosuggestOptions? = null
-    protected var returnCoordinates: Boolean = false
+    protected var autosuggestOptions: W3WAutosuggestOptions? = null
 
-    abstract val ocrWrapper: W3WOcrWrapper
-    abstract val dataProvider: What3WordsAndroidWrapper
+    abstract val w3WImageDataSource: W3WImageDataSource
+    abstract val w3WTextDataSource: W3WTextDataSource
 
     companion object {
-        const val OCR_PROVIDER_ID = "OCR_PROVIDER"
         const val DATA_PROVIDER_ID = "DATA_PROVIDER"
         const val MLKIT_LIBRARY_ID = "MLKIT_LIBRARY"
         const val AUTOSUGGEST_OPTIONS_ID = "AUTOSUGGEST_OPTIONS"
@@ -52,29 +55,32 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
         const val SCAN_STATE_FOUND_TITLE_ID = "SCAN_STATE_FOUND_TITLE"
         const val SCAN_STATE_LOADING_TITLE_ID = "SCAN_STATE_LOADING_TITLE"
         const val CLOSE_BUTTON_CD_ID = "CLOSE_BUTTON_CD"
-    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        ocrWrapper.stop()
+        enum class DataProvider {
+            API,
+            SDK
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // we can assume here that is not null due to the checks and exceptions thrown on the Builder.build()
-        if (!intent.hasExtra(DATA_PROVIDER_ID) || !intent.hasExtra(OCR_PROVIDER_ID)) {
-            throw IllegalAccessException("Missing data provider or ocr provider, please use newInstanceWithApi or newInstanceWithSdk to create a new a specific instance of our OCR Activities.")
+        if (!intent.hasExtra(DATA_PROVIDER_ID)) {
+            throw IllegalAccessException("Missing data provider please use newInstanceWithApi or newInstanceWithSdk to create a new a specific instance of our OCR Activities.")
         }
         dataProviderType = intent.serializable(DATA_PROVIDER_ID)!!
-        ocrProviderType = intent.serializable(OCR_PROVIDER_ID)!!
         mlKitV2Library = if (intent.hasExtra(MLKIT_LIBRARY_ID)) intent.getIntExtra(
             MLKIT_LIBRARY_ID,
             LATIN
         ) else null
         apiKey = intent.getStringExtra(API_KEY_ID)
-        languageCode = intent.getStringExtra(LANGUAGE_CODE_ID)
+        language = intent.getStringExtra(LANGUAGE_CODE_ID)?.let {
+            W3WRFC5646Language.values().first { language -> language.getLanguageCode() == it }
+        }
         tessDataPath = intent.getStringExtra(TESS_DATA_PATH_ID)
-        autosuggestOptions = intent.serializable(AUTOSUGGEST_OPTIONS_ID)
+        autosuggestOptions = intent.getStringExtra(AUTOSUGGEST_OPTIONS_ID)?.let {
+            Json.decodeFromString(it)
+        }
         displayUnits = intent.serializable(DISPLAY_UNITS_ID) ?: DisplayUnits.SYSTEM
         scanStateScanningTitle = intent.getStringExtra(SCAN_STATE_SCANNING_TITLE_ID)
             ?: getString(R.string.scan_state_scanning)
@@ -90,16 +96,19 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
             ?: getString(R.string.cd_close_button)
 
         //this setLanguage will just be called in OCRProviderTypes that are aware of languageCodes.
-        languageCode?.let { ocrWrapper.setLanguage(it) }
+        language?.let {
+            (w3WImageDataSource as? W3WLanguageSupportImageDataSource)?.setLanguage(it)
+        }
 
         setContent {
             W3WTheme {
                 // A surface container using the 'background' color from the theme
                 W3WOcrScanner(
-                    ocrWrapper,
-                    dataProvider = dataProvider,
-                    options = autosuggestOptions,
-                    returnCoordinates = returnCoordinates,
+                    ocrScanManager = rememberOcrScanManager(
+                        w3wImageDataSource = w3WImageDataSource,
+                        w3wTextDataSource = w3WTextDataSource,
+                        options = autosuggestOptions
+                    ),
                     displayUnits = displayUnits,
                     scannerStrings = W3WOcrScannerDefaults.defaultStrings(
                         scanStateScanningTitle = scanStateScanningTitle,
@@ -121,7 +130,7 @@ abstract class BaseOcrScanActivity : ComponentActivity() {
                     },
                     onSuggestionSelected = {
                         setResult(RESULT_OK, Intent().apply {
-                            putExtra(SUCCESS_RESULT_ID, it)
+                            putExtra(SUCCESS_RESULT_ID, Json.encodeToString(it))
                         })
                         finish()
                     })

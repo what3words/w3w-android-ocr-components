@@ -4,9 +4,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.what3words.core.types.domain.W3WSuggestion
 import com.what3words.javawrapper.response.Suggestion
 
-class ScanResultState() {
+internal class ScanResultState {
     sealed class State {
         object Idle : State()
 
@@ -25,7 +26,7 @@ class ScanResultState() {
         data class Error(val message: String) : State()
     }
 
-    var foundItems = mutableStateListOf<Suggestion>()
+    var foundItems = mutableStateListOf<W3WSuggestion>()
         private set
 
     var state: State by mutableStateOf(State.Idle)
@@ -50,17 +51,13 @@ class ScanResultState() {
         state = State.Error(message = errorMessage)
     }
 
-    fun found(res: List<Suggestion>) {
+    fun found(res: List<W3WSuggestion>) {
         res.forEach { newFound ->
-            if (foundItems.all { it.words != newFound.words }) {
+            if (foundItems.all { it.w3wAddress.words != newFound.w3wAddress.words }) {
                 foundItems.add(0, newFound)
-                lastAdded = newFound.words
+                lastAdded = newFound.w3wAddress.words
                 state = State.Found
             }
         }
-    }
-
-    fun switchToDefault() {
-        state = State.Scanning
     }
 }

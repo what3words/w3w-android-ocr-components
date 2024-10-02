@@ -2,16 +2,20 @@ package com.what3words.ocr.components.ui
 
 import android.content.Context
 import android.content.Intent
-import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.androidwrapper.What3WordsV3
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
+import com.what3words.androidwrapper.datasource.text.W3WApiTextDataSource
+import com.what3words.core.datasource.image.W3WImageDataSource
+import com.what3words.core.datasource.text.W3WTextDataSource
+import com.what3words.core.types.options.W3WAutosuggestOptions
+import com.what3words.datasource.text.W3WSDKTextDataSource
 import com.what3words.design.library.ui.models.DisplayUnits
+import com.what3words.javasdk.W3wEngines
 import com.what3words.javawrapper.request.AutosuggestOptions
 import com.what3words.javawrapper.response.Coordinates
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
 import com.what3words.ocr.components.R
-import com.what3words.ocr.components.models.W3WOcrMLKitWrapper
-import com.what3words.ocr.components.models.W3WOcrWrapper
+import com.what3words.ocr.components.models.W3WMLKitImageDataSource
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class MLKitOcrScanActivity : BaseOcrScanActivity() {
     companion object {
@@ -23,8 +27,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          *
          * @param context context needed to create new Intent.
          * @param mlKitLibrary the MLKit Library that this instance should use to detect text,
-         * options [W3WOcrWrapper.MLKitLibraries.Latin] (default), [W3WOcrWrapper.MLKitLibraries.LatinAndChinese],
-         * [W3WOcrWrapper.MLKitLibraries.LatinAndKorean], [W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari], [W3WOcrWrapper.MLKitLibraries.LatinAndJapanese].
          * @param apiKey the API key to use when querying the what3words API.
          * @param options [AutosuggestOptions] to be applied when using what3words API. (Optional)
          * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not. Default false, if true, it might result in API cost charges.
@@ -40,7 +42,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             context: Context,
             mlKitLibrary: Int,
             apiKey: String,
-            options: AutosuggestOptions? = null,
+            options: W3WAutosuggestOptions? = null,
             returnCoordinates: Boolean = false,
             displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
             scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
@@ -53,7 +55,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             return buildInstance(
                 context,
                 mlKitLibrary,
-                W3WOcrWrapper.DataProvider.API,
+                BaseOcrScanActivity.Companion.DataProvider.API,
                 apiKey,
                 options,
                 returnCoordinates,
@@ -75,8 +77,6 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
          *
          * @param context context needed to create new Intent.
          * @param mlKitLibrary the MLKit Library that this instance should use to detect text,
-         * options [W3WOcrWrapper.MLKitLibraries.Latin] (default), [W3WOcrWrapper.MLKitLibraries.LatinAndChinese],
-         * [W3WOcrWrapper.MLKitLibraries.LatinAndKorean], [W3WOcrWrapper.MLKitLibraries.LatinAndDevanagari], [W3WOcrWrapper.MLKitLibraries.LatinAndJapanese].
          * @param options [AutosuggestOptions] to be applied when using what3words SDK. (Optional)
          * @param returnCoordinates when a [SuggestionWithCoordinates] is picked if it should return [Coordinates] or not.
          * @param displayUnits the [DisplayUnits] that will show on the [SuggestionPicker], by default will be [DisplayUnits.SYSTEM] which will use the system Locale to determinate if Imperial or Metric system.
@@ -90,7 +90,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         fun newInstanceWithSdk(
             context: Context,
             mlKitLibrary: Int,
-            options: AutosuggestOptions? = null,
+            options: W3WAutosuggestOptions? = null,
             returnCoordinates: Boolean = false,
             displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
             scanStateScanningTitle: String = context.getString(R.string.scan_state_scanning),
@@ -103,7 +103,7 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
             return buildInstance(
                 context,
                 mlKitLibrary,
-                W3WOcrWrapper.DataProvider.SDK,
+                BaseOcrScanActivity.Companion.DataProvider.SDK,
                 null,
                 options,
                 returnCoordinates,
@@ -120,9 +120,9 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         private fun buildInstance(
             context: Context,
             mlKitLibrary: Int,
-            dataProvider: W3WOcrWrapper.DataProvider,
+            dataProvider: BaseOcrScanActivity.Companion.DataProvider,
             apiKey: String? = null,
-            options: AutosuggestOptions? = null,
+            options: W3WAutosuggestOptions? = null,
             returnCoordinates: Boolean,
             displayUnits: DisplayUnits,
             scanStateScanningTitle: String,
@@ -134,9 +134,8 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         ): Intent {
             return Intent(context, MLKitOcrScanActivity::class.java).apply {
                 this.putExtra(DATA_PROVIDER_ID, dataProvider)
-                this.putExtra(OCR_PROVIDER_ID, W3WOcrWrapper.OcrProvider.MLKit)
                 this.putExtra(MLKIT_LIBRARY_ID, mlKitLibrary)
-                this.putExtra(AUTOSUGGEST_OPTIONS_ID, options)
+                this.putExtra(AUTOSUGGEST_OPTIONS_ID, Json.encodeToString(options))
                 this.putExtra(API_KEY_ID, apiKey)
                 this.putExtra(RETURN_COORDINATES_ID, returnCoordinates)
                 this.putExtra(DISPLAY_UNITS_ID, displayUnits)
@@ -150,32 +149,25 @@ class MLKitOcrScanActivity : BaseOcrScanActivity() {
         }
     }
 
-    override val dataProvider: What3WordsAndroidWrapper by lazy {
-        if (dataProviderType == W3WOcrWrapper.DataProvider.SDK) {
-            What3WordsSdk(this, "")
+    override val w3WTextDataSource: W3WTextDataSource by lazy {
+        if (dataProviderType == BaseOcrScanActivity.Companion.DataProvider.SDK) {
+            val iEngine = W3wEngines.newDeviceEngine(this)
+            W3WSDKTextDataSource.create(iEngine)
         } else {
-            What3WordsV3(apiKey!!, this)
+            W3WApiTextDataSource.create(this, apiKey!!)
         }
     }
 
-    override val ocrWrapper: W3WOcrWrapper by lazy {
-        when (ocrProviderType) {
-            W3WOcrWrapper.OcrProvider.MLKit -> {
-                buildMLKit(this)
-            }
-
-            else -> {
-                throw ExceptionInInitializerError("Use private library for Hybrid and Tesseract")
-            }
-        }
+    override val w3WImageDataSource: W3WImageDataSource by lazy {
+        buildMLKit(this)
     }
 
     private fun buildMLKit(
         context: Context
-    ): W3WOcrMLKitWrapper {
-        if(mlKitV2Library == null) throw ExceptionInInitializerError(
+    ): W3WMLKitImageDataSource {
+        if (mlKitV2Library == null) throw ExceptionInInitializerError(
             "MLKitOcrScanActivity needs a valid MLKit Language Library"
         )
-        return W3WOcrMLKitWrapper(context, mlKitV2Library!!)
+        return W3WMLKitImageDataSource.create(context, mlKitV2Library!!)
     }
 }

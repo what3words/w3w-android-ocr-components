@@ -8,6 +8,7 @@ plugins {
     id("jacoco")
     id("signing")
     id("org.jetbrains.dokka") version "1.5.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
 }
 
 group = "com.what3words"
@@ -90,18 +91,22 @@ dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // MLKit
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.1")
 
     // what3words
-    implementation("com.what3words:w3w-android-api-sdk-bridge:1.0.8")
     api("com.what3words:w3w-android-wrapper:4.0.2")
     api("com.what3words:w3w-android-design-library:2.0.2")
+    api("com.what3words:w3w-core-android:1.1.0-SNAPSHOT") {
+        isChanging = true
+    }
+    compileOnly(project(":what3words", configuration = "default"))
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
@@ -122,11 +127,11 @@ dependencies {
     androidTestImplementation("io.mockk:mockk-android:1.13.3")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 
-    androidTestImplementation("com.google.mlkit:text-recognition:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-devanagari:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-japanese:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.0")
+    androidTestImplementation("com.google.mlkit:text-recognition:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.1")
 }
 
 //region publishing

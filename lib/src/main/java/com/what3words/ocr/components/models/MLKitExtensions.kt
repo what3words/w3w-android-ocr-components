@@ -1,82 +1,62 @@
 package com.what3words.ocr.components.models
 
 import android.graphics.Bitmap
-import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
 import com.google.mlkit.vision.text.TextRecognizer
-import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.androidwrapper.helpers.DefaultDispatcherProvider
-import com.what3words.androidwrapper.helpers.DispatcherProvider
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
-import com.what3words.javawrapper.What3WordsV3
+import com.what3words.core.types.common.W3WError
+import com.what3words.core.types.options.W3WAutosuggestOptions
 import com.what3words.javawrapper.What3WordsV3.findPossible3wa
-import com.what3words.javawrapper.request.AutosuggestOptions
-import com.what3words.javawrapper.response.APIResponse.What3WordsError
-import com.what3words.javawrapper.response.Suggestion
-import com.what3words.ocr.components.extensions.io
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Scan [image] [Bitmap] for one or more three word addresses using MLKit.
  *
  * @param image the [Bitmap] that the scanner should use to find possible three word addresses.
- * @param dataProvider the [What3WordsAndroidWrapper] that this wrapper will use to validate a three word address could be [What3WordsV3] or [What3WordsSdk].
- * @param options the [AutosuggestOptions] to be applied when validating a possible three word address,
- * i.e: country clipping, check [AutosuggestOptions] for possible filters/clippings.
+ * i.e: country clipping, check [W3WAutosuggestOptions] for possible filters/clippings.
  * @param onScanning the callback when it starts to scan image for text.
  * @param onDetected the callback when our [findPossible3wa] regex finds possible matches on the scanned text.
- * @param onValidating the callback when we start validating the results of [findPossible3wa] against our API/SDK to check if valid (it will take into account [options] if provided).
- * @param onFinished the callback with a [List] of [Suggestion] or a [What3WordsError] in case an error was found while scanning.
+ * @param onError the callback with a [W3WError] in case an error was found while scanning.
  */
 fun TextRecognizer.scan(
     image: Bitmap,
-    dataProvider: What3WordsAndroidWrapper,
-    options: AutosuggestOptions?,
     onScanning: () -> Unit,
-    onDetected: () -> Unit,
-    onValidating: () -> Unit,
-    onFinished: (List<Suggestion>, What3WordsError?) -> Unit,
-    dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
-    tag: String = this::class.java.simpleName,
+    onDetected: (List<String>) -> Unit,
+    onError: (W3WError) -> Unit,
+    onCompleted: () -> Unit,
+    coroutineScope: CoroutineScope,
+    rotation: Int = 0,
+    throttleTimeout: Long = 250L
 ) {
-    Log.d(tag, "** scanning with MLKit **")
+    require(image.width > 0 && image.height > 0) { "Invalid image dimensions" }
+    require(rotation in 0..359) { "Rotation must be between 0 and 359 degrees" }
+
     onScanning.invoke()
-    var error: What3WordsError? = null
-    val listFound3wa = mutableListOf<Suggestion>()
-    this.process(image, 0).addOnSuccessListener { visionText ->
-        io(dispatcherProvider) {
-            for (possible3wa in What3WordsV3.findPossible3wa(visionText.text.lowercase())) {
-                Log.d(tag, "*** found possible 3wa: $possible3wa ***")
-                onDetected.invoke()
-                val autosuggestReq =
-                    dataProvider.autosuggest(possible3wa)
-                if (options != null) autosuggestReq.options(options)
-                val autosuggestRes = autosuggestReq.execute()
-                if (autosuggestRes.isSuccessful) {
-                    //checks if at least one suggestion words matches the possible3wa from the regex,
-                    //this makes our OCR more accurate and avoids getting partial what3words address while focusing the camera.
-                    autosuggestRes.suggestions.firstOrNull { it.words == possible3wa }?.let {
-                        Log.d(tag, "*** dataProvider found a full match: ${it.words} ***")
-                        listFound3wa.add(it)
-                    }
-                } else {
-                    Log.d(tag, "*** dataProvider autosuggest failed with error: $error ***")
-                    error = autosuggestRes.error
+
+    coroutineScope.launch {
+        suspendCoroutine { continuation ->
+            this@scan.process(image, rotation).addOnSuccessListener { visionText ->
+                val possibleAddresses = findPossible3wa(visionText.text)
+                if (possibleAddresses.isNotEmpty()) {
+                    onDetected.invoke(possibleAddresses)
                 }
-                onValidating.invoke()
-            }
-            withContext(dispatcherProvider.main()) {
-                onFinished.invoke(if (error == null) listFound3wa else emptyList(), error)
+            }.addOnFailureListener { e ->
+                onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
+            }.addOnCompleteListener {
+                continuation.resume(Unit)
             }
         }
-    }.addOnFailureListener { e ->
-        Log.e(tag, "** scanning with MLKit failed with error: ${e.message} **")
-        onFinished.invoke(emptyList(), What3WordsError.SDK_ERROR.apply {
-            message = e.message
-        })
+
+        delay(throttleTimeout)
+    }.invokeOnCompletion { exception ->
+        exception?.let { onError.invoke(W3WError(message = it.message)) }
+        onCompleted.invoke()
     }
 }
 
@@ -84,23 +64,18 @@ fun TextRecognizer.scan(
  * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.
  *
  * @param moduleClient [ModuleInstallClient] to check against.
- * @param tag the tag of the class this extension is used on.
  * @param result a callback with a [Boolean] true if all modules are installed or no modules needed to install, false if not installed and wrapper needs to download modules.
  */
 fun TextRecognizer.isModuleInstalled(
     moduleClient: ModuleInstallClient,
-    tag: String = this::class.java.simpleName,
     result: (Boolean) -> Unit
 ) {
-    Log.d(tag, "* moduleInstalled check *")
     moduleClient
         .areModulesAvailable(this)
         .addOnSuccessListener { response ->
-            Log.d(tag, "** moduleInstalled check result: ${response.areModulesAvailable()} **")
             result.invoke(response.areModulesAvailable())
         }
         .addOnFailureListener {
-            Log.d(tag, "** moduleInstalled check failed with exception: ${it.message} **")
             result.invoke(false)
         }
 }
@@ -109,33 +84,22 @@ fun TextRecognizer.isModuleInstalled(
  * Request to download modules that this wrapper depend on.
  *
  * @param moduleClient [ModuleInstallClient] to check against.
- * @param tag the tag of the class this extension is used on.
- * @param onDownloaded a callback with a [Boolean] or [What3WordsError], if successful true, if some issues were found while trying to download dependency will be false,
- * if false the [What3WordsError] should contain the information related to the download error.
+ * @param onCompleted a callback when the download of the modules was successful.
+ * @param onError a callback with a [W3WError] in case an error was found while downloading the modules.
  */
 fun TextRecognizer.installModule(
     moduleClient: ModuleInstallClient,
-    tag: String = this::class.java.simpleName,
-    onDownloaded: (Boolean, What3WordsError?) -> Unit
+    onCompleted: () -> Unit,
+    onError: (W3WError) -> Unit
 ) {
     val listener = object : InstallStatusListener {
         override fun onInstallStatusUpdated(update: ModuleInstallStatusUpdate) {
-            update.progressInfo?.let {
-                val progress = (it.bytesDownloaded * 100 / it.totalBytesToDownload).toInt()
-                // Set the progress for the progress bar.
-                Log.d(tag, "*** Download progress: $progress ***")
-            }
-
             if (isTerminateState(update.installState)) {
                 moduleClient.unregisterListener(this)
                 if (update.installState == ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED) {
-                    Log.d(tag, "*** Download completed ***")
-                    onDownloaded.invoke(true, null)
+                    onCompleted()
                 } else if (update.installState == ModuleInstallStatusUpdate.InstallState.STATE_FAILED) {
-                    Log.d(tag, "*** Download failed with errorCode: ${update.errorCode} ***")
-                    onDownloaded.invoke(false, What3WordsError.SDK_ERROR.apply {
-                        message = "Download failed with errorCode: ${update.errorCode}"
-                    })
+                    onError.invoke(W3WError(message = "Download failed with errorCode: ${update.errorCode}"))
                 }
             }
         }
@@ -150,15 +114,10 @@ fun TextRecognizer.installModule(
             .addApi(this)
             .setListener(listener)
             .build()
+
     moduleClient
         .installModules(moduleInstallRequest)
-        .addOnSuccessListener {
-            Log.d(tag, "** installModule requested success, but not downloaded yet. **")
-        }
         .addOnFailureListener {
-            Log.d(tag, "** installModule requested failed with exception: ${it.message} **")
-            onDownloaded.invoke(false, What3WordsError.SDK_ERROR.apply {
-                message = it.message
-            })
+            onError(W3WError(message = it.message))
         }
 }
