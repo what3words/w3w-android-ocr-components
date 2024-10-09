@@ -1,6 +1,7 @@
-package com.what3words.ocr.components.models
+package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
