@@ -1,9 +1,12 @@
 package com.what3words.ocr.components.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
-import android.view.ViewGroup
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.tween
@@ -28,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,19 +50,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.domain.W3WSuggestion
 import com.what3words.core.types.domain.isLand
 import com.what3words.core.types.geometry.km
+import com.what3words.core.types.image.W3WImage
 import com.what3words.design.library.ui.components.What3wordsAddressListItem
 import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
@@ -67,8 +76,8 @@ import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.javawrapper.response.APIResponse.What3WordsError
 import com.what3words.javawrapper.response.SuggestionWithCoordinates
 import com.what3words.ocr.components.R
-import com.what3words.ocr.components.models.ScanResultState
-import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
+import com.what3words.ocr.components.internal.buildW3WImageAnalysis
+import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 private const val ANIMATION_DURATION = 500 //ms
@@ -197,8 +206,8 @@ object W3WOcrScannerDefaults {
  * Creates a new [W3WOcrScanner] Composable to utilize CameraX and a [OcrScanManager] for scanning what3words addresses using text recognition.
  * This component integrates camera functionality with OCR (Optical Character Recognition) to detect and validate three-word addresses in real-time.
  *
- * @param ocrScanManager The [OcrScanManager] instance used for scanning what3words addresses.
  * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
+ * @param ocrScannerState The state of the [W3WOcrScanner]. This state is used to control the scanner's behavior and display.
  * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
  *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
  * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
@@ -214,17 +223,16 @@ object W3WOcrScannerDefaults {
  *                         three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultColors]
  *                         and can be overridden.
  * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
+ * @param onFrameCaptured Callback invoked when a [W3WImage] is captured by the camera and ready for OCR processing.
  * @param onSuggestionSelected Callback invoked when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker]
- * @param onSuggestionFound Callback invoked when a [SuggestionWithCoordinates] is detected, validated, and displayed in the [SuggestionPicker].
  * @param onError Callback invoked when an error occurs within this composable, providing a [What3WordsError].
  * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
  */
-@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
-@androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun W3WOcrScanner(
-    ocrScanManager: OcrScanManager,
     modifier: Modifier = Modifier,
+    ocrScannerState: OcrScannerState,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
@@ -232,141 +240,120 @@ fun W3WOcrScanner(
     suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
     suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
+    onFrameCaptured: (W3WImage) -> Unit,
     onSuggestionSelected: ((W3WSuggestion) -> Unit),
-    onError: ((W3WError) -> Unit)?,
+    onError: ((W3WError) -> Unit),
     onDismiss: (() -> Unit)?,
-    onSuggestionFound: ((W3WSuggestion) -> Unit)? = null
 ) {
-    val context = LocalContext.current.applicationContext
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val previewView by remember {
-        mutableStateOf(PreviewView(context))
-    }
-    val scanResultState = remember { ScanResultState() }
-
-    val scaffoldState = rememberBottomSheetScaffoldState(
-        bottomSheetState = rememberStandardBottomSheetState(SheetValue.PartiallyExpanded)
-    )
-
-    var heightSheet by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
-    var heightSheetPeek by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
-    ) { granted ->
-        if (granted) {
-            ocrScanManager.scanWithCamera(context, lifecycleOwner, previewView)
-        } else {
-            onError?.invoke(
-                W3WError(
-                    message = "Ocr scanner needs camera permissions"
-                )
-            )
-        }
+    )
+
+    LaunchedEffect(Unit) {
+        cameraPermissionState.launchPermissionRequest()
     }
 
+    when {
+        cameraPermissionState.status.isGranted -> {
+            ScannerContent(
+                modifier = modifier,
+                context = LocalContext.current,
+                lifecycleOwner = LocalLifecycleOwner.current,
+                displayUnits = displayUnits,
+                ocrScannerState = ocrScannerState,
+                onFrameCaptured = onFrameCaptured,
+                onDismiss = onDismiss,
+                onError = onError,
+                scannerColors = scannerColors,
+                scannerStrings = scannerStrings,
+                scannerTextStyles = scannerTextStyles,
+                suggestionTextStyles = suggestionTextStyles,
+                suggestionColors = suggestionColors,
+                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                onSuggestionSelected = onSuggestionSelected,
+            )
+        }
+
+        else -> {
+            onError(W3WError(message = "Ocr scanner needs camera permissions"))
+        }
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun W3WOcrScanner(
+    modifier: Modifier = Modifier,
+    ocrScanManager: OcrScanManager,
+    displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
+    scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
+    scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
+    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
+    suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
+    onSuggestionFound: ((W3WSuggestion) -> Unit),
+    onSuggestionSelected: ((W3WSuggestion) -> Unit),
+    onError: ((W3WError) -> Unit),
+    onDismiss: (() -> Unit)?,
+) {
+    val cameraPermissionState = rememberPermissionState(
+        Manifest.permission.CAMERA
+    )
+
     LaunchedEffect(key1 = Unit) {
-        ocrScanManager.setOcrScanResultCallback(object : OcrScanResultCallback {
-            override fun onScanning() {
-                scanResultState.scanning()
-            }
-
-            override fun onDetected() {
-                scanResultState.detected()
-            }
-
-            override fun onValidating() {
-                scanResultState.validating()
-            }
-
-            override fun onError(error: W3WError) {
-                onError?.invoke(error)
-            }
-
-            override fun onFound(result: List<W3WSuggestion>) {
-                result.forEach { onSuggestionFound?.invoke(it) }
-                scanResultState.found(result)
-            }
-        })
-
         ocrScanManager.getReady(
             onReady = {
                 cameraPermissionState.launchPermissionRequest()
             },
             onError = {
-                onError?.invoke(it)
+                onError.invoke(it)
             }
         )
     }
 
-    /** This [LaunchedEffect] will run when a new scanned what3words address is added to [SuggestionPicker],
-     * and if list is not empty change the size of the peek and set it to expanded.
-     */
-    LaunchedEffect(key1 = scanResultState.lastAdded) {
-        if (scanResultState.foundItems.size > 0 && scaffoldState.bottomSheetState.hasPartiallyExpandedState) {
-            scaffoldState.bottomSheetState.expand()
-            heightSheetPeek = 100.dp
-        }
+    val ocrScannerState by remember {
+        ocrScanManager.ocrScannerState
     }
 
-    BottomSheetScaffold(
-        modifier = modifier,
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = heightSheetPeek,
-        sheetDragHandle = {
-            BottomSheetDefaults.DragHandle(
-                color = scannerColors.gripColor
-            )
-        },
-        sheetContainerColor = scannerColors.bottomDrawerBackground,
-        sheetContent = {
-            SuggestionPicker(
-                scanResultState,
-                heightSheet,
-                displayUnits,
+    when {
+        cameraPermissionState.status.isGranted -> {
+            ScannerContent(
+                modifier = modifier,
+                context = LocalContext.current,
+                lifecycleOwner = LocalLifecycleOwner.current,
+                displayUnits = displayUnits,
+                ocrScannerState = ocrScannerState,
+                onFrameCaptured = {
+                    ocrScanManager.scanImageBlocking(it,
+                        onError = onError,
+                        onFound = { suggestions ->
+                            suggestions.forEach { suggestion ->
+                                onSuggestionFound.invoke(suggestion)
+                            }
+                        })
+                },
+                onDismiss = onDismiss,
+                onError = onError,
+                scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
+                scannerTextStyles = scannerTextStyles,
                 suggestionTextStyles = suggestionTextStyles,
                 suggestionColors = suggestionColors,
-                scannerColors = scannerColors,
-                scannerTextStyles = scannerTextStyles,
-                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix
-            ) {
-                ocrScanManager.stop()
-                onSuggestionSelected.invoke(it)
-            }
+                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                onSuggestionSelected = onSuggestionSelected,
+            )
         }
-    ) {
-        // app UI
-        ScanArea(
-            previewView,
-            scanResultState,
-            scannerStrings.closeButtonContentDescription,
-            scannerColors,
-            cropAreaReady = {
-                if (scanResultState.state == ScanResultState.State.Idle) {
-                    ocrScanManager.cropLayoutCoordinates = it
-                }
-            },
-            bottomAreaReady = {
-                val newHeight =
-                    (it.size.height / context.resources.displayMetrics.density).dp - SHEET_PEEK_HEIGHT.dp
-                if (heightSheet != newHeight) {
-                    heightSheet = newHeight
-                }
-            },
-            previewAreaReady = {
-                if (scanResultState.state == ScanResultState.State.Idle) {
-                    ocrScanManager.cameraLayoutCoordinates = it
-                }
-            },
-            onDismiss = {
-                onDismiss?.invoke()
-            })
+
+        else -> {
+            onError(W3WError(message = "Ocr scanner needs camera permissions"))
+        }
     }
 }
 
 @Composable
 private fun SuggestionPicker(
-    scanResultState: ScanResultState,
+    ocrScannerState: OcrScannerState,
     maxHeight: Dp,
     displayUnits: DisplayUnits,
     scannerStrings: W3WOcrScannerDefaults.Strings,
@@ -381,18 +368,17 @@ private fun SuggestionPicker(
         modifier = Modifier
             .heightIn(min = 90.dp, max = maxHeight),
     ) {
-        if (scanResultState.state != ScanResultState.State.Found && scanResultState.foundItems.isEmpty()) {
+        if (ocrScannerState.state != OcrScannerState.State.Found && ocrScannerState.foundItems.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                val title: String? = when (scanResultState.state) {
-                    ScanResultState.State.Detected -> scannerStrings.scanStateDetectedTitle
-                    is ScanResultState.State.Error -> null
-                    ScanResultState.State.Found -> null
-                    ScanResultState.State.Scanning -> scannerStrings.scanStateScanningTitle
-                    ScanResultState.State.Validating -> scannerStrings.scanStateValidatingTitle
-                    ScanResultState.State.Idle -> scannerStrings.scanStateLoadingTitle
+                val title: String? = when (ocrScannerState.state) {
+                    OcrScannerState.State.Idle -> scannerStrings.scanStateLoadingTitle
+                    OcrScannerState.State.Detected -> scannerStrings.scanStateDetectedTitle
+                    OcrScannerState.State.Scanning -> scannerStrings.scanStateScanningTitle
+                    OcrScannerState.State.Validating -> scannerStrings.scanStateValidatingTitle
+                    else -> null
                 }
                 if (!title.isNullOrEmpty()) {
                     Text(
@@ -408,7 +394,7 @@ private fun SuggestionPicker(
         LazyColumn(modifier = Modifier) {
             // the first item that is visible
             item {
-                if (scanResultState.foundItems.isNotEmpty()) {
+                if (ocrScannerState.foundItems.isNotEmpty()) {
                     Text(
                         modifier = Modifier
                             .padding(start = 18.dp),
@@ -419,10 +405,10 @@ private fun SuggestionPicker(
                 }
             }
             items(
-                count = scanResultState.foundItems.size,
-                key = { scanResultState.foundItems[it].w3wAddress.words },
+                count = ocrScannerState.foundItems.size,
+                key = { ocrScannerState.foundItems[it].w3wAddress.words },
             ) {
-                val item = scanResultState.foundItems[it]
+                val item = ocrScannerState.foundItems[it]
                 Modifier
                     .testTag("itemOCR ${item.w3wAddress.words}")
                 What3wordsAddressListItem(
@@ -438,7 +424,7 @@ private fun SuggestionPicker(
                     onClick = {
                         onSuggestionSelected.invoke(item)
                     },
-                    showDivider = scanResultState.foundItems.lastIndex != it
+                    showDivider = ocrScannerState.foundItems.lastIndex != it
                 )
             }
         }
@@ -447,20 +433,23 @@ private fun SuggestionPicker(
 
 @Composable
 private fun ScanArea(
+    ocrScannerState: OcrScannerState,
     previewView: PreviewView,
-    scanResultState: ScanResultState,
     closeButtonContentDescription: String,
     scannerColors: W3WOcrScannerDefaults.Colors,
     cropAreaReady: (LayoutCoordinates) -> Unit,
     bottomAreaReady: (LayoutCoordinates) -> Unit,
     previewAreaReady: (LayoutCoordinates) -> Unit,
-    onDismiss: (() -> Unit)?
+    onDismiss: (() -> Unit)?,
 ) {
     val orientation = LocalConfiguration.current.orientation
+
     ConstraintLayout(
         modifier = Modifier.fillMaxSize()
     ) {
         val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage) = createRefs()
+
+        // Use the provided PreviewView
         AndroidView(
             modifier = Modifier
                 .fillMaxSize()
@@ -473,15 +462,9 @@ private fun ScanArea(
                 .onGloballyPositioned {
                     previewAreaReady.invoke(it)
                 },
-            factory = {
-                previewView.apply {
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            }
+            factory = { previewView }
         )
+
         Box(
             modifier = Modifier
                 .constrainAs(startBackground) {
@@ -493,6 +476,7 @@ private fun ScanArea(
                 }
                 .background(scannerColors.overlayBackground)
         )
+
         Box(
             modifier = Modifier
                 .constrainAs(endBackground) {
@@ -530,6 +514,7 @@ private fun ScanArea(
                     cropAreaReady.invoke(it)
                 }
         )
+
         Box(
             modifier = Modifier
                 .constrainAs(bottomBackground) {
@@ -576,23 +561,23 @@ private fun ScanArea(
                 contentDescription = closeButtonContentDescription
             )
         }
+
         val margin = (-2).dp
         val color = remember { Animatable(scannerColors.shutterInactiveColor) }
 
-        if (scanResultState.lastAdded != null) {
-            LaunchedEffect(scanResultState.lastAdded) {
-                color.animateTo(
-                    scannerColors.shutterActiveColor, animationSpec = tween(
-                        ANIMATION_DURATION
-                    )
+        LaunchedEffect(ocrScannerState.foundItems.size) {
+            color.animateTo(
+                scannerColors.shutterActiveColor, animationSpec = tween(
+                    ANIMATION_DURATION
                 )
-                color.animateTo(
-                    scannerColors.shutterInactiveColor, animationSpec = tween(
-                        ANIMATION_DURATION
-                    )
+            )
+            color.animateTo(
+                scannerColors.shutterInactiveColor, animationSpec = tween(
+                    ANIMATION_DURATION
                 )
-            }
+            )
         }
+
         Icon(
             modifier = Modifier.constrainAs(topLeftCropImage) {
                 top.linkTo(cropArea.top, margin)
@@ -632,51 +617,184 @@ private fun ScanArea(
     }
 }
 
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScanAreaScanningMode() {
+private fun ScannerContent(
+    modifier: Modifier = Modifier,
+    ocrScannerState: OcrScannerState,
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    displayUnits: DisplayUnits,
+    onFrameCaptured: ((W3WImage) -> Unit),
+    onDismiss: (() -> Unit)?,
+    onError: ((W3WError) -> Unit)?,
+    scannerColors: W3WOcrScannerDefaults.Colors,
+    scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
+    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
+    suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
+    onSuggestionSelected: ((W3WSuggestion) -> Unit),
+) {
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val previewView = remember {
+        PreviewView(context).apply {
+            implementationMode = PreviewView.ImplementationMode.PERFORMANCE
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+        }
+    }
+    val executor = remember { ContextCompat.getMainExecutor(context) }
+    val scaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = rememberStandardBottomSheetState(SheetValue.PartiallyExpanded)
+    )
+
+    var heightSheet by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
+    var heightSheetPeek by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
+
+    // Add these to store layout coordinates
+    var cropLayoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    var cameraLayoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    // Create an ExecutorService for image analysis
+    val imageAnalyzerExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    /** This [LaunchedEffect] will run when a new scanned what3words address is added to [SuggestionPicker],
+     * and if list is not empty change the size of the peek and set it to expanded.
+     */
+    LaunchedEffect(
+        ocrScannerState.foundItems,
+        scaffoldState.bottomSheetState.hasPartiallyExpandedState
+    ) {
+        val shouldExpandSheet =
+            ocrScannerState.foundItems.isNotEmpty() && scaffoldState.bottomSheetState.hasPartiallyExpandedState
+        if (shouldExpandSheet) {
+            scaffoldState.bottomSheetState.expand()
+            heightSheetPeek = 100.dp
+        }
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val listener = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                cameraProviderFuture.addListener({
+                    try {
+                        val cameraProvider = cameraProviderFuture.get()
+
+                        // Optimize Preview use case
+                        val preview = Preview.Builder()
+                            .build()
+
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        // Build the ImageAnalysis use case
+                        val imageAnalysis = buildW3WImageAnalysis(
+                            onFrameCaptured = onFrameCaptured,
+                            onError = onError ?: { /* Handle error */ },
+                            imageAnalyzerExecutor = imageAnalyzerExecutor,
+                            cropLayoutCoordinates = cropLayoutCoordinates ?: return@addListener,
+                            cameraLayoutCoordinates = cameraLayoutCoordinates ?: return@addListener,
+                        )
+
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageAnalysis
+                        )
+
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
+                    } catch (e: Exception) {
+                        onError?.invoke(W3WError(message = "Camera initialization failed: ${e.message}"))
+                    }
+                }, executor)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(listener)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(listener)
+            imageAnalyzerExecutor.shutdown()
+        }
+    }
+
+    BottomSheetScaffold(
+        modifier = modifier,
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = heightSheetPeek,
+        sheetDragHandle = {
+            BottomSheetDefaults.DragHandle(
+                color = scannerColors.gripColor
+            )
+        },
+        sheetContainerColor = scannerColors.bottomDrawerBackground,
+        sheetContent = {
+            SuggestionPicker(
+                ocrScannerState = ocrScannerState,
+                maxHeight = heightSheet,
+                displayUnits = displayUnits,
+                scannerStrings = scannerStrings,
+                suggestionTextStyles = suggestionTextStyles,
+                suggestionColors = suggestionColors,
+                scannerColors = scannerColors,
+                scannerTextStyles = scannerTextStyles,
+                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                onSuggestionSelected = onSuggestionSelected
+            )
+        }
+    ) {
+        ScanArea(
+            ocrScannerState = ocrScannerState,
+            previewView = previewView,
+            closeButtonContentDescription = scannerStrings.closeButtonContentDescription,
+            scannerColors = scannerColors,
+            cropAreaReady = { coordinates ->
+                if (ocrScannerState.state == OcrScannerState.State.Idle) {
+                    cropLayoutCoordinates = coordinates
+                }
+            },
+            bottomAreaReady = {
+                val newHeight =
+                    (it.size.height / context.resources.displayMetrics.density).dp - SHEET_PEEK_HEIGHT.dp
+                if (heightSheet != newHeight) {
+                    heightSheet = newHeight
+                }
+            },
+            previewAreaReady = { coordinates ->
+                if (ocrScannerState.state == OcrScannerState.State.Idle) {
+                    cameraLayoutCoordinates = coordinates
+                }
+            },
+            onDismiss = onDismiss
+        )
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ScanAreaDetectedMode() {
     W3WTheme {
         ScanArea(
-            PreviewView(LocalContext.current.applicationContext),
-            ScanResultState().apply { scanning() },
+            OcrScannerState(emptyList(), OcrScannerState.State.Detected),
+            PreviewView(LocalContext.current),
             "",
             W3WOcrScannerDefaults.defaultColors(),
             {},
             {},
             {},
-            {})
+            {}
+        )
     }
 }
 
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true
-)
-@Composable
-fun ScanAreaDetectedMode() {
-    W3WTheme {
-        ScanArea(
-            PreviewView(LocalContext.current.applicationContext),
-            ScanResultState().apply { detected() },
-            "",
-            W3WOcrScannerDefaults.defaultColors(),
-            {},
-            {},
-            {},
-            {})
-    }
-}
-
-@Preview(
+@androidx.compose.ui.tooling.preview.Preview(
     uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true
 )
 @Composable
 fun ScanAreaValidatingMode() {
     W3WTheme {
         ScanArea(
-            PreviewView(LocalContext.current.applicationContext),
-            ScanResultState().apply { validating() },
+            OcrScannerState(emptyList(), OcrScannerState.State.Validating),
+            PreviewView(LocalContext.current),
             "",
             W3WOcrScannerDefaults.defaultColors(),
             {},
@@ -686,15 +804,33 @@ fun ScanAreaValidatingMode() {
     }
 }
 
-@Preview(
+@androidx.compose.ui.tooling.preview.Preview(
     uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true
 )
 @Composable
 fun ScanAreaFoundMode() {
     W3WTheme {
         ScanArea(
-            PreviewView(LocalContext.current.applicationContext),
-            ScanResultState().apply { found(emptyList()) },
+            OcrScannerState(emptyList(), OcrScannerState.State.Found),
+            PreviewView(LocalContext.current),
+            "",
+            W3WOcrScannerDefaults.defaultColors(),
+            {},
+            {},
+            {},
+            {})
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true
+)
+@Composable
+fun ScanAreaScanningMode() {
+    W3WTheme {
+        ScanArea(
+            OcrScannerState(emptyList(), OcrScannerState.State.Scanning),
+            PreviewView(LocalContext.current),
             "",
             W3WOcrScannerDefaults.defaultColors(),
             {},

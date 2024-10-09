@@ -112,9 +112,10 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.activity:activity-compose")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    implementation("androidx.constraintlayout:constraintlayout-compose")
     implementation("androidx.compose.material3:material3")
 
     // gms for module install

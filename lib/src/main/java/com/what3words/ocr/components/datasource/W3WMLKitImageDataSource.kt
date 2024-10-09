@@ -1,4 +1,4 @@
-package com.what3words.ocr.components.models
+package com.what3words.ocr.components.datasource
 
 import android.content.Context
 import com.google.android.gms.common.moduleinstall.ModuleInstall
@@ -15,6 +15,9 @@ import com.what3words.androidwrapper.helpers.DispatcherProvider
 import com.what3words.core.datasource.image.W3WImageDataSource
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
+import com.what3words.ocr.components.extensions.installModule
+import com.what3words.ocr.components.extensions.isModuleInstalled
+import com.what3words.ocr.components.extensions.scan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
