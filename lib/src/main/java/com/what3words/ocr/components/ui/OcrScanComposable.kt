@@ -56,14 +56,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.domain.W3WSuggestion
 import com.what3words.core.types.domain.isLand
@@ -242,7 +241,7 @@ fun W3WOcrScanner(
     onFrameCaptured: (W3WImage) -> Unit,
     onSuggestionSelected: ((W3WSuggestion) -> Unit),
     onError: ((W3WError) -> Unit),
-    onDismiss: (() -> Unit)?,
+    onDismiss: (() -> Unit),
 ) {
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -273,8 +272,10 @@ fun W3WOcrScanner(
             )
         }
 
-        else -> {
-            onError(W3WError(message = "Ocr scanner needs camera permissions"))
+        cameraPermissionState.status is PermissionStatus.Denied -> {
+            if (cameraPermissionState.status.shouldShowRationale) {
+                onError(W3WError(message = "Ocr scanner needs camera permissions"))
+            }
         }
     }
 }
@@ -317,10 +318,10 @@ fun W3WOcrScanner(
     suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
     suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
-    onSuggestionFound: ((W3WSuggestion) -> Unit),
     onSuggestionSelected: ((W3WSuggestion) -> Unit),
     onError: ((W3WError) -> Unit),
-    onDismiss: (() -> Unit)?,
+    onDismiss: (() -> Unit),
+    onSuggestionFound: ((W3WSuggestion) -> Unit)? = null,
 ) {
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -352,7 +353,7 @@ fun W3WOcrScanner(
                         onError = onError,
                         onFound = { suggestions ->
                             suggestions.forEach { suggestion ->
-                                onSuggestionFound.invoke(suggestion)
+                                onSuggestionFound?.invoke(suggestion)
                             }
                         })
                 },
@@ -368,8 +369,10 @@ fun W3WOcrScanner(
             )
         }
 
-        else -> {
-            onError(W3WError(message = "Ocr scanner needs camera permissions"))
+        cameraPermissionState.status is PermissionStatus.Denied -> {
+            if (cameraPermissionState.status.shouldShowRationale) {
+                onError(W3WError(message = "Ocr scanner needs camera permissions"))
+            }
         }
     }
 }
@@ -666,7 +669,6 @@ private fun ScannerContent(
             scaleType = PreviewView.ScaleType.FILL_CENTER
         }
     }
-    val executor = remember { ContextCompat.getMainExecutor(context) }
     val scaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = rememberStandardBottomSheetState(SheetValue.PartiallyExpanded)
     )
@@ -674,11 +676,9 @@ private fun ScannerContent(
     var heightSheet by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
     var heightSheetPeek by remember { mutableStateOf(SHEET_PEEK_HEIGHT.dp) }
 
-    // Add these to store layout coordinates
     var cropLayoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var cameraLayoutCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-    // Create an ExecutorService for image analysis
     val imageAnalyzerExecutor = remember { Executors.newSingleThreadExecutor() }
 
     /** This [LaunchedEffect] will run when a new scanned what3words address is added to [SuggestionPicker],
@@ -696,47 +696,59 @@ private fun ScannerContent(
         }
     }
 
-    DisposableEffect(lifecycleOwner) {
-        val listener = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                cameraProviderFuture.addListener({
-                    try {
-                        val cameraProvider = cameraProviderFuture.get()
+    // Add a state to track if the camera is bound
+    var isCameraBound by remember { mutableStateOf(false) }
 
-                        // Optimize Preview use case
-                        val preview = Preview.Builder()
-                            .build()
+    // Function to bind the camera use cases
+    fun bindCamera(cameraProvider: ProcessCameraProvider) {
+        try {
+            val preview = Preview.Builder().build()
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val imageAnalysis = buildW3WImageAnalysis(
+                onFrameCaptured = onFrameCaptured,
+                onError = onError ?: { /* Handle error */ },
+                imageAnalyzerExecutor = imageAnalyzerExecutor,
+                cropLayoutCoordinates = cropLayoutCoordinates ?: return,
+                cameraLayoutCoordinates = cameraLayoutCoordinates ?: return,
+            )
 
-                        // Build the ImageAnalysis use case
-                        val imageAnalysis = buildW3WImageAnalysis(
-                            onFrameCaptured = onFrameCaptured,
-                            onError = onError ?: { /* Handle error */ },
-                            imageAnalyzerExecutor = imageAnalyzerExecutor,
-                            cropLayoutCoordinates = cropLayoutCoordinates ?: return@addListener,
-                            cameraLayoutCoordinates = cameraLayoutCoordinates ?: return@addListener,
-                        )
+            cameraProvider.unbindAll()
+            cameraProvider.bindToLifecycle(
+                lifecycleOwner,
+                cameraSelector,
+                preview,
+                imageAnalysis
+            )
 
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageAnalysis
-                        )
-
-                        preview.setSurfaceProvider(previewView.surfaceProvider)
-                    } catch (e: Exception) {
-                        onError?.invoke(W3WError(message = "Camera initialization failed: ${e.message}"))
-                    }
-                }, executor)
-            }
+            preview.setSurfaceProvider(previewView.surfaceProvider)
+            isCameraBound = true
+        } catch (e: Exception) {
+            onError?.invoke(W3WError(message = "Camera initialization failed: ${e.message}"))
         }
-        lifecycleOwner.lifecycle.addObserver(listener)
+    }
+
+    // Function to unbind the camera use cases
+    fun unbindCamera(cameraProvider: ProcessCameraProvider) {
+        cameraProvider.unbindAll()
+        isCameraBound = false
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val cameraProvider = cameraProviderFuture.get()
+
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(listener)
+            if (isCameraBound) {
+                unbindCamera(cameraProvider)
+            }
             imageAnalyzerExecutor.shutdown()
+        }
+    }
+
+    LaunchedEffect(cropLayoutCoordinates, cameraLayoutCoordinates) {
+        if (cropLayoutCoordinates != null && cameraLayoutCoordinates != null && !isCameraBound) {
+            val cameraProvider = cameraProviderFuture.get()
+            bindCamera(cameraProvider)
         }
     }
 

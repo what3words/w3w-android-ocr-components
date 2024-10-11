@@ -43,6 +43,7 @@ class OcrScanManager(
      */
     private val _ocrScannerState = MutableStateFlow(OcrScannerState())
     val ocrScannerState: StateFlow<OcrScannerState> = _ocrScannerState.asStateFlow()
+    private var isStopping: Boolean = false
 
     /**
      * Prepares the OCR scanner for operation. This method should be called before scanning images.
@@ -51,6 +52,7 @@ class OcrScanManager(
      * @param onError Callback invoked if an error occurs during preparation.
      */
     fun getReady(onReady: () -> Unit, onError: (W3WError) -> Unit) {
+        isStopping = false
         w3wImageDataSource.start(onReady, onError)
     }
 
@@ -58,6 +60,7 @@ class OcrScanManager(
      * Stops the OCR scanner and resets its state.
      */
     fun stop() {
+        isStopping = true
         w3wImageDataSource.stop()
         _ocrScannerState.value = OcrScannerState()
     }
@@ -74,6 +77,11 @@ class OcrScanManager(
         onError: (W3WError) -> Unit,
         onFound: (List<W3WSuggestion>) -> Unit,
     ) {
+        // In case the scanner is stopping, we ignore the scan request.
+        if (isStopping) {
+            return
+        }
+
         val latch = CountDownLatch(1)
         try {
             w3wImageDataSource.scan(
@@ -96,14 +104,14 @@ class OcrScanManager(
                     }
                 },
                 onError = {
-                    onError(it)
                     latch.countDown()
+                    onError(it)
                 },
                 onCompleted = { latch.countDown() }
             )
         } catch (e: Exception) {
-            onError(W3WError(message = e.message))
             latch.countDown()
+            onError(W3WError(message = e.message))
         } finally {
             latch.await()
             image.bitmap.recycle()
