@@ -12,6 +12,9 @@ import com.what3words.core.types.image.W3WImage
 import com.what3words.ocr.components.extensions.BitmapUtils
 import kotlin.math.roundToInt
 
+/**
+ * An [ImageAnalysis.Analyzer] that captures frames from the camera and processes them.
+ */
 internal class W3WImageAnalyzer(
     private val cropLayoutCoordinates: LayoutCoordinates,
     private val cameraLayoutCoordinates: LayoutCoordinates,

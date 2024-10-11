@@ -33,6 +33,7 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,8 +74,6 @@ import com.what3words.design.library.ui.components.What3wordsAddressListItemDefa
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.design.library.ui.theme.w3wColorScheme
-import com.what3words.javawrapper.response.APIResponse.What3WordsError
-import com.what3words.javawrapper.response.SuggestionWithCoordinates
 import com.what3words.ocr.components.R
 import com.what3words.ocr.components.internal.buildW3WImageAnalysis
 import java.util.concurrent.Executors
@@ -203,11 +202,11 @@ object W3WOcrScannerDefaults {
 
 
 /**
- * Creates a new [W3WOcrScanner] Composable to utilize CameraX and a [OcrScanManager] for scanning what3words addresses using text recognition.
- * This component integrates camera functionality with OCR (Optical Character Recognition) to detect and validate three-word addresses in real-time.
+ * The composable for the OCR scanner UI, which includes the camera preview, scanner state display,
+ * and list of scanned three-word addresses.
  *
  * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
- * @param ocrScannerState The state of the [W3WOcrScanner]. This state is used to control the scanner's behavior and display.
+ * @param ocrScannerState The state of the [W3WOcrScanner]. This state is used to control the scanner's display.
  * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
  *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
  * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
@@ -224,8 +223,8 @@ object W3WOcrScannerDefaults {
  *                         and can be overridden.
  * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
  * @param onFrameCaptured Callback invoked when a [W3WImage] is captured by the camera and ready for OCR processing.
- * @param onSuggestionSelected Callback invoked when a [SuggestionWithCoordinates] is selected from the [SuggestionPicker]
- * @param onError Callback invoked when an error occurs within this composable, providing a [What3WordsError].
+ * @param onSuggestionSelected Callback invoked when a [W3WSuggestion] is selected from the [SuggestionPicker]
+ * @param onError Callback invoked when an error occurs within this composable, providing a [W3WError].
  * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
  */
 @OptIn(ExperimentalPermissionsApi::class)
@@ -280,6 +279,32 @@ fun W3WOcrScanner(
     }
 }
 
+/**
+ * Creates a new [W3WOcrScanner] Composable to utilize CameraX and a [OcrScanManager] for scanning what3words addresses using text recognition.
+ * This component integrates camera functionality with OCR (Optical Character Recognition) to detect and validate three-word addresses in real-time.
+ *
+ * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
+ * @param ocrScanManager The [OcrScanManager] instance that manages the OCR scanning process.
+ * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
+ *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
+ * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
+ *                      Defaults are provided by [W3WOcrScannerDefaults.defaultColors] and can be overridden.
+ * @param scannerTextStyles The text styles ([W3WOcrScannerDefaults.TextStyles]) applied to the [W3WOcrScanner].
+ *                          Defaults are provided by [W3WOcrScannerDefaults.defaultTextStyles] and can be overridden.
+ * @param scannerStrings Localized strings ([W3WOcrScannerDefaults.Strings]) used in the [W3WOcrScanner] for customization
+ *                       and accessibility. Defaults are provided by [W3WOcrScannerDefaults.defaultStrings] and can be overridden.
+ * @param suggestionTextStyles Text styles ([What3wordsAddressListItemDefaults.TextStyles]) applied to the list of scanned
+ *                             three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultTextStyles]
+ *                             and can be overridden.
+ * @param suggestionColors Color scheme ([What3wordsAddressListItemDefaults.Colors]) applied to the list of scanned
+ *                         three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultColors]
+ *                         and can be overridden.
+ * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
+ * @param onSuggestionFound Callback invoked when a [W3WSuggestion] is found in the [OcrScanManager].
+ * @param onSuggestionSelected Callback invoked when a [W3WSuggestion] is selected from the [SuggestionPicker]
+ * @param onError Callback invoked when an error occurs within this composable, providing a [W3WError].
+ * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
+ */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun W3WOcrScanner(
@@ -312,9 +337,7 @@ fun W3WOcrScanner(
         )
     }
 
-    val ocrScannerState by remember {
-        ocrScanManager.ocrScannerState
-    }
+    val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
 
     when {
         cameraPermissionState.status.isGranted -> {

@@ -2,8 +2,6 @@ package com.what3words.ocr.components.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.what3words.core.datasource.image.W3WImageDataSource
 import com.what3words.core.datasource.text.W3WTextDataSource
@@ -14,28 +12,58 @@ import com.what3words.core.types.image.W3WImage
 import com.what3words.core.types.options.W3WAutosuggestOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.CountDownLatch
 
+/**
+ * Manages OCR (Optical Character Recognition) scanning operations for what3words addresses
+ * within [W3WOcrScanner].
+ *
+ * This class utilizing the [W3WImageDataSource] to scan images for possible what3words addresses, then it uses the [W3WTextDataSource] for
+ * validating detected addresses.
+ *
+ * In most cases, this will be created via [rememberOcrScanManager].
+ *
+ * @property w3wImageDataSource The data source for scanning images for possible what3words addresses.
+ * @property w3wTextDataSource The data source for what3words address validation operations.
+ * @property options Optional [W3WAutosuggestOptions] for what3words address validation.
+ */
 class OcrScanManager(
     private val w3wImageDataSource: W3WImageDataSource,
     private val w3wTextDataSource: W3WTextDataSource,
     private val options: W3WAutosuggestOptions? = null
 ) {
-    private val _ocrScannerState = mutableStateOf(OcrScannerState())
-    val ocrScannerState: State<OcrScannerState> = _ocrScannerState
+    /**
+     * The current state of the OCR scanner, exposed as a Compose State.
+     * This allows the W3WOcrScanner Composable to reactively update based on scanner state changes.
+     */
+    private val _ocrScannerState = MutableStateFlow(OcrScannerState())
+    val ocrScannerState: StateFlow<OcrScannerState> = _ocrScannerState.asStateFlow()
 
+    /**
+     * Prepares the OCR scanner for operation. This method should be called before scanning images.
+     *
+     * @param onReady Callback invoked when the scanner is ready.
+     * @param onError Callback invoked if an error occurs during preparation.
+     */
     fun getReady(onReady: () -> Unit, onError: (W3WError) -> Unit) {
         w3wImageDataSource.start(onReady, onError)
     }
 
+    /**
+     * Stops the OCR scanner and resets its state.
+     */
     fun stop() {
         w3wImageDataSource.stop()
         _ocrScannerState.value = OcrScannerState()
     }
 
     /**
-     * Scan the image for what3words addresses. This function is blocking the current thread until the scan is completed.
+     * Scan the image for what3words addresses. This function is blocking the current thread until the scanning is completed.
      *
      * @param image the [W3WImage] to be scanned.
      * @param onError the callback with a [W3WError] in case an error was found while scanning.
@@ -114,13 +142,26 @@ class OcrScanManager(
         newState: OcrScannerState.State,
         newFoundItems: List<W3WSuggestion>? = null
     ) {
-        _ocrScannerState.value = _ocrScannerState.value.copy(
-            state = newState,
-            foundItems = newFoundItems ?: _ocrScannerState.value.foundItems
-        )
+        _ocrScannerState.update { currentState ->
+            currentState.copy(
+                state = newState,
+                foundItems = newFoundItems ?: currentState.foundItems
+            )
+        }
     }
 }
 
+/**
+ * Creates a [OcrScanManager] that is remembered across compositions. It also sets up
+ * a [DisposableEffect] to properly stop the manager when the composable leaves the
+ * composition.
+ *
+ * @param w3wImageDataSource The data source for scanning images for possible what3words addresses.
+ * @param w3wTextDataSource The data source for validating what3words addresses.
+ * @param options Optional [W3WAutosuggestOptions] for address validation.
+ *
+ * @see OcrScanManager
+ */
 @Composable
 fun rememberOcrScanManager(
     w3wImageDataSource: W3WImageDataSource,

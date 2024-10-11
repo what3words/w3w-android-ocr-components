@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * The implementation of [W3WImageDataSource] that uses MLKit to scan images for what3words addresses.
+ * The implementation of [W3WImageDataSource] that uses MLKit to scan images for possible what3words addresses.
  *
  * @property context The context used for initializing ML Kit and module installation.
  * @property recognizerOptions The options for configuring the text recognizer. Defaults to Latin text recognition.

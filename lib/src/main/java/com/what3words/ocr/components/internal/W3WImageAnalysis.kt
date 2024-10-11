@@ -8,6 +8,9 @@ import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
 import java.util.concurrent.ExecutorService
 
+/**
+ * Builds an [ImageAnalysis] instance with a [W3WImageAnalyzer] for processing images.
+ */
 internal fun buildW3WImageAnalysis(
     imageAnalyzerExecutor: ExecutorService,
     cropLayoutCoordinates: LayoutCoordinates,
