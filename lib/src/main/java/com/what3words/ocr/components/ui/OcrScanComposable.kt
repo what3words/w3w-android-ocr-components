@@ -323,10 +323,24 @@ fun W3WOcrScanner(
     onDismiss: (() -> Unit),
     onSuggestionFound: ((W3WSuggestion) -> Unit)? = null,
 ) {
+    var isReady by remember {
+        mutableStateOf(false)
+    }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
-    )
+    ) { granted ->
+        if (granted) {
+            isReady = true
+        }
+        else {
+            onError.invoke(W3WError(message = "Ocr scanner needs camera permissions"))
+        }
+    }
 
+    /** This [LaunchedEffect] will run once and check if modules installed to go to next check which is camera permissions,
+     * if not installed to request to install missing modules and when installed go to next step which is camera permissions,
+     * if fails calls [onError] callback saying that was a problem installing required modules.
+     */
     LaunchedEffect(key1 = Unit) {
         ocrScanManager.getReady(
             onReady = {
@@ -338,40 +352,41 @@ fun W3WOcrScanner(
         )
     }
 
-    val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
+    if (isReady) {
+        val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
+        when {
+            cameraPermissionState.status.isGranted -> {
+                ScannerContent(
+                    modifier = modifier,
+                    context = LocalContext.current,
+                    lifecycleOwner = LocalLifecycleOwner.current,
+                    displayUnits = displayUnits,
+                    ocrScannerState = ocrScannerState,
+                    onFrameCaptured = {
+                        ocrScanManager.scanImageBlocking(it,
+                            onError = onError,
+                            onFound = { suggestions ->
+                                suggestions.forEach { suggestion ->
+                                    onSuggestionFound?.invoke(suggestion)
+                                }
+                            })
+                    },
+                    onDismiss = onDismiss,
+                    onError = onError,
+                    scannerColors = scannerColors,
+                    scannerStrings = scannerStrings,
+                    scannerTextStyles = scannerTextStyles,
+                    suggestionTextStyles = suggestionTextStyles,
+                    suggestionColors = suggestionColors,
+                    suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                    onSuggestionSelected = onSuggestionSelected,
+                )
+            }
 
-    when {
-        cameraPermissionState.status.isGranted -> {
-            ScannerContent(
-                modifier = modifier,
-                context = LocalContext.current,
-                lifecycleOwner = LocalLifecycleOwner.current,
-                displayUnits = displayUnits,
-                ocrScannerState = ocrScannerState,
-                onFrameCaptured = {
-                    ocrScanManager.scanImageBlocking(it,
-                        onError = onError,
-                        onFound = { suggestions ->
-                            suggestions.forEach { suggestion ->
-                                onSuggestionFound?.invoke(suggestion)
-                            }
-                        })
-                },
-                onDismiss = onDismiss,
-                onError = onError,
-                scannerColors = scannerColors,
-                scannerStrings = scannerStrings,
-                scannerTextStyles = scannerTextStyles,
-                suggestionTextStyles = suggestionTextStyles,
-                suggestionColors = suggestionColors,
-                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
-                onSuggestionSelected = onSuggestionSelected,
-            )
-        }
-
-        cameraPermissionState.status is PermissionStatus.Denied -> {
-            if (cameraPermissionState.status.shouldShowRationale) {
-                onError(W3WError(message = "Ocr scanner needs camera permissions"))
+            cameraPermissionState.status is PermissionStatus.Denied -> {
+                if (cameraPermissionState.status.shouldShowRationale) {
+                    onError(W3WError(message = "Ocr scanner needs camera permissions"))
+                }
             }
         }
     }

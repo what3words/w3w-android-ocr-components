@@ -111,7 +111,9 @@ class W3WMLKitImageDataSource internal constructor(
 
     override fun stop() {
         isStopped = true
-        mlkitRecognizer.close()
+        if (::mlkitRecognizer.isInitialized) {
+            mlkitRecognizer.close()
+        }
     }
 
     companion object {
