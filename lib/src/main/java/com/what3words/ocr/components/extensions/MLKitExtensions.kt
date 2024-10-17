@@ -1,6 +1,7 @@
-package com.what3words.ocr.components.models
+package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
@@ -16,13 +17,13 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * Scan [image] [Bitmap] for one or more three word addresses using MLKit.
+ * Scan [image] [Bitmap] for one or more what3words addresses using MLKit.
  *
- * @param image the [Bitmap] that the scanner should use to find possible three word addresses.
- * i.e: country clipping, check [W3WAutosuggestOptions] for possible filters/clippings.
+ * @param image the [Bitmap] that the scanner should use to find possible what3words addresses.
  * @param onScanning the callback when it starts to scan image for text.
  * @param onDetected the callback when our [findPossible3wa] regex finds possible matches on the scanned text.
  * @param onError the callback with a [W3WError] in case an error was found while scanning.
+ * @param onCompleted the callback when the scanning process is completed.
  */
 fun TextRecognizer.scan(
     image: Bitmap,

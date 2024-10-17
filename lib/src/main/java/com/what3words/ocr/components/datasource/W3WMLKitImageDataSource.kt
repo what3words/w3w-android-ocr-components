@@ -1,4 +1,4 @@
-package com.what3words.ocr.components.models
+package com.what3words.ocr.components.datasource
 
 import android.content.Context
 import com.google.android.gms.common.moduleinstall.ModuleInstall
@@ -15,11 +15,14 @@ import com.what3words.androidwrapper.helpers.DispatcherProvider
 import com.what3words.core.datasource.image.W3WImageDataSource
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
+import com.what3words.ocr.components.extensions.installModule
+import com.what3words.ocr.components.extensions.isModuleInstalled
+import com.what3words.ocr.components.extensions.scan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * The implementation of [W3WImageDataSource] that uses MLKit to scan images for what3words addresses.
+ * The implementation of [W3WImageDataSource] that uses MLKit to scan images for possible what3words addresses.
  *
  * @property context The context used for initializing ML Kit and module installation.
  * @property recognizerOptions The options for configuring the text recognizer. Defaults to Latin text recognition.
@@ -108,7 +111,9 @@ class W3WMLKitImageDataSource internal constructor(
 
     override fun stop() {
         isStopped = true
-        mlkitRecognizer.close()
+        if (::mlkitRecognizer.isInitialized) {
+            mlkitRecognizer.close()
+        }
     }
 
     companion object {
