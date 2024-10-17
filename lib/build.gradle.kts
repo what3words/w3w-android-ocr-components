@@ -106,7 +106,6 @@ dependencies {
     api("com.what3words:w3w-core-android:1.1.0-SNAPSHOT") {
         isChanging = true
     }
-    compileOnly(project(":what3words", configuration = "default"))
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
