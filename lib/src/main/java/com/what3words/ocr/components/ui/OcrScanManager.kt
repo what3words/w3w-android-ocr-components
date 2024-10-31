@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.concurrent.CountDownLatch
 
 /**
  * Manages OCR (Optical Character Recognition) scanning operations for what3words addresses
@@ -66,23 +65,24 @@ class OcrScanManager(
     }
 
     /**
-     * Scan the image for what3words addresses. This function is blocking the current thread until the scanning is completed.
+     * Scan the image for what3words addresses.
      *
      * @param image the [W3WImage] to be scanned.
      * @param onError the callback with a [W3WError] in case an error was found while scanning.
      * @param onFound the callback with a list of [W3WSuggestion] in case a what3words address was found.
+     * @param onCompleted the callback when the scanning process is completed.
      */
-    fun scanImageBlocking(
+    fun scanImage(
         image: W3WImage,
         onError: (W3WError) -> Unit,
         onFound: (List<W3WSuggestion>) -> Unit,
+        onCompleted: () -> Unit
     ) {
         // In case the scanner is stopping, we ignore the scan request.
         if (isStopping) {
             return
         }
 
-        val latch = CountDownLatch(1)
         try {
             w3wImageDataSource.scan(
                 image,
@@ -104,17 +104,15 @@ class OcrScanManager(
                     }
                 },
                 onError = {
-                    latch.countDown()
                     onError(it)
                 },
-                onCompleted = { latch.countDown() }
+                onCompleted = {
+                    image.bitmap.recycle()
+                    onCompleted.invoke()
+                }
             )
         } catch (e: Exception) {
-            latch.countDown()
             onError(W3WError(message = e.message))
-        } finally {
-            latch.await()
-            image.bitmap.recycle()
         }
     }
 

@@ -10,6 +10,7 @@ import androidx.compose.ui.layout.positionInRoot
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
 import com.what3words.ocr.components.extensions.BitmapUtils
+import kotlinx.coroutines.CompletableDeferred
 import kotlin.math.roundToInt
 
 /**
@@ -18,7 +19,7 @@ import kotlin.math.roundToInt
 internal class W3WImageAnalyzer(
     private val cropLayoutCoordinates: LayoutCoordinates,
     private val cameraLayoutCoordinates: LayoutCoordinates,
-    private val onFrameCaptured: (W3WImage) -> Unit,
+    private val onFrameCaptured: ((W3WImage) -> CompletableDeferred<Unit>),
     private val onError: (W3WError) -> Unit
 ) : ImageAnalysis.Analyzer {
 
@@ -52,8 +53,10 @@ internal class W3WImageAnalyzer(
                 return
             }
 
-            onFrameCaptured.invoke(W3WImage(bitmapToBeScanned))
-            imageProxy.close()
+            val deferred = onFrameCaptured.invoke(W3WImage(bitmapToBeScanned))
+            deferred.invokeOnCompletion {
+                imageProxy.close()
+            }
         } ?: run {
             onError.invoke(W3WError(message = "ImageProxy to Bitmap conversion failed"))
             imageProxy.close()

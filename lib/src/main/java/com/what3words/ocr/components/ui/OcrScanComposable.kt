@@ -75,6 +75,7 @@ import com.what3words.design.library.ui.theme.W3WTheme
 import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.ocr.components.R
 import com.what3words.ocr.components.internal.buildW3WImageAnalysis
+import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
@@ -201,30 +202,50 @@ object W3WOcrScannerDefaults {
 
 
 /**
- * The composable for the OCR scanner UI, which includes the camera preview, scanner state display,
- * and list of scanned three-word addresses.
+ * A composable that implements an OCR scanner interface for detecting and processing what3words addresses.
+ * The scanner includes a camera preview, status display, and a list of detected addresses.
  *
- * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
- * @param ocrScannerState The state of the [W3WOcrScanner]. This state is used to control the scanner's display.
- * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
- *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
- * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
- *                      Defaults are provided by [W3WOcrScannerDefaults.defaultColors] and can be overridden.
- * @param scannerTextStyles The text styles ([W3WOcrScannerDefaults.TextStyles]) applied to the [W3WOcrScanner].
- *                          Defaults are provided by [W3WOcrScannerDefaults.defaultTextStyles] and can be overridden.
- * @param scannerStrings Localized strings ([W3WOcrScannerDefaults.Strings]) used in the [W3WOcrScanner] for customization
- *                       and accessibility. Defaults are provided by [W3WOcrScannerDefaults.defaultStrings] and can be overridden.
- * @param suggestionTextStyles Text styles ([What3wordsAddressListItemDefaults.TextStyles]) applied to the list of scanned
- *                             three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultTextStyles]
- *                             and can be overridden.
- * @param suggestionColors Color scheme ([What3wordsAddressListItemDefaults.Colors]) applied to the list of scanned
- *                         three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultColors]
- *                         and can be overridden.
- * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
- * @param onFrameCaptured Callback invoked when a [W3WImage] is captured by the camera and ready for OCR processing.
- * @param onSuggestionSelected Callback invoked when a [W3WSuggestion] is selected from the [SuggestionPicker]
- * @param onError Callback invoked when an error occurs within this composable, providing a [W3WError].
- * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
+ * The scanner provides real-time visual feedback of the scanning process and allows users to select
+ * from detected three-word addresses. It supports customization of appearance, text styles, and localization.
+ *
+ * @param modifier Modifier to be applied to the root BottomSheetScaffold
+ *
+ * @param ocrScannerState Controls the scanner's display state and behavior
+ *
+ * @param displayUnits Determines how distances are displayed:
+ *                     - DisplayUnits.SYSTEM (default): Uses system locale to choose Imperial/Metric
+ *                     - DisplayUnits.IMPERIAL: Forces Imperial units
+ *                     - DisplayUnits.METRIC: Forces Metric units
+ *
+ * @param scannerColors Defines the scanner's color scheme
+ *                      Default: W3WOcrScannerDefaults.defaultColors()
+ *
+ * @param scannerTextStyles Defines text styling for scanner UI elements
+ *                          Default: W3WOcrScannerDefaults.defaultTextStyles()
+ *
+ * @param scannerStrings Provides localized strings for UI elements and accessibility
+ *                       Default: W3WOcrScannerDefaults.defaultStrings()
+ *
+ * @param suggestionTextStyles Defines text styling for the address list items
+ *                            Default: What3wordsAddressListItemDefaults.defaultTextStyles()
+ *
+ * @param suggestionColors Defines colors for the address list items
+ *                        Default: What3wordsAddressListItemDefaults.defaultColors()
+ *
+ * @param suggestionNearestPlacePrefix Prefix text for nearest place display
+ *                                     Default: Resource string R.string.near
+ *
+ * @param onFrameCaptured Callback for processing captured camera frames
+ *                        Params: W3WImage - The captured frame
+ *                        Returns: CompletableDeferred<Unit> to signal processing completion and the internal image analyzer should capture a new image for processing
+ *
+ * @param onSuggestionSelected Callback when user selects an address suggestion
+ *                            Params: W3WSuggestion - The selected address
+ *
+ * @param onError Callback for error handling
+ *                Params: W3WError - The error that occurred
+ *
+ * @param onDismiss Callback when user manually closes the scanner
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -238,7 +259,7 @@ fun W3WOcrScanner(
     suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
     suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
     suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
-    onFrameCaptured: (W3WImage) -> Unit,
+    onFrameCaptured: ((W3WImage) -> CompletableDeferred<Unit>),
     onSuggestionSelected: ((W3WSuggestion) -> Unit),
     onError: ((W3WError) -> Unit),
     onDismiss: (() -> Unit),
@@ -331,8 +352,7 @@ fun W3WOcrScanner(
     ) { granted ->
         if (granted) {
             isReady = true
-        }
-        else {
+        } else {
             onError.invoke(W3WError(message = "Ocr scanner needs camera permissions"))
         }
     }
@@ -362,14 +382,22 @@ fun W3WOcrScanner(
                     lifecycleOwner = LocalLifecycleOwner.current,
                     displayUnits = displayUnits,
                     ocrScannerState = ocrScannerState,
-                    onFrameCaptured = {
-                        ocrScanManager.scanImageBlocking(it,
+                    onFrameCaptured = { image ->
+                        val deferred = CompletableDeferred<Unit>()
+
+                        ocrScanManager.scanImage(
+                            image = image,
                             onError = onError,
                             onFound = { suggestions ->
                                 suggestions.forEach { suggestion ->
                                     onSuggestionFound?.invoke(suggestion)
                                 }
-                            })
+                            },
+                            onCompleted = {
+                                deferred.complete(Unit)
+                            }
+                        )
+                        return@ScannerContent deferred
                     },
                     onDismiss = onDismiss,
                     onError = onError,
@@ -666,7 +694,7 @@ private fun ScannerContent(
     context: Context,
     lifecycleOwner: LifecycleOwner,
     displayUnits: DisplayUnits,
-    onFrameCaptured: ((W3WImage) -> Unit),
+    onFrameCaptured: ((W3WImage) -> CompletableDeferred<Unit>),
     onDismiss: (() -> Unit)?,
     onError: ((W3WError) -> Unit)?,
     scannerColors: W3WOcrScannerDefaults.Colors,
