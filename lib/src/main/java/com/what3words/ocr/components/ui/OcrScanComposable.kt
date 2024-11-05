@@ -218,22 +218,16 @@ object W3WOcrScannerDefaults {
  *                     - DisplayUnits.METRIC: Forces Metric units
  *
  * @param scannerColors Defines the scanner's color scheme
- *                      Default: W3WOcrScannerDefaults.defaultColors()
  *
  * @param scannerTextStyles Defines text styling for scanner UI elements
- *                          Default: W3WOcrScannerDefaults.defaultTextStyles()
  *
  * @param scannerStrings Provides localized strings for UI elements and accessibility
- *                       Default: W3WOcrScannerDefaults.defaultStrings()
  *
  * @param suggestionTextStyles Defines text styling for the address list items
- *                            Default: What3wordsAddressListItemDefaults.defaultTextStyles()
  *
  * @param suggestionColors Defines colors for the address list items
- *                        Default: What3wordsAddressListItemDefaults.defaultColors()
  *
  * @param suggestionNearestPlacePrefix Prefix text for nearest place display
- *                                     Default: Resource string R.string.near
  *
  * @param onFrameCaptured Callback for processing captured camera frames
  *                        Params: W3WImage - The captured frame
@@ -344,47 +338,41 @@ fun W3WOcrScanner(
     onDismiss: (() -> Unit),
     onSuggestionFound: ((W3WSuggestion) -> Unit)? = null,
 ) {
-    var isReady by remember {
-        mutableStateOf(false)
-    }
+    var isScannerReady by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
     ) { granted ->
         if (granted) {
-            isReady = true
+            ocrScanManager.getReady(
+                onReady = {
+                    isScannerReady = true
+                },
+                onError = {
+                    onError.invoke(it)
+                }
+            )
         } else {
             onError.invoke(W3WError(message = "Ocr scanner needs camera permissions"))
         }
     }
 
-    /** This [LaunchedEffect] will run once and check if modules installed to go to next check which is camera permissions,
-     * if not installed to request to install missing modules and when installed go to next step which is camera permissions,
-     * if fails calls [onError] callback saying that was a problem installing required modules.
-     */
     LaunchedEffect(key1 = Unit) {
-        ocrScanManager.getReady(
-            onReady = {
-                cameraPermissionState.launchPermissionRequest()
-            },
-            onError = {
-                onError.invoke(it)
-            }
-        )
+        cameraPermissionState.launchPermissionRequest()
     }
 
-    if (isReady) {
-        val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
-        when {
-            cameraPermissionState.status.isGranted -> {
-                ScannerContent(
-                    modifier = modifier,
-                    context = LocalContext.current,
-                    lifecycleOwner = LocalLifecycleOwner.current,
-                    displayUnits = displayUnits,
-                    ocrScannerState = ocrScannerState,
-                    onFrameCaptured = { image ->
-                        val deferred = CompletableDeferred<Unit>()
+    val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
 
+    when {
+        cameraPermissionState.status.isGranted -> {
+            ScannerContent(
+                modifier = modifier,
+                context = LocalContext.current,
+                lifecycleOwner = LocalLifecycleOwner.current,
+                displayUnits = displayUnits,
+                ocrScannerState = ocrScannerState,
+                onFrameCaptured = { image ->
+                    val deferred = CompletableDeferred<Unit>()
+                    if (isScannerReady) {
                         ocrScanManager.scanImage(
                             image = image,
                             onError = onError,
@@ -397,24 +385,27 @@ fun W3WOcrScanner(
                                 deferred.complete(Unit)
                             }
                         )
-                        return@ScannerContent deferred
-                    },
-                    onDismiss = onDismiss,
-                    onError = onError,
-                    scannerColors = scannerColors,
-                    scannerStrings = scannerStrings,
-                    scannerTextStyles = scannerTextStyles,
-                    suggestionTextStyles = suggestionTextStyles,
-                    suggestionColors = suggestionColors,
-                    suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
-                    onSuggestionSelected = onSuggestionSelected,
-                )
-            }
+                    } else {
+                        deferred.complete(Unit)
+                    }
 
-            cameraPermissionState.status is PermissionStatus.Denied -> {
-                if (cameraPermissionState.status.shouldShowRationale) {
-                    onError(W3WError(message = "Ocr scanner needs camera permissions"))
-                }
+                    return@ScannerContent deferred
+                },
+                onDismiss = onDismiss,
+                onError = onError,
+                scannerColors = scannerColors,
+                scannerStrings = scannerStrings,
+                scannerTextStyles = scannerTextStyles,
+                suggestionTextStyles = suggestionTextStyles,
+                suggestionColors = suggestionColors,
+                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                onSuggestionSelected = onSuggestionSelected,
+            )
+        }
+
+        cameraPermissionState.status is PermissionStatus.Denied -> {
+            if (cameraPermissionState.status.shouldShowRationale) {
+                onError(W3WError(message = "Ocr scanner needs camera permissions"))
             }
         }
     }
