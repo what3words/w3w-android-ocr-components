@@ -26,14 +26,18 @@ jobs:
           paths:
             - ~/.gradle
           key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
+
       - android/create-avd:
           avd-name: testDevice
-          system-image: system-images;android-30;google_apis;x86
+          system-image: system-images;android-30;google_apis;x86_64
           install: true
+          additional-args: --device pixel_4
+
       - android/start-emulator:
           avd-name: testDevice
           no-window: true
           restore-gradle-cache-prefix: v2a
+
       - android/run-tests:
           test-command: ./gradlew lib:connectedDebugAndroidTest
           max-tries: 3

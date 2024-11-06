@@ -1,6 +1,7 @@
 package com.what3words.ocr.components.datasource
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.mlkit.vision.text.TextRecognition
@@ -39,6 +40,9 @@ class W3WMLKitImageDataSource internal constructor(
         ModuleInstall.getClient(context)
     }
     private val scope: CoroutineScope = CoroutineScope(dispatcherProvider.io() + SupervisorJob())
+
+    @VisibleForTesting
+    internal var isBypassed3waFilter: Boolean = false
 
     override fun start(onReady: () -> Unit, onError: (W3WError) -> Unit) {
         isStopped = false
@@ -105,7 +109,8 @@ class W3WMLKitImageDataSource internal constructor(
             onDetected,
             onError,
             onCompleted,
-            scope
+            scope,
+            isBypassed3waFilter
         )
     }
 

@@ -121,11 +121,14 @@ dependencies {
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
     // Test dependencies
-    androidTestImplementation("androidx.test:runner:1.6.1")
-    androidTestUtil("androidx.test:orchestrator:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("io.mockk:mockk-android:1.13.3")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    androidTestImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
+    androidTestImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
 
     androidTestImplementation("com.google.mlkit:text-recognition:16.0.1")
     androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.1")
