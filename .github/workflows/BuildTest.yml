@@ -25,7 +25,7 @@ jobs:
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
+          distribution: 'temurin'
           java-version: '17'
 
       - name: Setup Gradle
@@ -43,7 +43,7 @@ jobs:
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
 
-      - name: Run Instrumental tests
+      - name: Build lib and run instrumentation tests
         run: ./gradlew :lib:pixel6Api33DebugAndroidTest
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true

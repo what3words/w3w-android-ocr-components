@@ -1,104 +1,104 @@
-version: 2.1
-orbs:
-  gradle: circleci/gradle@2.2.0
-  android: circleci/android@2.2.0
-
-jobs:
-  run-tests-generate-samples:
-    executor:
-      name: android/android-machine
-      resource-class: large
-      tag: 2023.05.1
-    steps:
-      - checkout
-      - restore_cache:
-          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
-      - run:
-          name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
-          command: sudo chmod +x ./gradlew
-      - run:
-          name: Wrapper
-          command: ./gradlew wrapper
-      - run:
-          name: Download Dependencies
-          command: ./gradlew androidDependencies
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
-
-      - android/create-avd:
-          avd-name: testDevice
-          system-image: system-images;android-30;google_apis;x86_64
-          install: true
-          additional-args: --device pixel_4
-
-      - android/start-emulator:
-          avd-name: testDevice
-          no-window: true
-          restore-gradle-cache-prefix: v2a
-
-      - android/run-tests:
-          test-command: ./gradlew lib:connectedDebugAndroidTest
-          max-tries: 3
-      - android/save-gradle-cache:
-          cache-prefix: v2a
-      - store_test_results:
-          path: lib/build/outputs/androidTest-results
-  deploy-to-sonatype:
-    executor:
-      name: android/android-machine
-      resource-class: large
-      tag: 2023.05.1
-    steps:
-      - checkout
-      - restore_cache:
-          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
-      - run:
-          name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
-          command: sudo chmod +x ./gradlew
-      - run:
-          name: Wrapper
-          command: ./gradlew wrapper
-      - run:
-          name: Download Dependencies
-          command: ./gradlew androidDependencies
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
-      - run:
-          name: Force break line gradle properties
-          command: echo -e '\n' >> gradle.properties
-      - run:
-          name: Inject Maven signing key
-          command: |
-            echo $GPG_SIGNING_KEY \
-            | awk 'NR == 1 { print "SIGNING_KEY=" } 1' ORS='\\n' \
-            >> gradle.properties
-      - run:
-          name: Snapshot Release Check
-          command: |
-            echo -e "\nIS_SNAPSHOT_RELEASE=$( [[ "${CIRCLE_BRANCH}" =~ ^epic.* ]] && echo true || echo false )" >> gradle.properties
-      - run:
-          name: Publish to Maven
-          command: ./gradlew assemble publish
-workflows:
-  build-test-sonar-publish:
-    jobs:
-      - run-tests-generate-samples:
-          context:
-            - SonarCloud
-            - maven-sign
-            - mobile
-      - deploy-to-sonatype:
-          name: Build, run tests, sonar and push to maven staging
-          context:
-            - SonarCloud
-            - maven-sign
-            - mobile
-          filters:
-            branches:
-              only:
-                - /^(epic)\/.*/
-                - staging
+#version: 2.1
+#orbs:
+#  gradle: circleci/gradle@2.2.0
+#  android: circleci/android@2.2.0
+#
+#jobs:
+#  run-tests-generate-samples:
+#    executor:
+#      name: android/android-machine
+#      resource-class: large
+#      tag: 2023.05.1
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
+#      - run:
+#          name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
+#          command: sudo chmod +x ./gradlew
+#      - run:
+#          name: Wrapper
+#          command: ./gradlew wrapper
+#      - run:
+#          name: Download Dependencies
+#          command: ./gradlew androidDependencies
+#      - save_cache:
+#          paths:
+#            - ~/.gradle
+#          key: jars2-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
+#
+#      - android/create-avd:
+#          avd-name: testDevice
+#          system-image: system-images;android-30;google_apis;x86_64
+#          install: true
+#          additional-args: --device pixel_4
+#
+#      - android/start-emulator:
+#          avd-name: testDevice
+#          no-window: true
+#          restore-gradle-cache-prefix: v2a
+#
+#      - android/run-tests:
+#          test-command: ./gradlew lib:connectedDebugAndroidTest
+#          max-tries: 3
+#      - android/save-gradle-cache:
+#          cache-prefix: v2a
+#      - store_test_results:
+#          path: lib/build/outputs/androidTest-results
+#  deploy-to-sonatype:
+#    executor:
+#      name: android/android-machine
+#      resource-class: large
+#      tag: 2023.05.1
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
+#      - run:
+#          name: Chmod permissions #if permission for Gradlew Dependencies fail, use this.
+#          command: sudo chmod +x ./gradlew
+#      - run:
+#          name: Wrapper
+#          command: ./gradlew wrapper
+#      - run:
+#          name: Download Dependencies
+#          command: ./gradlew androidDependencies
+#      - save_cache:
+#          paths:
+#            - ~/.gradle
+#          key: jars-{{ checksum "build.gradle.kts" }}-{{ checksum  "lib/build.gradle.kts" }}
+#      - run:
+#          name: Force break line gradle properties
+#          command: echo -e '\n' >> gradle.properties
+#      - run:
+#          name: Inject Maven signing key
+#          command: |
+#            echo $GPG_SIGNING_KEY \
+#            | awk 'NR == 1 { print "SIGNING_KEY=" } 1' ORS='\\n' \
+#            >> gradle.properties
+#      - run:
+#          name: Snapshot Release Check
+#          command: |
+#            echo -e "\nIS_SNAPSHOT_RELEASE=$( [[ "${CIRCLE_BRANCH}" =~ ^epic.* ]] && echo true || echo false )" >> gradle.properties
+#      - run:
+#          name: Publish to Maven
+#          command: ./gradlew assemble publish
+#workflows:
+#  build-test-sonar-publish:
+#    jobs:
+#      - run-tests-generate-samples:
+#          context:
+#            - SonarCloud
+#            - maven-sign
+#            - mobile
+#      - deploy-to-sonatype:
+#          name: Build, run tests, sonar and push to maven staging
+#          context:
+#            - SonarCloud
+#            - maven-sign
+#            - mobile
+#          filters:
+#            branches:
+#              only:
+#                - /^(epic)\/.*/
+#                - staging
