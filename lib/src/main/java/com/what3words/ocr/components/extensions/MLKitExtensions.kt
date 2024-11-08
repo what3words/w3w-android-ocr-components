@@ -1,14 +1,12 @@
 package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
-import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
 import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
 import com.google.mlkit.vision.text.TextRecognizer
 import com.what3words.core.types.common.W3WError
-import com.what3words.core.types.options.W3WAutosuggestOptions
 import com.what3words.javawrapper.What3WordsV3.findPossible3wa
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -32,6 +30,7 @@ fun TextRecognizer.scan(
     onError: (W3WError) -> Unit,
     onCompleted: () -> Unit,
     coroutineScope: CoroutineScope,
+    isBypass3waFilter: Boolean = false,
     rotation: Int = 0,
     throttleTimeout: Long = 250L
 ) {
@@ -43,10 +42,15 @@ fun TextRecognizer.scan(
     coroutineScope.launch {
         suspendCoroutine { continuation ->
             this@scan.process(image, rotation).addOnSuccessListener { visionText ->
-                val possibleAddresses = findPossible3wa(visionText.text)
-                if (possibleAddresses.isNotEmpty()) {
-                    onDetected.invoke(possibleAddresses)
+                if (isBypass3waFilter) {
+                    onDetected.invoke(visionText.text.split("\n"))
+                } else {
+                    val possibleAddresses = findPossible3wa(visionText.text)
+                    if (possibleAddresses.isNotEmpty()) {
+                        onDetected.invoke(possibleAddresses)
+                    }
                 }
+
             }.addOnFailureListener { e ->
                 onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             }.addOnCompleteListener {
