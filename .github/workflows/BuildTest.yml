@@ -7,6 +7,10 @@ on:
       - 'bug/**'
       - 'fix/**'
       - 'epic/**'
+  pull_request:
+    branches:
+      - 'staging'
+      - 'epic/**'
 
 jobs:
   build_test:
@@ -30,6 +34,15 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Check for SNAPSHOT dependencies
+        if: github.event_name == 'pull_request' && github.base_ref == 'epic/**'
+        run: |
+          if grep -q "SNAPSHOT" build.gradle.kts lib/build.gradle.kts; then
+            echo "Error: SNAPSHOT dependencies found in build files when opening PR to staging."
+            echo "Please remove SNAPSHOT dependencies before merging to staging."
+            exit 1
+          fi
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
