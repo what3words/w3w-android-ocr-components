@@ -7,6 +7,9 @@ on:
       - 'bug/**'
       - 'fix/**'
       - 'epic/**'
+  pull_request:
+    branches:
+      - 'staging'
 
 jobs:
   build_test:
@@ -30,6 +33,10 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Check for SNAPSHOT dependencies
+        if: github.event_name == 'pull_request' && github.base_ref == 'staging'
+        run: ./gradlew :lib:checkSnapshotDependencies
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
