@@ -149,6 +149,28 @@ dependencies {
     androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.1")
 }
 
+tasks.register("checkSnapshotDependencies") {
+    doLast {
+        val snapshotDependencies = allprojects.flatMap { project ->
+            project.configurations
+                .asSequence()
+                .filter { it.isCanBeResolved }
+                .flatMap { it.allDependencies }
+                .filter { it.version?.contains("SNAPSHOT", ignoreCase = true) == true }
+                .map { "${project.name}:${it.group}:${it.name}:${it.version}" }
+                .distinct()
+                .toList()
+        }
+
+        if (snapshotDependencies.isNotEmpty()) {
+            snapshotDependencies.forEach { println("SNAPSHOT dependency found: $it") }
+            throw GradleException("SNAPSHOT dependencies found.")
+        } else {
+            println("No SNAPSHOT dependencies found.")
+        }
+    }
+}
+
 //region publishing
 
 val ossrhUsername = findProperty("OSSRH_USERNAME") as String?
