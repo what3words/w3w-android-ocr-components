@@ -76,6 +76,18 @@ android {
             withSourcesJar()
         }
     }
+
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel6Api33") {
+                    device = "Pixel 6"
+                    apiLevel = 33
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
