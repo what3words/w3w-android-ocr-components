@@ -82,7 +82,14 @@ import kotlin.math.roundToInt
 private const val ANIMATION_DURATION = 500 //ms
 private const val SHEET_PEEK_HEIGHT = 90 //dp
 
+/**
+ * Contains the default values used by W3WOcrScanner.
+ */
 object W3WOcrScannerDefaults {
+
+    /**
+     * The default colors used by W3WOcrScanner.
+     */
     data class Colors(
         val bottomDrawerBackground: Color,
         val overlayBackground: Color,
@@ -95,11 +102,17 @@ object W3WOcrScannerDefaults {
         val shutterActiveColor: Color
     )
 
+    /**
+     * The default text styles used by W3WOcrScanner.
+     */
     data class TextStyles(
         val stateTextStyle: TextStyle,
         val listHeaderTextStyle: TextStyle
     )
 
+    /**
+     * The default strings used by W3WOcrScanner.
+     */
     data class Strings(
         val scanStateScanningTitle: String,
         val scanStateDetectedTitle: String,
@@ -200,46 +213,41 @@ object W3WOcrScannerDefaults {
     }
 }
 
-
 /**
- * A composable that implements an OCR scanner interface for detecting and processing what3words addresses.
- * The scanner includes a camera preview, status display, and a list of detected addresses.
+ * A composable that provides an OCR scanner interface for detecting and processing what3words addresses.
+ * This version allows fine-grained control by using an external [OcrScannerState] parameter, making it
+ * suitable for integration into existing architectures.
  *
- * The scanner provides real-time visual feedback of the scanning process and allows users to select
- * from detected three-word addresses. It supports customization of appearance, text styles, and localization.
+ * This version is ideal for applications requiring high customization and tight integration with
+ * existing state management systems.
  *
- * @param modifier Modifier to be applied to the root BottomSheetScaffold
+ * This component includes:
+ * - Camera preview.
+ * - Status display.
+ * - List of detected addresses.
  *
- * @param ocrScannerState Controls the scanner's display state and behavior
+ * @param modifier Modifier to be applied to the root BottomSheetScaffold.
+ * @param ocrScannerState An external state object that controls the scanner's behavior and lifecycle.
+ *                        This allows the client to manage the scanner state independently.
+ * @param displayUnits The unit system for displaying distances:
+ *                     - `DisplayUnits.SYSTEM` (default): Uses the system locale (Imperial/Metric).
+ *                     - `DisplayUnits.IMPERIAL`: Forces Imperial units.
+ *                     - `DisplayUnits.METRIC`: Forces Metric units.
+ * @param scannerColors Customizable color scheme for the scanner's interface.
+ * @param scannerTextStyles Customizable text styles for UI elements.
+ * @param scannerStrings Localized strings for scanner UI and accessibility.
+ * @param suggestionTextStyles Text styles for the list of detected what3words addresses.
+ * @param suggestionColors Color scheme for the list of detected addresses.
+ * @param suggestionNearestPlacePrefix A prefix for displaying the nearest place, e.g., "near".
+ * @param onFrameCaptured Callback triggered when a camera frame is captured for processing.
+ *                        - Params: `W3WImage` - The captured image frame.
+ *                        - Returns: `CompletableDeferred<Unit>` - Signals when processing is complete.
+ * @param onSuggestionSelected Callback triggered when a user selects a three-word address.
+ *                             - Params: `W3WSuggestion` - The selected address.
+ * @param onError Callback triggered when an error occurs.
+ *                - Params: `W3WError` - The error details.
+ * @param onDismiss Callback triggered when the scanner is manually dismissed by the user.
  *
- * @param displayUnits Determines how distances are displayed:
- *                     - DisplayUnits.SYSTEM (default): Uses system locale to choose Imperial/Metric
- *                     - DisplayUnits.IMPERIAL: Forces Imperial units
- *                     - DisplayUnits.METRIC: Forces Metric units
- *
- * @param scannerColors Defines the scanner's color scheme
- *
- * @param scannerTextStyles Defines text styling for scanner UI elements
- *
- * @param scannerStrings Provides localized strings for UI elements and accessibility
- *
- * @param suggestionTextStyles Defines text styling for the address list items
- *
- * @param suggestionColors Defines colors for the address list items
- *
- * @param suggestionNearestPlacePrefix Prefix text for nearest place display
- *
- * @param onFrameCaptured Callback for processing captured camera frames
- *                        Params: W3WImage - The captured frame
- *                        Returns: CompletableDeferred<Unit> to signal processing completion and the internal image analyzer should capture a new image for processing
- *
- * @param onSuggestionSelected Callback when user selects an address suggestion
- *                            Params: W3WSuggestion - The selected address
- *
- * @param onError Callback for error handling
- *                Params: W3WError - The error that occurred
- *
- * @param onDismiss Callback when user manually closes the scanner
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -296,30 +304,37 @@ fun W3WOcrScanner(
 }
 
 /**
- * Creates a new [W3WOcrScanner] Composable to utilize CameraX and a [OcrScanManager] for scanning what3words addresses using text recognition.
- * This component integrates camera functionality with OCR (Optical Character Recognition) to detect and validate three-word addresses in real-time.
+ * A composable that provides an OCR scanner interface for detecting and processing what3words addresses.
+ * This version simplifies integration by internally managing the scanner's state with [OcrScanManager],
+ * making it easy to use in projects without the need for external state management.
  *
- * @param modifier An optional [Modifier] for customizing the appearance and layout of the root [BottomSheetScaffold].
- * @param ocrScanManager The [OcrScanManager] instance that manages the OCR scanning process.
- * @param displayUnits The unit system ([DisplayUnits]) for displaying distances. Defaults to [DisplayUnits.SYSTEM],
- *                     which uses the system's locale to determine whether to use the Imperial or Metric system.
- * @param scannerColors The color scheme ([W3WOcrScannerDefaults.Colors]) applied to the [W3WOcrScanner].
- *                      Defaults are provided by [W3WOcrScannerDefaults.defaultColors] and can be overridden.
- * @param scannerTextStyles The text styles ([W3WOcrScannerDefaults.TextStyles]) applied to the [W3WOcrScanner].
- *                          Defaults are provided by [W3WOcrScannerDefaults.defaultTextStyles] and can be overridden.
- * @param scannerStrings Localized strings ([W3WOcrScannerDefaults.Strings]) used in the [W3WOcrScanner] for customization
- *                       and accessibility. Defaults are provided by [W3WOcrScannerDefaults.defaultStrings] and can be overridden.
- * @param suggestionTextStyles Text styles ([What3wordsAddressListItemDefaults.TextStyles]) applied to the list of scanned
- *                             three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultTextStyles]
- *                             and can be overridden.
- * @param suggestionColors Color scheme ([What3wordsAddressListItemDefaults.Colors]) applied to the list of scanned
- *                         three-word addresses. Defaults are set by [What3wordsAddressListItemDefaults.defaultColors]
- *                         and can be overridden.
- * @param suggestionNearestPlacePrefix The prefix for displaying the nearest place in [What3wordsAddressListItem]. Defaults to the resource string [com.what3words.design.library.R.string.near].
- * @param onSuggestionFound Callback invoked when a [W3WSuggestion] is found in the [OcrScanManager].
- * @param onSuggestionSelected Callback invoked when a [W3WSuggestion] is selected from the [SuggestionPicker]
- * @param onError Callback invoked when an error occurs within this composable, providing a [W3WError].
- * @param onDismiss Callback invoked when this composable is closed using the close button, indicating a user dismissal without an error or a selected suggestion.
+ * This version is ideal for projects requiring quick and easy integration without extensive
+ * customization or state management.
+ *
+ * This component includes:
+ * - Camera preview.
+ * - Status display.
+ * - List of detected addresses.
+ *
+ * @param modifier Modifier to be applied to the root BottomSheetScaffold.
+ * @param ocrScanManager A manager object that handles the scanner's state and processing automatically.
+ * @param displayUnits The unit system for displaying distances:
+ *                     - `DisplayUnits.SYSTEM` (default): Uses the system locale (Imperial/Metric).
+ *                     - `DisplayUnits.IMPERIAL`: Forces Imperial units.
+ *                     - `DisplayUnits.METRIC`: Forces Metric units.
+ * @param scannerColors Customizable color scheme for the scanner's interface.
+ * @param scannerTextStyles Customizable text styles for UI elements.
+ * @param scannerStrings Localized strings for scanner UI and accessibility.
+ * @param suggestionTextStyles Text styles for the list of detected three-word addresses.
+ * @param suggestionColors Color scheme for the list of detected addresses.
+ * @param suggestionNearestPlacePrefix A prefix for displaying the nearest place, e.g., "near".
+ * @param onSuggestionSelected Callback triggered when a user selects a three-word address.
+ *                             - Params: `W3WSuggestion` - The selected address.
+ * @param onSuggestionFound (Optional) Callback triggered when a suggestion is detected in real-time.
+ *                          - Params: `W3WSuggestion` - The detected suggestion.
+ * @param onError Callback triggered when an error occurs.
+ *                - Params: `W3WError` - The error details.
+ * @param onDismiss Callback triggered when the scanner is manually dismissed by the user.
  */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

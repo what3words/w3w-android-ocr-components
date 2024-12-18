@@ -15,7 +15,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * Scan [image] [Bitmap] for one or more what3words addresses using MLKit.
+ * Scan [image] [Bitmap] for one or more possible what3words addresses using MLKit.
  *
  * @param image the [Bitmap] that the scanner should use to find possible what3words addresses.
  * @param onScanning the callback when it starts to scan image for text.

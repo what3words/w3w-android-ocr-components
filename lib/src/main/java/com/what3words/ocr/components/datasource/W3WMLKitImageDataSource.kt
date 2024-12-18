@@ -6,6 +6,7 @@ import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.TextRecognizer
+import com.google.mlkit.vision.text.TextRecognizerOptionsInterface
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
@@ -122,6 +123,14 @@ class W3WMLKitImageDataSource internal constructor(
     }
 
     companion object {
+        /**
+         * Creates a new instance of [W3WMLKitImageDataSource].
+         *
+         * @param context The context of the application.
+         * @param recognizerOptions The options [TextRecognizerOptionsInterface] for configuring the text recognizer.
+         *
+         * @return A new instance of W3WMLKitImageDataSource.
+         */
         @JvmStatic
         fun create(
             context: Context,

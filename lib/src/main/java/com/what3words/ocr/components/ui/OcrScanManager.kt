@@ -42,6 +42,10 @@ class OcrScanManager(
      */
     private val _ocrScannerState = MutableStateFlow(OcrScannerState())
     val ocrScannerState: StateFlow<OcrScannerState> = _ocrScannerState.asStateFlow()
+
+    /**
+     * Flag to indicate if the OCR scanner is currently stopping. It don't accept new images for processing.
+     */
     private var isStopping: Boolean = false
 
     /**
