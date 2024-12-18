@@ -2,9 +2,8 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.what3words/w3w-android-ocr-components.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.what3words%22%20AND%20a:%22w3w-android-ocr-components%22)
 
-### Android minumum SDK support
+### Android minimum SDK support
 [![Generic badge](https://img.shields.io/badge/minSdk-24-green.svg)](https://developer.android.com/about/versions/marshmallow/android-7.0/)
-
 
 An Android library to scan what3words address using [MLKit V2](https://developers.google.com/ml-kit/vision/text-recognition/v2/android).
 
@@ -18,148 +17,130 @@ To obtain an API key, please visit [https://what3words.com/select-plan](https://
 implementation 'com.what3words:w3w-android-ocr-components:$latest'
 ```
 
-## Sample using w3w-android-wrapper library
+## Sample app
 
-[ocr-sample](https://github.com/what3words/w3w-android-samples/tree/main/ocr-sample)
+This repository includes a [sample app](https://github.com/what3words/w3w-android-samples/tree/main/ocr-sample) demonstrating the usage of the what3words OCR component.
 
-## Usage
+## Usages
 
-There are two ways to use our MLKit OCR Component:
+Adding a `W3WOcrScanner` to your app looks like the following:
 
-1. As an Activity, **MLKitOcrScanActivity**, that should be used as an activity for result, which have minimum setup but doesn't allow style customisation. Our library handles all lifecycle and scan flow and will return the selected scanned three word address. Custom localisation and accessibility are available.
+```kotlin
+W3WOcrScanner(
+    ocrScanManager = ocrScanManager,
+    onDismiss = {},
+    onSuggestionSelected = {},
+    onError = {},
+    onSuggestionFound = {}
+)
+```
+<details>
+  <summary>Creating a OcrScanManager</summary>
 
-2. Using our Jetpack Compose Composable **W3WOcrScanner**, will allow all the above, but the results are returned as a callback (selection and errors) and will enable styling customisation, allowing to override all styles used on our composable with just a couple of extra steps to setup.
+### Creating a OcrScanManager
 
-### Using MLKitOcrScanActivity (#1)
+OcrScanManager encapsulates the scanner’s state and logic within it. It uses the `W3WImageDataSource` to scan images for possible what3words addresses, and the `W3WTextDataSource` to validate detected addresses.
 
-```Kotlin
-class MainActivity : AppCompatActivity() {
+```kotlin
+val w3WImageDataSource = W3WMLKitImageDataSource.create(
+    context = context,
+    recognizerOptions = TextRecognizerOptionsInterface.LATIN
+)
 
-      private val resultLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            when {
-                //registerForActivityResult success with result
-                result.resultCode == Activity.RESULT_OK && result.data?.hasExtra(BaseOcrScanActivity.SUCCESS_RESULT_ID) == true -> {
-                    val suggestion =
-                        result.data!!.serializable<SuggestionWithCoordinates>(BaseOcrScanActivity.SUCCESS_RESULT_ID)
-                    //TODO: Handle suggestion scanned
-                }
-                //registerForActivityResult canceled with error
-                result.resultCode == Activity.RESULT_CANCELED && result.data?.hasExtra(
-                    BaseOcrScanActivity.ERROR_RESULT_ID
-                ) == true -> {
-                    val error =
-                        result.data!!.getStringExtra(BaseOcrScanActivity.ERROR_RESULT_ID)
-                    //TODO: Handle error
-                }
-                //registerForActivityResult canceled by user.
-                else -> {
-                }
-            }
-        }
-        
-    override fun onCreate(savedInstanceState: Bundle?) {
-        ...
-        //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
-        val options = AutosuggestOptions().apply { 
-            this.focus = Coordinates(51.23, 0.1)
-        }
-        
-        //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
-        val returnCoordinates = true
-        
-        //MLKitOcrScanActivity.newInstanceWithApi allows to provide all strings to be used internally for localisation and accessibility propuses. This should be used on a click actions, i.e: button click.
-        val intent = MLKitOcrScanActivity.newInstanceWithApi(
-            context = this,
-            mlKitLibrary = com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN,
-            apiKey = "YOUR_API_KEY_HERE",
-            options = options,
-            returnCoordinates = returnCoordinates,
-            scanStateFoundTitle = "Custom found title"
-        )
-        try {
-            resultLauncher.launch(intent)
-        } catch (e: ExceptionInInitializerError) {
-            //TODO: Handle Error
-        }
-    }
-}
+val w3WTextDataSource = W3WApiTextDataSource.create(context, W3W_API_KEY)
+
+val ocrScanManager = rememberOcrScanManager(
+    w3wImageDataSource = w3WImageDataSource,
+    w3wTextDataSource = w3WTextDataSource,
+)
+
 ```
 
-### Using W3WOcrScanner Composable (#2)
+</details>
 
-```Kotlin
-class MainActivity : ComponentActivity() {
-    private lateinit var ocrWrapper: W3WOcrWrapper
+<details>
+ <summary>Using OcrScannerState</summary>
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::ocrWrapper.isInitialized) ocrWrapper.stop()
-    }
-        
-    override fun onCreate(savedInstanceState: Bundle?) {
-        //This example uses Latin MLKit library, check MLKit documentation of how to instanciate other libraries like Korean, Japanese, Devanagari or Chinese.
-        val textRecognizer = com.google.mlkit.vision.text.TextRecognizerOptionsInterface.LATIN
+### Using OcrScannerState
 
-        //Options to filter the OCR scanning or like this example providing current location for more accurate results/distances to three word addresses.
-        val options = AutosuggestOptions().apply { 
-            this.focus = Coordinates(51.23, 0.1)
+If you prefer more control over the scanner's state, you can use `OcrScannerState` directly instead of using `OcrScanManager`. This allows you to manage the state externally and integrate the component into your existing architecture.
+
+#### Example Usage
+```kotlin
+val ocrScannerState = remember { OcrScannerState() }
+
+W3WOcrScanner(
+    ocrScannerState = ocrScannerState,
+    onError = { error ->
+        // Handle the error
+    },
+    onDismiss = {
+        // Handle scanner dismissal
+    },
+    onFrameCaptured = { image ->
+        // Scanner has captured a frame, you will need to implement your own functions to detect the what3words addresses in the frame and then update the ocrScannerState
+
+        CompletableDeferred<Unit>().apply {
+            // Signal completion when processing is done
+            complete(Unit)
         }
-
-        //Per default the scanned three word address will not return coordinate information, if you set returnCoordinates to true when instanciating a new MLKitOcrScanActivity, it will return coordinates and this might results in charge against your API Key.
-        val returnCoordinates = true
-
-        val dataProvider = What3WordsV3("YOUR_API_KEY_HERE", this)
-        ocrWrapper = W3WOcrMLKitWrapper(this, textRecognizer)
-
-        setContent { 
-            YourTheme {
-                W3WOcrScanner(
-                    ocrWrapper,
-                    dataProvider = dataProvider,
-                    modifier = Modifier.fillMaxSize(),
-                    options = options,
-                    returnCoordinates = returnCoordinates,
-                    onError = { error ->
-                        //TODO: Handle error
-                    },
-                    onDismiss = {
-                        //TODO: Dismissed by user, hide W3WOcrScanner using AnimatedVisibility or finish activity.
-                    },
-                    onSuggestionSelected = { scannedSuggestion ->
-                        //TODO: Use scanned three word address info, hide W3WOcrScanner using AnimatedVisibility or finish activity.
-                    }
-                ) 
-            }
-        }
-    }
-}
+    },
+    onSuggestionSelected = { suggestion ->
+        // Handle address selection
+    },
+)
 ```
 
-### Styling W3WOcrScanner (#2)
+#### Comparison Between using OcrScanManager and OcrScannerState directly
+| Feature/Aspect                | **OcrScanManager**                                              | **OcrScannerState**                                       |
+|-------------------------------|-----------------------------------------------------------------|----------------------------------------------------------|
+| **Ease of Use**               | Encapsulates scanner state and logic, easier to use out of the box. | Provides more granular control but requires extra setup. |
+| **State Management**          | Internal state management, ideal for simple integrations.      | External state management, better for complex apps.      |
+| **Customizability**           | Limited to predefined functionalities.                         | High, allows deep customization and integration.         |
+| **Use Case**                  | Quick implementation without managing internal details.        | Advanced use cases needing dynamic or external control.  |
+| **Flexibility**               | Limited flexibility.        
 
-```Kotlin
+</details>
+
+<details>
+  <summary>Styling W3WOcrScanner</summary>
+
+### Styling W3WOcrScanner
+
+You can customize the appearance of the `W3WOcrScanner` by providing parameters for strings, colors, and text styles.
+
+```kotlin
 W3WOcrScanner(
     ...
-    //optional if you want to override any string of the scanner composable, to allow localisation and accessibility.
     scannerStrings = W3WOcrScannerDefaults.defaultStrings(
         scanStateFoundTitle = stringResource(id = R.string.scan_state_found),
     ),
-    //optional if you want to override any colors of the scanner composable.
     scannerColors = W3WOcrScannerDefaults.defaultColors(
         bottomDrawerBackground = W3WTheme.colors.background
     ),
-    //optional if you want to override any text styles.
     scannerTextStyles = W3WOcrScannerDefaults.defaultTextStyles(
         stateTextStyle = W3WTheme.typography.headline
     ),
-    //optional if you want to override any colors of the scanned list item composable.
     suggestionColors = SuggestionWhat3wordsDefaults.defaultColors(
         background = W3WTheme.colors.background
     ),
-    //optional if you want to override any text styles of the scanned list item composable.
     suggestionTextStyles = SuggestionWhat3wordsDefaults.defaultTextStyles(
         wordsTextStyle = W3WTheme.typography.headline
     )
-) 
+)
 ```
+
+</details>
+
+<details>
+  <summary>Camera Permission</summary>
+
+### Camera Permission
+
+The OCR component requires camera permission to function. Add the following permission to your app’s `AndroidManifest.xml` file:
+
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+```
+
+</details>
