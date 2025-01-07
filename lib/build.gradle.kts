@@ -114,10 +114,8 @@ dependencies {
 
     // what3words
     api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.2")
-    api("com.what3words:w3w-core-android:1.1.0-SNAPSHOT") {
-        isChanging = true
-    }
+    api("com.what3words:w3w-android-design-library:2.0.3")
+    api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
