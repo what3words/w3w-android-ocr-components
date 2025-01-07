@@ -1,251 +1,196 @@
 package com.what3words.ocr.components.ui
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.util.DisplayMetrics
-import android.util.Log
-import androidx.camera.core.AspectRatio
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.core.UseCaseGroup
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.positionInRoot
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleOwner
-import com.google.common.util.concurrent.ListenableFuture
-import com.what3words.androidwrapper.What3WordsAndroidWrapper
-import com.what3words.api.sdk.bridge.models.What3WordsSdk
-import com.what3words.javawrapper.What3WordsV3
-import com.what3words.javawrapper.request.AutosuggestOptions
-import com.what3words.javawrapper.response.APIResponse.What3WordsError
-import com.what3words.javawrapper.response.Suggestion
-import com.what3words.ocr.components.extensions.BitmapUtils
-import com.what3words.ocr.components.models.W3WOcrWrapper
-import com.what3words.ocr.components.ui.OcrScanManager.OcrScanResultCallback
-import kotlin.math.roundToInt
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import com.what3words.core.datasource.image.W3WImageDataSource
+import com.what3words.core.datasource.text.W3WTextDataSource
+import com.what3words.core.types.common.W3WError
+import com.what3words.core.types.common.W3WResult
+import com.what3words.core.types.domain.W3WSuggestion
+import com.what3words.core.types.image.W3WImage
+import com.what3words.core.types.options.W3WAutosuggestOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Manager that uses [androidx.camera.view.PreviewView] and [androidx.camera.core.ImageAnalysis] to analise captured frames
- * from devices camera, creating a queue of frames to be cropped and sent to the [wrapper] provided for Text scan, working as an helper
- * to be used internally by our [W3WOcrScanner], for separation of concerns.
+ * Manages OCR (Optical Character Recognition) scanning operations for what3words addresses
+ * within [W3WOcrScanner].
  *
- * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
- * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
- * @param options optional [AutosuggestOptions] to filter OCR scan results.
- * @param ocrScanResultCallback a [OcrScanResultCallback] called in different stages of the OCR scanning process.
+ * This class utilizing the [W3WImageDataSource] to scan images for possible what3words addresses, then it uses the [W3WTextDataSource] for
+ * validating detected addresses.
+ *
+ * In most cases, this will be created via [rememberOcrScanManager].
+ *
+ * @property w3wImageDataSource The data source for scanning images for possible what3words addresses.
+ * @property w3wTextDataSource The data source for what3words address validation operations.
+ * @property options Optional [W3WAutosuggestOptions] for what3words address validation.
  */
-@ExperimentalGetImage
-internal class OcrScanManager(
-    private val wrapper: W3WOcrWrapper,
-    private val dataProvider: What3WordsAndroidWrapper,
-    private val options: AutosuggestOptions? = null,
-    private val ocrScanResultCallback: OcrScanResultCallback
+class OcrScanManager(
+    private val w3wImageDataSource: W3WImageDataSource,
+    private val w3wTextDataSource: W3WTextDataSource,
+    private val options: W3WAutosuggestOptions? = null
 ) {
-    interface OcrScanResultCallback {
-        fun onScanning()
-        fun onDetected()
-        fun onValidating()
-        fun onError(error: What3WordsError)
-        fun onFound(result: List<Suggestion>)
-    }
-
-    private var cameraProvider: ProcessCameraProvider? = null
-    private lateinit var cameraProviderFuture: ListenableFuture<ProcessCameraProvider>
-
-    private lateinit var imageAnalyzer: ImageAnalysis
-    internal var cropLayoutCoordinates: LayoutCoordinates? = null
-    internal var cameraLayoutCoordinates: LayoutCoordinates? = null
-
     /**
-     * This method will start all the camera logic, bind [PreviewView] to [LifecycleOwner] provided and create a [UseCaseGroup] using [PreviewView.getViewPort]
-     * At this point permissions should have been handled already.
-     *
-     * @param context the [Context] where the [PreviewView] will be running.
-     * @param lifecycleOwner the lifecycle owner of the [PreviewView] to allows us to bind a [UseCaseGroup] it.
-     * @param previewView the [PreviewView] that will be used to capture frames to be scanned.
+     * The current state of the OCR scanner, exposed as a Compose State.
+     * This allows the W3WOcrScanner Composable to reactively update based on scanner state changes.
      */
-    fun startCamera(
-        context: Context,
-        lifecycleOwner: LifecycleOwner,
-        previewView: PreviewView
-    ) {
-        imageAnalyzer =
-            ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .setTargetAspectRatio(AspectRatio.RATIO_16_9).build().also { imageAnalysis ->
-                    imageAnalysis.setAnalyzer(
-                        wrapper.executor(),
-                        OcrAnalyzer(
-                            wrapper,
-                            dataProvider,
-                            options,
-                            cropLayoutCoordinates!!,
-                            cameraLayoutCoordinates!!,
-                            ocrScanResultCallback
-                        ) { suggestions, error ->
-                            CoroutineScope(Dispatchers.Main).launch {
-                                //only call onFinished if isSuccessful or there's an error
-                                if (error == null && suggestions.isNotEmpty()) {
-                                    ocrScanResultCallback.onFound(suggestions)
-                                } else if (error != null) {
-                                    ocrScanResultCallback.onError(error)
-                                }
-                            }
-                        }
-                    )
-                }
-        cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-        val runnable = Runnable {
-            val preview = Preview.Builder().build()
-                .also { it.setSurfaceProvider(previewView.surfaceProvider) }
-            //use preview ViewPort to get cropRect to make sure WYSIWYG
-            val useCaseGroup = UseCaseGroup.Builder()
-                .setViewPort(previewView.viewPort!!)
-                .addUseCase(preview)
-                .addUseCase(imageAnalyzer)
-                .build()
-            with(cameraProviderFuture.get()) {
-                cameraProvider = this
-                unbindAll()
-                bindToLifecycle(
-                    lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, useCaseGroup
-                )
-            }
-        }
-        cameraProviderFuture.addListener(runnable, ContextCompat.getMainExecutor(context))
+    private val _ocrScannerState = MutableStateFlow(OcrScannerState())
+    val ocrScannerState: StateFlow<OcrScannerState> = _ocrScannerState.asStateFlow()
+
+    /**
+     * Flag to indicate if the OCR scanner is currently stopping. It don't accept new images for processing.
+     */
+    private var isStopping: Boolean = false
+
+    /**
+     * Prepares the OCR scanner for operation. This method should be called before scanning images.
+     *
+     * @param onReady Callback invoked when the scanner is ready.
+     * @param onError Callback invoked if an error occurs during preparation.
+     */
+    fun getReady(onReady: () -> Unit, onError: (W3WError) -> Unit) {
+        isStopping = false
+        w3wImageDataSource.start(onReady, onError)
     }
 
     /**
-     * This method will stop all the camera logic, unbind [PreviewView] to [LifecycleOwner] provided and clear [imageAnalyzer] frames that are currently in the queue.
+     * Stops the OCR scanner and resets its state.
      */
     fun stop() {
-        if (::cameraProviderFuture.isInitialized) cameraProviderFuture.get().unbindAll()
-        if (::imageAnalyzer.isInitialized) imageAnalyzer.clearAnalyzer()
+        isStopping = true
+        w3wImageDataSource.stop()
+        _ocrScannerState.value = OcrScannerState()
     }
 
     /**
-     * [OcrAnalyzer] is a custom [ImageAnalysis.Analyzer] that will get the frames from [imageAnalyzer] and will send them to [OcrRecognizer]
-     * which will compute the [ImageProxy] returned by [ImageAnalysis.Analyzer.analyze] and call [onResult] when [OcrRecognizer] finishes.
+     * Scan the image for what3words addresses.
      *
-     * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
-     * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
-     * @param options optional [AutosuggestOptions] to filter OCR scan results.
-     * @param cropLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
-     * @param cameraLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamically to allow different form factors.
-     * @param displayMetrics the [DisplayMetrics] of the device to gives necessary information to crop the [ImageProxy] to the desired camera shutter size.
-     * @param ocrScanResultCallback a [OcrScanResultCallback] called in different stages of the OCR scanning process, provided by the [W3WOcrScanner].
-     * @param onResult a callback that will be called when a result was found, which is either [List] of [Suggestion] or, in case of an error, a [What3WordsError] with all error details.
+     * @param image the [W3WImage] to be scanned.
+     * @param onError the callback with a [W3WError] in case an error was found while scanning.
+     * @param onFound the callback with a list of [W3WSuggestion] in case a what3words address was found.
+     * @param onCompleted the callback when the scanning process is completed.
      */
-    @ExperimentalGetImage
-    private class OcrAnalyzer(
-        wrapper: W3WOcrWrapper,
-        dataProvider: What3WordsAndroidWrapper,
-        options: AutosuggestOptions?,
-        cropLayoutCoordinates: LayoutCoordinates,
-        cameraLayoutCoordinates: LayoutCoordinates,
-        private val ocrScanResultCallback: OcrScanResultCallback,
-        private val onResult: (List<Suggestion>, What3WordsError?) -> Unit
-    ) :
-        ImageAnalysis.Analyzer {
-        private val textRecognizer =
-            OcrRecognizer(wrapper, dataProvider, options, cropLayoutCoordinates, cameraLayoutCoordinates)
-
-        @ExperimentalGetImage
-        override fun analyze(imageProxy: ImageProxy) {
-            textRecognizer.recognizeImageText(
-                imageProxy,
-                ocrScanResultCallback
-            ) { suggestions, error ->
-                imageProxy.close()
-                onResult.invoke(suggestions, error)
-            }
-        }
-    }
-
-    /**
-     * [OcrRecognizer] will get the [ImageProxy] convert it to a [Bitmap], crop the bitmap with [LayoutCoordinates] and [DisplayMetrics] information
-     * and send the cropped [Bitmap] to our [wrapper].
-     *
-     * @param wrapper the [What3WordsAndroidWrapper] data provider to be used by this wrapper to validate a possible three word address,
-     * could be our [What3WordsV3] for API or [What3WordsSdk] for SDK (SDK requires extra setup).
-     * @param options optional [AutosuggestOptions] to filter OCR scan results.
-     * @param cropLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
-     * @param cameraLayoutCoordinates the [LayoutCoordinates] of the camera shutter set on top of [PreviewView] inside [W3WOcrScanner], this is set dynamicallyto allow different form factors.
-     */
-    @ExperimentalGetImage
-    private class OcrRecognizer(
-        private val wrapper: W3WOcrWrapper,
-        private val dataProvider: What3WordsAndroidWrapper,
-        private val options: AutosuggestOptions?,
-        private val cropLayoutCoordinates: LayoutCoordinates,
-        private val cameraLayoutCoordinates: LayoutCoordinates
+    fun scanImage(
+        image: W3WImage,
+        onError: (W3WError) -> Unit,
+        onFound: (List<W3WSuggestion>) -> Unit,
+        onCompleted: () -> Unit
     ) {
-        companion object {
-            const val TAG = "OcrRecognizer"
+        // In case the scanner is stopping, we ignore the scan request.
+        if (isStopping) {
+            return
         }
 
-        fun recognizeImageText(
-            imageProxy: ImageProxy,
-            ocrScanResultCallback: OcrScanResultCallback,
-            onResult: (List<Suggestion>, What3WordsError?) -> Unit
-        ) {
-            BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
-                val bitmapToBeScanned = try {
-                    if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
-                        val x1: Float =
-                            (cropLayoutCoordinates.positionInRoot().x * bitmap.width) / cameraLayoutCoordinates.size.width
-                        val y1: Float =
-                            (cropLayoutCoordinates.positionInRoot().y * bitmap.height) / cameraLayoutCoordinates.size.height
-                        val width1: Int =
-                            (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
-                        val height1: Int =
-                            (cropLayoutCoordinates.size.height * bitmap.height) / cameraLayoutCoordinates.size.height
-                        Bitmap.createBitmap(
-                            bitmap,
-                            x1.roundToInt(),
-                            y1.roundToInt(),
-                            width1,
-                            height1
-                        )
-                    } else {
-                        bitmap
+        try {
+            w3wImageDataSource.scan(
+                image,
+                onScanning = {
+                    updateState(OcrScannerState.State.Scanning)
+                },
+                onDetected = { possibleAddresses ->
+                    updateState(OcrScannerState.State.Detected)
+                    updateState(OcrScannerState.State.Validating)
+                    validateAddressesAsync(possibleAddresses) { newSuggestions ->
+                        if (newSuggestions.isNotEmpty()) {
+                            onFound(newSuggestions)
+                            updateState(
+                                OcrScannerState.State.Found,
+                                (newSuggestions + _ocrScannerState.value.foundItems).distinctBy { it.w3wAddress.words }
+                            )
+                        }
+
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, e.message ?: "")
-                    //ignore frame if any cropping issues.
-                    onResult(emptyList(), null)
-                    return
+                },
+                onError = {
+                    onError(it)
+                },
+                onCompleted = {
+                    image.bitmap.recycle()
+                    onCompleted.invoke()
                 }
-                try {
-                    wrapper.scan(
-                        bitmapToBeScanned,
-                        dataProvider,
-                        options,
-                        onScanning = { ocrScanResultCallback.onScanning() },
-                        onDetected = { ocrScanResultCallback.onDetected() },
-                        onValidating = { ocrScanResultCallback.onValidating() }
-                    ) { suggestions, error ->
-                        onResult(suggestions, error)
-                        bitmap.recycle()
-                        bitmapToBeScanned.recycle()
-                    }
-                } catch (e: Exception) {
-                    onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
-                        this.message = e.message
-                    })
-                }
-            } ?: kotlin.run {
-                onResult(emptyList(), What3WordsError.SDK_ERROR.apply {
-                    this.message = "Bitmap conversion error"
-                })
-            }
+            )
+        } catch (e: Exception) {
+            onError(W3WError(message = e.message))
         }
     }
+
+    private fun validateAddressesAsync(
+        possibleAddresses: List<String>,
+        onValidationComplete: (List<W3WSuggestion>) -> Unit
+    ) {
+        val filteredAddresses =
+            possibleAddresses.filterNot { it in _ocrScannerState.value.foundItems.map { item -> item.w3wAddress.words } }
+        if (filteredAddresses.isEmpty()) {
+            onValidationComplete(emptyList())
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val newSuggestions = filteredAddresses.mapNotNull { possible3wa ->
+                when (val result = w3wTextDataSource.autosuggest(possible3wa, options)) {
+                    is W3WResult.Success -> result.value.firstOrNull {
+                        it.w3wAddress.words.equals(
+                            possible3wa,
+                            ignoreCase = true
+                        )
+                    }
+
+                    is W3WResult.Failure -> null
+                }
+            }
+            onValidationComplete(newSuggestions)
+        }
+    }
+
+    private fun updateState(
+        newState: OcrScannerState.State,
+        newFoundItems: List<W3WSuggestion>? = null
+    ) {
+        _ocrScannerState.update { currentState ->
+            currentState.copy(
+                state = newState,
+                foundItems = newFoundItems ?: currentState.foundItems
+            )
+        }
+    }
+}
+
+/**
+ * Creates a [OcrScanManager] that is remembered across compositions. It also sets up
+ * a [DisposableEffect] to properly stop the manager when the composable leaves the
+ * composition.
+ *
+ * @param w3wImageDataSource The data source for scanning images for possible what3words addresses.
+ * @param w3wTextDataSource The data source for validating what3words addresses.
+ * @param options Optional [W3WAutosuggestOptions] for address validation.
+ *
+ * @see OcrScanManager
+ */
+@Composable
+fun rememberOcrScanManager(
+    w3wImageDataSource: W3WImageDataSource,
+    w3wTextDataSource: W3WTextDataSource,
+    options: W3WAutosuggestOptions?,
+): OcrScanManager {
+    val manager = remember {
+        OcrScanManager(
+            w3wImageDataSource = w3wImageDataSource,
+            w3wTextDataSource = w3wTextDataSource,
+            options = options,
+        )
+    }
+
+    DisposableEffect(key1 = Unit) {
+        onDispose {
+            manager.stop()
+        }
+    }
+
+    return manager
 }
