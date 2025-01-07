@@ -8,6 +8,7 @@ plugins {
     id("jacoco")
     id("signing")
     id("org.jetbrains.dokka") version "1.5.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
 }
 
 group = "com.what3words"
@@ -75,6 +76,18 @@ android {
             withSourcesJar()
         }
     }
+
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel6Api33") {
+                    device = "Pixel 6"
+                    apiLevel = 33
+                    systemImageSource = "aosp"
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -90,43 +103,70 @@ dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // MLKit
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.0")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.0")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.1")
+    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.1")
 
     // what3words
-    implementation("com.what3words:w3w-android-api-sdk-bridge:1.0.8")
     api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.2")
+    api("com.what3words:w3w-android-design-library:2.0.3")
+    api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.activity:activity-compose")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    implementation("androidx.constraintlayout:constraintlayout-compose")
     implementation("androidx.compose.material3:material3")
 
     // gms for module install
     implementation("com.google.android.gms:play-services-base:18.5.0")
 
     // Test dependencies
-    androidTestImplementation("androidx.test:runner:1.6.1")
-    androidTestUtil("androidx.test:orchestrator:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("io.mockk:mockk-android:1.13.3")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+    androidTestImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
+    androidTestImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
 
-    androidTestImplementation("com.google.mlkit:text-recognition:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-devanagari:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-japanese:16.0.0")
-    androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.0")
+    androidTestImplementation("com.google.mlkit:text-recognition:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+    androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.1")
+}
+
+tasks.register("checkSnapshotDependencies") {
+    doLast {
+        val snapshotDependencies = allprojects.flatMap { project ->
+            project.configurations
+                .asSequence()
+                .filter { it.isCanBeResolved }
+                .flatMap { it.allDependencies }
+                .filter { it.version?.contains("SNAPSHOT", ignoreCase = true) == true }
+                .map { "${project.name}:${it.group}:${it.name}:${it.version}" }
+                .distinct()
+                .toList()
+        }
+
+        if (snapshotDependencies.isNotEmpty()) {
+            snapshotDependencies.forEach { println("SNAPSHOT dependency found: $it") }
+            throw GradleException("SNAPSHOT dependencies found.")
+        } else {
+            println("No SNAPSHOT dependencies found.")
+        }
+    }
 }
 
 //region publishing
