@@ -118,6 +118,7 @@ dependencies {
     api("com.what3words:w3w-core-android:1.1.0-SNAPSHOT") {
         isChanging = true
     }
+    api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
