@@ -114,11 +114,11 @@ dependencies {
 
     // what3words
     api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.3")
+    api("com.what3words:w3w-android-design-library:2.0.4-SNAPSHOT")
     api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation(platform("androidx.compose:compose-bom:2025.01.01"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling")
