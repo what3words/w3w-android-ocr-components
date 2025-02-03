@@ -124,8 +124,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.constraintlayout:constraintlayout-compose")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
 
     // gms for module install
     implementation("com.google.android.gms:play-services-base:18.5.0")
