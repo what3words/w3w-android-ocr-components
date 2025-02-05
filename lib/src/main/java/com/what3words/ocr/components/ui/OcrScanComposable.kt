@@ -72,6 +72,7 @@ import com.what3words.design.library.ui.components.What3wordsAddressListItem
 import com.what3words.design.library.ui.components.What3wordsAddressListItemDefaults
 import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.W3WTheme
+import com.what3words.design.library.ui.theme.colors_blue_20
 import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.ocr.components.R
 import com.what3words.ocr.components.internal.buildW3WImageAnalysis
@@ -140,13 +141,13 @@ object W3WOcrScannerDefaults {
     @Composable
     fun defaultColors(
         bottomDrawerBackground: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        overlayBackground: Color = Color(0x990A3049),
+        overlayBackground: Color = colors_blue_20.copy(0.6f),
         stateTextColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
         listHeaderTextColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
         gripColor: Color = MaterialTheme.colorScheme.outline,
-        closeIconColor: Color = Color.White,
-        logoColor: Color = Color.White,
-        shutterInactiveColor: Color = Color.White,
+        closeIconColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
+        logoColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
+        shutterInactiveColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
         shutterActiveColor: Color = MaterialTheme.w3wColorScheme.success,
     ): Colors {
         return Colors(
