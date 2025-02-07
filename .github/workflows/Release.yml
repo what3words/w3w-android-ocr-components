@@ -40,11 +40,11 @@ jobs:
           echo "OSSRH_PASSWORD=${OSSRH_PASSWORD}">> ~/.gradle/gradle.properties
           echo "SIGNING_KEY=${GPG_SIGNING_KEY}">> ~/.gradle/gradle.properties
           echo "SIGNING_KEY_PWD=${SIGNING_KEY_PWD}">> ~/.gradle/gradle.properties
-          cat ~/.gradle/gradle.properties
 
       - name: Snapshot Release Check
         run: |
-          echo -e "\nIS_SNAPSHOT_RELEASE=$( [[ "${CIRCLE_BRANCH}" =~ ^epic.* ]] && echo true || echo false )" >> gradle.properties
+          echo -e "\nIS_SNAPSHOT_RELEASE=$( [[ "${{ github.ref_name }}" == epic/* ]] && echo true || echo false )" >> ~/.gradle/gradle.properties
+          cat ~/.gradle/gradle.properties
 
       - name: Publish to Maven
         run: ./gradlew assemble publish
