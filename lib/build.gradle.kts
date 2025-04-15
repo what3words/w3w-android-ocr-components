@@ -114,7 +114,7 @@ dependencies {
 
     // what3words
     api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.4-SNAPSHOT")
+    api("com.what3words:w3w-android-design-library:2.0.4")
     api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
