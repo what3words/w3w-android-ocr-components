@@ -6,7 +6,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.positionInParent
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
 import com.what3words.ocr.components.extensions.BitmapUtils
@@ -28,10 +28,11 @@ internal class W3WImageAnalyzer(
         BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
             val bitmapToBeScanned = try {
                 if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
+
                     val x1: Float =
-                        (cropLayoutCoordinates.positionInRoot().x * bitmap.width) / cameraLayoutCoordinates.size.width
+                        (cropLayoutCoordinates.positionInParent().x * bitmap.width) / cameraLayoutCoordinates.size.width
                     val y1: Float =
-                        (cropLayoutCoordinates.positionInRoot().y * bitmap.height) / cameraLayoutCoordinates.size.height
+                        (cropLayoutCoordinates.positionInParent().y * bitmap.height) / cameraLayoutCoordinates.size.height
                     val width1: Int =
                         (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
                     val height1: Int =

@@ -114,18 +114,19 @@ dependencies {
 
     // what3words
     api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.3")
+    api("com.what3words:w3w-android-design-library:2.0.4")
     api("com.what3words:w3w-core-android:1.1.0")
 
     //compose
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation(platform("androidx.compose:compose-bom:2025.01.01"))
     implementation("androidx.compose.runtime:runtime")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.activity:activity-compose")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.constraintlayout:constraintlayout-compose")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
 
     // gms for module install
     implementation("com.google.android.gms:play-services-base:18.5.0")
