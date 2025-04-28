@@ -82,7 +82,7 @@ class OcrScanManagerTest {
     }
 
     @Test
-    fun testScanImage() = runTest {
+    fun testScanImageFromCamera() = runTest {
         fakeImageDataSource.setScanResults(listOf("index.home.raft"))
         fakeTextDataSource.setSuggested3was(
             listOf(

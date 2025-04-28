@@ -1,6 +1,7 @@
 package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
@@ -45,10 +46,9 @@ fun TextRecognizer.scan(
                 if (isBypass3waFilter) {
                     onDetected.invoke(visionText.text.split("\n"))
                 } else {
-                    val possibleAddresses = findPossible3wa(visionText.text)
-                    if (possibleAddresses.isNotEmpty()) {
-                        onDetected.invoke(possibleAddresses)
-                    }
+                    val processedText = correctSlashesInText(visionText.text)
+                    val possibleAddresses = findPossible3wa(processedText)
+                    onDetected.invoke(possibleAddresses)
                 }
 
             }.addOnFailureListener { e ->
@@ -64,6 +64,43 @@ fun TextRecognizer.scan(
         onCompleted.invoke()
     }
 }
+
+/**
+ * Corrects common OCR misinterpretations of the three slashes (///) that begin what3words addresses.
+ *
+ * @param text The text recognized by OCR
+ * @return The text with common slash misinterpretations corrected
+ */
+private fun correctSlashesInText(text: String): String {
+    // Common patterns where slashes are misrecognized
+    val patterns = listOf(
+        "Ill", "IlI", "lIl", "III", "ill", "lll", "I/I", "l/l", "II/", "Iil",
+        "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II", "///I", "///l",
+    )
+
+    var processedText = text
+
+    // Replace pattern at the beginning of a word
+    for (pattern in patterns) {
+        processedText = processedText.replace(Regex("\\b$pattern"), "///")
+    }
+    
+    // Handle fake spaces in what3words addresses
+    // Look for patterns like "///word1. word2. word3" or "///word1.word2. word3"
+    processedText = processedText.replace(
+        Regex("///([a-zA-Z]+)[.\\s]+([a-zA-Z]+)[.\\s]+([a-zA-Z]+)"),
+        "///$1.$2.$3"
+    )
+
+    // Also handle cases where the word boundaries might have extra spaces
+    processedText = processedText.replace(
+        Regex("///([a-zA-Z]+)\\s*[.]\\s*([a-zA-Z]+)\\s*[.]\\s*([a-zA-Z]+)"),
+        "///$1.$2.$3"
+    )
+
+    return processedText
+}
+
 
 /**
  * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.
