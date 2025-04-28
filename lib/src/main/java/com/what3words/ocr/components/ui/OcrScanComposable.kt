@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -12,12 +13,14 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +34,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,8 +67,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInParent
@@ -112,8 +118,9 @@ import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 private const val ANIMATION_DURATION = 500 //ms
-private const val SHEET_PEEK_HEIGHT = 90 //dp
+private const val SHEET_PEEK_HEIGHT = 72 //dp
 private const val BUTTON_CONTROL_HEIGHT = 72 //dp
+enum class SheetState { PEEK, CONTENT, FULL }
 
 /**
  * Contains the default values used by W3WOcrScanner.
@@ -872,11 +879,26 @@ private fun ScannerContent(
                 }
             }
         // Add bottom control bar
+        // Track the control bar visibility
+
+        // State for the bottom sheet
+        val peekHeight = SHEET_PEEK_HEIGHT.dp
+        val sheetState = remember { mutableStateOf(SheetState.PEEK) }
+        val fullScreenHeight = with(density) { parentHeight.toDp() }
+
+// Track whether we're currently dragging
+        var isDragging by remember { mutableStateOf(false) }
+        var dragOffset by remember { mutableStateOf(0f) }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
-                    bottom.linkTo(bottomSheet.top, margin = 24.dp)
+                    if (sheetState.value == SheetState.PEEK) {
+                        bottom.linkTo(bottomSheet.top, margin = 24.dp)
+                    } else {
+                        top.linkTo(cropArea.bottom, margin = 24.dp)
+                    }
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                     height = Dimension.value(BUTTON_CONTROL_HEIGHT.dp)
@@ -1027,6 +1049,39 @@ private fun ScannerContent(
                 contentScale = ContentScale.Fit
             )
         }
+
+// Calculate the target height based on state and drag
+        val targetHeight = when {
+            isDragging -> when (sheetState.value) {
+                SheetState.CONTENT -> {
+                    // When dragging from CONTENT state, start at maxBottomSheetHeight and add positive offset (moving toward fullScreenHeight)
+                    val base = maxBottomSheetHeight.value
+                    val target = fullScreenHeight.value
+                    val current = (base + (target - base) * (-dragOffset / 500f)).coerceIn(base, target)
+                    current.dp
+                }
+                SheetState.FULL -> {
+                    // When dragging from FULL state, start at fullScreenHeight and add negative offset (moving toward maxBottomSheetHeight)
+                    val base = fullScreenHeight.value
+                    val target = maxBottomSheetHeight.value
+                    val current = (base - (base - target) * (dragOffset / 500f)).coerceIn(target, base)
+                    current.dp
+                }
+                else -> peekHeight // No dragging allowed in PEEK state
+            }
+            else -> when (sheetState.value) {
+                SheetState.PEEK -> peekHeight
+                SheetState.CONTENT -> maxBottomSheetHeight
+                SheetState.FULL -> fullScreenHeight
+            }
+        }
+
+// Animate the height
+        val animatedHeight by animateFloatAsState(
+            targetValue = targetHeight.value,
+            animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
+            label = "bottomSheetHeight"
+        )
         Box(
             modifier = Modifier
                 .constrainAs(bottomSheet) {
@@ -1035,13 +1090,92 @@ private fun ScannerContent(
                     end.linkTo(parent.end)
                     width = Dimension.fillToConstraints
                 }
+                .height(animatedHeight.dp)
                 .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .background(scannerColors.bottomDrawerBackground)
-                .heightIn(min = 52.dp, max = maxBottomSheetHeight)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = {
+                            if (sheetState.value != SheetState.PEEK) {
+                                isDragging = true
+                                dragOffset = 0f
+                            }
+                        },
+                        onDragEnd = {
+                            isDragging = false
+
+                            // Calculate which state to snap to based on current height and drag direction
+                            if (sheetState.value == SheetState.CONTENT && dragOffset < -200) {
+                                sheetState.value = SheetState.FULL
+                            }
+                            else if (sheetState.value == SheetState.FULL && dragOffset > 200) {
+                                sheetState.value = SheetState.CONTENT
+                            }
+
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            isDragging = false
+                            dragOffset = 0f
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+
+                            // Only allow dragging in specific states
+                            when (sheetState.value) {
+                                SheetState.CONTENT -> {
+                                    // Only allow dragging up from CONTENT
+                                    if (dragAmount.y < 0) {
+                                        // Accumulate negative offset when dragging up
+                                        dragOffset += dragAmount.y
+                                    }
+                                }
+                                SheetState.FULL -> {
+                                    // Only allow dragging down from FULL
+                                    if (dragAmount.y > 0) {
+                                        // Accumulate positive offset when dragging down
+                                        dragOffset += dragAmount.y
+                                    }
+                                }
+                                else -> { /* No dragging in PEEK state */ }
+                            }
+                        }
+                    )
+                }
         ) {
             Column(
                 modifier = Modifier.padding(top = 16.dp)
+                    .onGloballyPositioned { coordinates ->
+                        // Measure content height whenever content changes
+                        val contentHeight = with(density) { coordinates.size.height.toDp() }
+
+                        // Auto-expand from PEEK to CONTENT if content grows or state changes
+                        if (sheetState.value == SheetState.PEEK &&
+                            (ocrScannerState.state == OcrScannerState.State.Found ||
+                                    ocrScannerState.state == OcrScannerState.State.NotFound ||
+                                    contentHeight > peekHeight + 20.dp)) {
+                            sheetState.value = SheetState.CONTENT
+                        }
+                    }
             ) {
+                // Drag handle
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                scannerColors.gripColor,
+                                RoundedCornerShape(2.dp)
+                            )
+                    )
+                }
+
                 if (ocrScannerState.state != OcrScannerState.State.Found && ocrScannerState.state != OcrScannerState.State.NotFound && ocrScannerState.foundItems.isEmpty()) {
                     Box(
                         modifier = Modifier
