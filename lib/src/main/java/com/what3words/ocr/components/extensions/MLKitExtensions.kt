@@ -33,7 +33,8 @@ fun TextRecognizer.scan(
     coroutineScope: CoroutineScope,
     isBypass3waFilter: Boolean = false,
     rotation: Int = 0,
-    throttleTimeout: Long = 250L
+    throttleTimeout: Long = 250L,
+    shouldProcess: Boolean = false
 ) {
     val TAG = "MLKitExtensions" // Define a TAG for logging
 
@@ -52,7 +53,7 @@ fun TextRecognizer.scan(
                     Log.d(TAG, "Bypassing 3wa filter. Detected lines: $lines")
                     onDetected.invoke(lines)
                 } else {
-                    val processedText = correctSlashesInText(visionText.text)
+                    val processedText = if(shouldProcess) correctSlashesInText(visionText.text) else visionText.text
                     Log.d(TAG, "Processed text after slash correction: $processedText")
                     val possibleAddresses = findPossible3wa(processedText)
                     Log.d(TAG, "Found possible what3words addresses: $possibleAddresses")

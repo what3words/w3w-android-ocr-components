@@ -136,6 +136,8 @@ class OcrScanManager(
                                 OcrScannerState.State.Found,
                                 newSuggestions.distinctBy { it.w3wAddress.words }
                             )
+                        } else {
+                            updateState(OcrScannerState.State.NotFound, emptyList())
                         }
                     }
                 }
@@ -238,6 +240,8 @@ class OcrScanManager(
                                 OcrScannerState.State.Found,
                                 newSuggestions.distinctBy { it.w3wAddress.words }
                             )
+                        } else {
+                            updateState(OcrScannerState.State.NotFound, emptyList())
                         }
                     }
                 }
@@ -264,7 +268,7 @@ class OcrScanManager(
                 onScanning = onScanning,
                 onDetected = onDetected,
                 onError = onError,
-                onCompleted = onCompleted
+                onCompleted = onCompleted,
             )
         } catch (e: Exception) {
             onError(W3WError(message = e.message))

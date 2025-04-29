@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,9 +63,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -84,12 +83,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionStatus
 import com.google.accompanist.permissions.isGranted
@@ -118,8 +122,8 @@ import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 private const val ANIMATION_DURATION = 500 //ms
-private const val SHEET_PEEK_HEIGHT = 72 //dp
 private const val BUTTON_CONTROL_HEIGHT = 72 //dp
+
 enum class SheetState { PEEK, CONTENT, FULL }
 
 /**
@@ -154,7 +158,8 @@ object W3WOcrScannerDefaults {
         val stateTextStyle: TextStyle,
         val listHeaderTextStyle: TextStyle,
         val buttonLabelTextStyle: TextStyle,
-        val scanningTipTextStyle: TextStyle
+        val scanningTipTextStyle: TextStyle,
+        val notFoundMessageTextStyle: TextStyle
     )
 
     /**
@@ -170,7 +175,9 @@ object W3WOcrScannerDefaults {
         val importButtonLabel: String = "Import",
         val shutterButtonContentDescription: String = "Take photo",
         val liveScanLabel: String = "Live Scan",
-        val scanningTip: String = "Position the what3words addresses within frame and capture"
+        val scanningTip: String = "Position the what3words addresses within frame and capture",
+        val notFoundMessage: String = "Sorry, we could not detect any what3words address in the photo.",
+        val tryAgainButtonLabel: String = "Try again"
     )
 
     /**
@@ -236,13 +243,15 @@ object W3WOcrScannerDefaults {
         stateTextStyle: TextStyle = MaterialTheme.typography.titleMedium,
         listHeaderTextStyle: TextStyle = MaterialTheme.typography.titleSmall,
         buttonLabelTextStyle: TextStyle = MaterialTheme.typography.bodyMedium,
-        scanningTipTextStyle: TextStyle = MaterialTheme.typography.bodyLarge
+        scanningTipTextStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+        notFoundMessageTextStyle: TextStyle = MaterialTheme.typography.titleMedium
     ): TextStyles {
         return TextStyles(
             stateTextStyle = stateTextStyle,
             listHeaderTextStyle = listHeaderTextStyle,
             buttonLabelTextStyle = buttonLabelTextStyle,
-            scanningTipTextStyle = scanningTipTextStyle
+            scanningTipTextStyle = scanningTipTextStyle,
+            notFoundMessageTextStyle = notFoundMessageTextStyle
         )
     }
 
@@ -334,6 +343,31 @@ fun W3WOcrScanner(
     onBackPressed: (() -> Unit),
     onDismiss: (() -> Unit),
     onImport: (() -> Unit),
+    scannerBottomSheetContent: @Composable () -> Unit = {
+        OCRScannerBottomSheetContent(
+            ocrScannerState = ocrScannerState,
+            displayUnits = displayUnits,
+            scannerColors = scannerColors,
+            scannerStrings = scannerStrings,
+            scannerTextStyles = scannerTextStyles,
+            suggestionTextStyles = suggestionTextStyles,
+            suggestionColors = suggestionColors,
+            suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+            onSuggestionSelected = onSuggestionSelected,
+            onRetryPressed = onBackPressed
+        )
+    },
+    scannerControlBar: @Composable () -> Unit = {
+        OCRScannerControlBar(
+            ocrScannerState = ocrScannerState,
+            scannerColors = scannerColors,
+            scannerStrings = scannerStrings,
+            scannerTextStyles = scannerTextStyles,
+            onToggleLiveMode = onToggleLiveMode,
+            onImport = onImport,
+            onShutterClick = onShutterClick
+        )
+    }
 ) {
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -349,22 +383,15 @@ fun W3WOcrScanner(
                 modifier = modifier,
                 context = LocalContext.current,
                 lifecycleOwner = LocalLifecycleOwner.current,
-                displayUnits = displayUnits,
                 ocrScannerState = ocrScannerState,
                 onFrameCaptured = onFrameCaptured,
                 onDismiss = onDismiss,
                 onError = onError,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
-                scannerTextStyles = scannerTextStyles,
-                suggestionTextStyles = suggestionTextStyles,
-                suggestionColors = suggestionColors,
-                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
-                onSuggestionSelected = onSuggestionSelected,
-                onToggleLiveMode = onToggleLiveMode,
-                onShutterClick = onShutterClick,
-                onImport = onImport,
-                onBackPressed = onBackPressed
+                onBackPressed = onBackPressed,
+                scannerBottomSheetContent = scannerBottomSheetContent,
+                scannerControlBar = scannerControlBar
             )
         }
 
@@ -374,24 +401,6 @@ fun W3WOcrScanner(
             }
         }
     }
-}
-
-// Helper function to calculate appropriate sample size
-private fun calculateSampleSize(width: Int, height: Int, targetWidth: Int, targetHeight: Int): Int {
-    var sampleSize = 1
-
-    if (width > targetWidth || height > targetHeight) {
-        val halfWidth = width / 2
-        val halfHeight = height / 2
-
-        // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-        // height and width larger than the requested height and width
-        while ((halfWidth / sampleSize) >= targetWidth && (halfHeight / sampleSize) >= targetHeight) {
-            sampleSize *= 2
-        }
-    }
-
-    return sampleSize
 }
 
 /**
@@ -442,8 +451,74 @@ fun W3WOcrScanner(
     onSuggestionSelected: ((W3WSuggestion) -> Unit),
     onError: ((W3WError) -> Unit),
     onDismiss: (() -> Unit),
-    onSuggestionFound: ((W3WSuggestion) -> Unit)? = null,
+    onSuggestionFound: ((W3WSuggestion) -> Unit)? = null
 ) {
+    val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
+
+    //region Image Picker setup
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    // Register for activity result to get single image
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val loader = ImageLoader(context)
+            val request = ImageRequest.Builder(context)
+                .data(uri)
+                .size(1280) // Recommended for most OCRs
+                .build()
+
+            scope.launch(Dispatchers.IO) {
+                val drawable = loader.execute(request).drawable
+                drawable?.toBitmap()?.let { bitmap ->
+                    val w3wImage = W3WImage(bitmap)
+                    ocrScanManager.scanImage(
+                        image = w3wImage,
+                        onError = onError,
+                        onFound = { suggestions ->
+                            suggestions.forEach { suggestion ->
+                                onSuggestionFound?.invoke(suggestion)
+                            }
+                        },
+                        onCompleted = {},
+                        isFromMedia = true
+                    )
+                }
+            }
+        }
+    }
+
+    // Define the permission request based on Android version
+    val photoLibraryPermission = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
+            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
+        }
+
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
+            Manifest.permission.READ_MEDIA_IMAGES
+        }
+
+        else -> {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+    }
+
+    // Create the permission state
+    val photoLibraryPermissionState = rememberPermissionState(
+        permission = photoLibraryPermission
+    ) { granted ->
+        if (granted) {
+            imagePicker.launch("image/*")
+        } else {
+            onError.invoke(W3WError(message = "OCR scanner needs media permissions"))
+        }
+    }
+
+
+    //endregion
+
+    //region Camera Setup
     var isScannerReady by remember { mutableStateOf(false) }
     val cameraPermissionState = rememberPermissionState(
         Manifest.permission.CAMERA
@@ -466,73 +541,12 @@ fun W3WOcrScanner(
         cameraPermissionState.launchPermissionRequest()
     }
 
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    // Register for activity result to get single image
-    val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            scope.launch(Dispatchers.IO) {
-                // Get image dimensions first before loading full bitmap
-                uri.loadDownsampledBitmap(context.contentResolver)?.let {
-                    // Create a W3WImage from the bitmap
-                    val w3wImage = W3WImage(it)
-
-                    ocrScanManager.scanImage(
-                        image = w3wImage,
-                        onError = onError,
-                        onFound = { suggestions ->
-                            suggestions.forEach { suggestion ->
-                                onSuggestionFound?.invoke(suggestion)
-                            }
-                        },
-                        onCompleted = {},
-                        isFromMedia = true
-                    )
-                }
-            }
-        }
-    }
-
-    // Define the permission request based on Android version
-    val photoLibraryPermission = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> {
-            // Android 14+ - Use the limited photos select API
-            Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
-        }
-
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> {
-            // Android 13
-            Manifest.permission.READ_MEDIA_IMAGES
-        }
-
-        else -> {
-            // Android 12 and below
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-    }
-
-    // Create the permission state
-    val photoLibraryPermissionState = rememberPermissionState(
-        permission = photoLibraryPermission
-    ) { granted ->
-        if (granted) {
-            imagePicker.launch("image/*")
-        } else {
-            onError.invoke(W3WError(message = "OCR scanner needs media permissions"))
-        }
-    }
-
-    val ocrScannerState by ocrScanManager.ocrScannerState.collectAsState()
-
     when {
         cameraPermissionState.status.isGranted -> {
             ScannerContent(
                 modifier = modifier,
                 context = LocalContext.current,
                 lifecycleOwner = LocalLifecycleOwner.current,
-                displayUnits = displayUnits,
                 ocrScannerState = ocrScannerState,
                 onFrameCaptured = { image ->
                     val deferred = CompletableDeferred<Unit>()
@@ -559,30 +573,49 @@ fun W3WOcrScanner(
                 onError = onError,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
-                scannerTextStyles = scannerTextStyles,
-                suggestionTextStyles = suggestionTextStyles,
-                suggestionColors = suggestionColors,
-                suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
-                onSuggestionSelected = onSuggestionSelected,
-                onToggleLiveMode = { isLiveMode ->
-                    ocrScanManager.toggleLiveMode(isLiveMode)
-                },
-                onShutterClick = {
-                    ocrScanManager.captureNextFrame()
-                },
-                onImport = {
-                    if (photoLibraryPermissionState.status.isGranted ||
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                    ) {
-                        // For Android 14+ we can always launch the picker as it will handle permission itself
-                        imagePicker.launch("image/*")
-                    } else {
-                        photoLibraryPermissionState.launchPermissionRequest()
-                    }
-                },
                 onBackPressed = {
                     ocrScanManager.onBackPressed()
                 },
+                scannerBottomSheetContent = {
+                    OCRScannerBottomSheetContent(
+                        ocrScannerState = ocrScannerState,
+                        displayUnits = displayUnits,
+                        scannerColors = scannerColors,
+                        scannerStrings = scannerStrings,
+                        scannerTextStyles = scannerTextStyles,
+                        suggestionTextStyles = suggestionTextStyles,
+                        suggestionColors = suggestionColors,
+                        suggestionNearestPlacePrefix = suggestionNearestPlacePrefix,
+                        onSuggestionSelected = onSuggestionSelected,
+                        onRetryPressed = {
+                            ocrScanManager.onBackPressed()
+                        }
+                    )
+                },
+                scannerControlBar = {
+                    OCRScannerControlBar(
+                        ocrScannerState = ocrScannerState,
+                        scannerColors = scannerColors,
+                        scannerStrings = scannerStrings,
+                        scannerTextStyles = scannerTextStyles,
+                        onToggleLiveMode = { isLiveMode ->
+                            ocrScanManager.toggleLiveMode(isLiveMode)
+                        },
+                        onImport = {
+                            if (photoLibraryPermissionState.status.isGranted ||
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                            ) {
+                                // For Android 14+ we can always launch the picker as it will handle permission itself
+                                imagePicker.launch("image/*")
+                            } else {
+                                photoLibraryPermissionState.launchPermissionRequest()
+                            }
+                        },
+                        onShutterClick = {
+                            ocrScanManager.captureNextFrame()
+                        }
+                    )
+                }
             )
         }
 
@@ -592,6 +625,8 @@ fun W3WOcrScanner(
             }
         }
     }
+
+    //endregion
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -601,22 +636,16 @@ private fun ScannerContent(
     ocrScannerState: OcrScannerState,
     context: Context,
     lifecycleOwner: LifecycleOwner,
-    displayUnits: DisplayUnits,
     onFrameCaptured: ((W3WImage) -> CompletableDeferred<Unit>),
-    onToggleLiveMode: (Boolean) -> Unit,
-    onImport: () -> Unit,
-    onShutterClick: () -> Unit,
     onBackPressed: () -> Unit,
     onDismiss: (() -> Unit)?,
     onError: ((W3WError) -> Unit)?,
     scannerColors: W3WOcrScannerDefaults.Colors,
     scannerStrings: W3WOcrScannerDefaults.Strings,
-    scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
-    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
-    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
-    suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
-    onSuggestionSelected: ((W3WSuggestion) -> Unit),
+    scannerBottomSheetContent: @Composable () -> Unit,
+    scannerControlBar: @Composable () -> Unit
 ) {
+    //region Camera Bindings
     val orientation = LocalConfiguration.current.orientation
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -689,6 +718,17 @@ private fun ScannerContent(
             bindCamera(cameraProvider)
         }
     }
+
+    LaunchedEffect(ocrScannerState.capturedImage) {
+        if (ocrScannerState.capturedImage != null && isCameraBound) {
+            unbindCamera(cameraProviderFuture.get())
+        } else if (ocrScannerState.capturedImage == null && !isCameraBound) {
+            bindCamera(cameraProviderFuture.get())
+        }
+    }
+
+    //endregion
+
     var parentHeight by remember { mutableStateOf(0f) }
     var maxBottomSheetHeight by remember { mutableStateOf(52.dp) }
 
@@ -749,6 +789,7 @@ private fun ScannerContent(
                 }
                 .background(scannerColors.overlayBackground)
         )
+
         var cropAreaBottom by remember { mutableStateOf(0f) }
 
         Box(
@@ -878,15 +919,32 @@ private fun ScannerContent(
                     parentHeightDp - instructionBottomDp - controlBarHeight - 48.dp
                 }
             }
-        // Add bottom control bar
-        // Track the control bar visibility
 
-        // State for the bottom sheet
-        val peekHeight = SHEET_PEEK_HEIGHT.dp
+        var peekHeight by remember { mutableStateOf(80.dp) }
         val sheetState = remember { mutableStateOf(SheetState.PEEK) }
         val fullScreenHeight = with(density) { parentHeight.toDp() }
 
-// Track whether we're currently dragging
+        LaunchedEffect(ocrScannerState.state) {
+            when (ocrScannerState.state) {
+                OcrScannerState.State.NotFound -> {
+                    peekHeight = 160.dp
+                    sheetState.value = SheetState.PEEK
+                }
+
+                OcrScannerState.State.Idle -> {
+                    peekHeight = 80.dp
+                    sheetState.value = SheetState.PEEK
+                }
+
+                OcrScannerState.State.Found -> {
+                    sheetState.value = SheetState.CONTENT
+                }
+
+                else -> {}
+            }
+        }
+
+        // Track whether we're currently dragging
         var isDragging by remember { mutableStateOf(false) }
         var dragOffset by remember { mutableStateOf(0f) }
 
@@ -895,7 +953,7 @@ private fun ScannerContent(
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
                     if (sheetState.value == SheetState.PEEK) {
-                        bottom.linkTo(bottomSheet.top, margin = 24.dp)
+                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp)
                     } else {
                         top.linkTo(cropArea.bottom, margin = 24.dp)
                     }
@@ -907,89 +965,10 @@ private fun ScannerContent(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                OutlinedIconButton(
-                    onClick = onImport,
-                    modifier = Modifier.size(48.dp),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        color = scannerColors.logoColor
-                    ),
-                    colors = IconButtonDefaults.outlinedIconButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_import),
-                        contentDescription = scannerStrings.importButtonLabel,
-                        tint = scannerColors.logoColor
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = scannerStrings.importButtonLabel,
-                    color = scannerColors.buttonLabelColor,
-                    style = scannerTextStyles.buttonLabelTextStyle
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .border(3.dp, scannerColors.shutterInactiveColor, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                var isPressed by remember { mutableStateOf(false) }
-
-                val animatedSize by animateFloatAsState(
-                    targetValue = if (isPressed) 48.dp.value else 60.dp.value,
-                    animationSpec = tween(durationMillis = 150),
-                    label = "shutter-button-animation"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .size(animatedSize.dp)
-                        .clip(CircleShape)
-                        .background(scannerColors.shutterInactiveColor)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            isPressed = true
-                            onShutterClick()
-                            // Reset after animation
-                            MainScope().launch {
-                                delay(150)
-                                isPressed = false
-                            }
-                        }
-                )
-            }
-
-            // Live scan toggle
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Switch(
-                    checked = ocrScannerState.scanningType == ScanningType.Live,
-                    onCheckedChange = onToggleLiveMode,
-                    colors = SwitchDefaults.colors(
-                        checkedTrackColor = scannerColors.liveSwitchCheckedTrackColor,
-                        uncheckedTrackColor = scannerColors.liveSwitchUncheckedTrackColor,
-                        checkedThumbColor = scannerColors.liveSwitchThumbColor,
-                        uncheckedThumbColor = scannerColors.liveSwitchThumbColor
-                    )
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = scannerStrings.liveScanLabel,
-                    color = scannerColors.buttonLabelColor,
-                    style = scannerTextStyles.buttonLabelTextStyle
-                )
-            }
+            scannerControlBar()
         }
+
+        //region Single Frame Scan
         if (ocrScannerState.capturedImage != null) {
             Surface(
                 modifier = Modifier
@@ -1004,6 +983,11 @@ private fun ScannerContent(
                 // Empty box covering the entire screen as background for the preview
                 Box(modifier = Modifier.fillMaxSize())
             }
+            val topGuideline =
+                if (ocrScannerState.state == OcrScannerState.State.Found) createGuidelineFromBottom(
+                    maxBottomSheetHeight
+                ) else
+                    createGuidelineFromBottom(peekHeight)
             TopAppBar(
                 modifier = Modifier
                     .constrainAs(topAppBar) {
@@ -1034,49 +1018,58 @@ private fun ScannerContent(
                     }
                 }
             )
-            Image(
+
+            AsyncImage(
                 modifier = Modifier
                     .constrainAs(picturePreviewImage) {
-                        top.linkTo(topAppBar.bottom)
+                        top.linkTo(topAppBar.bottom, 10.dp)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                        bottom.linkTo(bottomSheet.top)
+                        bottom.linkTo(topGuideline, 10.dp)
                         width = Dimension.fillToConstraints
-                        height =Dimension.fillToConstraints
+                        height = Dimension.fillToConstraints
                     },
-                painter = BitmapPainter(image = ocrScannerState.capturedImage.toImageBitmap()),
+                model = ocrScannerState.capturedImage.bitmap,
                 contentDescription = null,
                 contentScale = ContentScale.Fit
             )
         }
+        //endregion
 
-// Calculate the target height based on state and drag
+        // Calculate the target height based on state and drag
         val targetHeight = when {
             isDragging -> when (sheetState.value) {
                 SheetState.CONTENT -> {
                     // When dragging from CONTENT state, start at maxBottomSheetHeight and add positive offset (moving toward fullScreenHeight)
                     val base = maxBottomSheetHeight.value
-                    val target = fullScreenHeight.value
-                    val current = (base + (target - base) * (-dragOffset / 500f)).coerceIn(base, target)
+                    val target =
+                        if (ocrScannerState.capturedImage == null) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
+                    val current =
+                        (base + (target - base) * (-dragOffset / 500f)).coerceIn(base, target)
                     current.dp
                 }
+
                 SheetState.FULL -> {
                     // When dragging from FULL state, start at fullScreenHeight and add negative offset (moving toward maxBottomSheetHeight)
-                    val base = fullScreenHeight.value
+                    val base =
+                        if (ocrScannerState.capturedImage == null) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
                     val target = maxBottomSheetHeight.value
-                    val current = (base - (base - target) * (dragOffset / 500f)).coerceIn(target, base)
+                    val current =
+                        (base - (base - target) * (dragOffset / 500f)).coerceIn(target, base)
                     current.dp
                 }
+
                 else -> peekHeight // No dragging allowed in PEEK state
             }
+
             else -> when (sheetState.value) {
                 SheetState.PEEK -> peekHeight
                 SheetState.CONTENT -> maxBottomSheetHeight
-                SheetState.FULL -> fullScreenHeight
+                SheetState.FULL -> if (ocrScannerState.capturedImage == null) fullScreenHeight else fullScreenHeight - TopAppBarDefaults.TopAppBarExpandedHeight
             }
         }
 
-// Animate the height
+        // Animate the height
         val animatedHeight by animateFloatAsState(
             targetValue = targetHeight.value,
             animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
@@ -1107,8 +1100,7 @@ private fun ScannerContent(
                             // Calculate which state to snap to based on current height and drag direction
                             if (sheetState.value == SheetState.CONTENT && dragOffset < -200) {
                                 sheetState.value = SheetState.FULL
-                            }
-                            else if (sheetState.value == SheetState.FULL && dragOffset > 200) {
+                            } else if (sheetState.value == SheetState.FULL && dragOffset > 200) {
                                 sheetState.value = SheetState.CONTENT
                             }
 
@@ -1130,6 +1122,7 @@ private fun ScannerContent(
                                         dragOffset += dragAmount.y
                                     }
                                 }
+
                                 SheetState.FULL -> {
                                     // Only allow dragging down from FULL
                                     if (dragAmount.y > 0) {
@@ -1137,125 +1130,231 @@ private fun ScannerContent(
                                         dragOffset += dragAmount.y
                                     }
                                 }
-                                else -> { /* No dragging in PEEK state */ }
+
+                                else -> { /* No dragging in PEEK state */
+                                }
                             }
                         }
                     )
                 }
         ) {
-            Column(
-                modifier = Modifier.padding(top = 16.dp)
-                    .onGloballyPositioned { coordinates ->
-                        // Measure content height whenever content changes
-                        val contentHeight = with(density) { coordinates.size.height.toDp() }
+            scannerBottomSheetContent()
+        }
+    }
+}
 
-                        // Auto-expand from PEEK to CONTENT if content grows or state changes
-                        if (sheetState.value == SheetState.PEEK &&
-                            (ocrScannerState.state == OcrScannerState.State.Found ||
-                                    ocrScannerState.state == OcrScannerState.State.NotFound ||
-                                    contentHeight > peekHeight + 20.dp)) {
-                            sheetState.value = SheetState.CONTENT
-                        }
-                    }
-            ) {
-                // Drag handle
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+@Composable
+private fun OCRScannerControlBar(
+    ocrScannerState: OcrScannerState,
+    scannerColors: W3WOcrScannerDefaults.Colors,
+    scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles,
+    onToggleLiveMode: (Boolean) -> Unit,
+    onImport: () -> Unit,
+    onShutterClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        OutlinedIconButton(
+            onClick = onImport,
+            modifier = Modifier.size(48.dp),
+            border = BorderStroke(
+                width = 1.dp,
+                color = scannerColors.logoColor
+            ),
+            colors = IconButtonDefaults.outlinedIconButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_import),
+                contentDescription = scannerStrings.importButtonLabel,
+                tint = scannerColors.logoColor
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = scannerStrings.importButtonLabel,
+            color = scannerColors.buttonLabelColor,
+            style = scannerTextStyles.buttonLabelTextStyle
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .alpha(if (ocrScannerState.scanningType != ScanningType.Live) 1.0f else 0.4f)
+            .size(72.dp)
+            .clip(CircleShape)
+            .border(3.dp, scannerColors.shutterInactiveColor, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        var isPressed by remember { mutableStateOf(false) }
+
+        val animatedSize by animateFloatAsState(
+            targetValue = if (isPressed) 48.dp.value else 60.dp.value,
+            animationSpec = tween(durationMillis = 150),
+            label = "shutter-button-animation"
+        )
+
+        Box(
+            modifier = Modifier
+                .size(animatedSize.dp)
+                .clip(CircleShape)
+                .background(scannerColors.shutterInactiveColor)
+                .clickable(
+                    enabled = ocrScannerState.scanningType != ScanningType.Live,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
                 ) {
-                    Box(
-                        Modifier
-                            .width(40.dp)
-                            .height(4.dp)
-                            .background(
-                                scannerColors.gripColor,
-                                RoundedCornerShape(2.dp)
-                            )
-                    )
-                }
-
-                if (ocrScannerState.state != OcrScannerState.State.Found && ocrScannerState.state != OcrScannerState.State.NotFound && ocrScannerState.foundItems.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        val title: String? = when (ocrScannerState.state) {
-                            OcrScannerState.State.Idle -> scannerStrings.scanStateLoadingTitle
-                            OcrScannerState.State.Detected -> scannerStrings.scanStateDetectedTitle
-                            OcrScannerState.State.Scanning -> scannerStrings.scanStateScanningTitle
-                            OcrScannerState.State.Validating -> scannerStrings.scanStateValidatingTitle
-                            else -> null
-                        }
-                        if (!title.isNullOrEmpty()) {
-                            Text(
-                                modifier = Modifier
-                                    .align(Alignment.Center),
-                                style = scannerTextStyles.stateTextStyle,
-                                text = title,
-                                color = scannerColors.stateTextColor
-                            )
-                        }
+                    isPressed = true
+                    onShutterClick()
+                    // Reset after animation
+                    MainScope().launch {
+                        delay(150)
+                        isPressed = false
                     }
                 }
-                if (ocrScannerState.state == OcrScannerState.State.NotFound) {
+        )
+    }
+
+    // Live scan toggle
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Switch(
+            checked = ocrScannerState.scanningType == ScanningType.Live,
+            onCheckedChange = onToggleLiveMode,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = scannerColors.liveSwitchCheckedTrackColor,
+                uncheckedTrackColor = scannerColors.liveSwitchUncheckedTrackColor,
+                checkedThumbColor = scannerColors.liveSwitchThumbColor,
+                uncheckedThumbColor = scannerColors.liveSwitchThumbColor
+            )
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = scannerStrings.liveScanLabel,
+            color = scannerColors.buttonLabelColor,
+            style = scannerTextStyles.buttonLabelTextStyle
+        )
+    }
+}
+
+@Composable
+private fun OCRScannerBottomSheetContent(
+    ocrScannerState: OcrScannerState,
+    displayUnits: DisplayUnits,
+    scannerColors: W3WOcrScannerDefaults.Colors,
+    scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
+    suggestionTextStyles: What3wordsAddressListItemDefaults.TextStyles = What3wordsAddressListItemDefaults.defaultTextStyles(),
+    suggestionColors: What3wordsAddressListItemDefaults.Colors = What3wordsAddressListItemDefaults.defaultColors(),
+    suggestionNearestPlacePrefix: String? = stringResource(id = R.string.near),
+    onSuggestionSelected: ((W3WSuggestion) -> Unit),
+    onRetryPressed: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(top = 16.dp)
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .background(
+                        scannerColors.gripColor,
+                        RoundedCornerShape(2.dp)
+                    )
+            )
+        }
+
+        if (ocrScannerState.state != OcrScannerState.State.Found && ocrScannerState.state != OcrScannerState.State.NotFound && ocrScannerState.foundItems.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                val title: String? = when (ocrScannerState.state) {
+                    OcrScannerState.State.Idle -> scannerStrings.scanStateLoadingTitle
+                    OcrScannerState.State.Detected -> scannerStrings.scanStateDetectedTitle
+                    OcrScannerState.State.Scanning -> scannerStrings.scanStateScanningTitle
+                    OcrScannerState.State.Validating -> scannerStrings.scanStateValidatingTitle
+                    else -> null
+                }
+                if (!title.isNullOrEmpty()) {
                     Text(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth(),
-                        text = "Sorry, we could not detect any what3words address in the photo.",
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center
+                            .align(Alignment.Center),
+                        style = scannerTextStyles.stateTextStyle,
+                        text = title,
+                        color = scannerColors.stateTextColor
                     )
-                    Button(
-                        onClick = { onBackPressed() },
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                            .fillMaxWidth()
-                            .align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(text = "Try again")
-                    }
-                }
-                LazyColumn(modifier = Modifier) {
-                    // the first item that is visible
-                    item {
-                        if (ocrScannerState.foundItems.isNotEmpty()) {
-                            Text(
-                                modifier = Modifier
-                                    .padding(start = 18.dp),
-                                style = scannerTextStyles.listHeaderTextStyle,
-                                color = scannerColors.listHeaderTextColor,
-                                text = scannerStrings.scanStateFoundTitle
-                            )
-                        }
-                    }
-                    items(
-                        count = ocrScannerState.foundItems.size,
-                        key = { ocrScannerState.foundItems[it].w3wAddress.words },
-                    ) {
-                        val item = ocrScannerState.foundItems[it]
-                        Modifier
-                            .testTag("itemOCR ${item.w3wAddress.words}")
-                        What3wordsAddressListItem(
-                            modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
-                            words = item.w3wAddress.words,
-                            nearestPlace = item.w3wAddress.nearestPlace,
-                            distance = item.distanceToFocus?.km()?.roundToInt(),
-                            displayUnits = displayUnits,
-                            textStyles = suggestionTextStyles,
-                            colors = suggestionColors,
-                            isLand = item.w3wAddress.country.isLand(),
-                            nearestPlacePrefix = suggestionNearestPlacePrefix,
-                            onClick = {
-                                onSuggestionSelected.invoke(item)
-                            },
-                            showDivider = ocrScannerState.foundItems.lastIndex != it
-                        )
-                    }
                 }
             }
         }
+        if (ocrScannerState.state == OcrScannerState.State.NotFound) {
+            Text(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth(),
+                text = scannerStrings.notFoundMessage,
+                style = scannerTextStyles.notFoundMessageTextStyle,
+                textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = { onRetryPressed() },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Text(text = scannerStrings.tryAgainButtonLabel)
+            }
+        }
+        LazyColumn(modifier = Modifier) {
+            // the first item that is visible
+            item {
+                if (ocrScannerState.foundItems.isNotEmpty()) {
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 18.dp),
+                        style = scannerTextStyles.listHeaderTextStyle,
+                        color = scannerColors.listHeaderTextColor,
+                        text = scannerStrings.scanStateFoundTitle
+                    )
+                }
+            }
+            items(
+                count = ocrScannerState.foundItems.size,
+                key = { ocrScannerState.foundItems[it].w3wAddress.words },
+            ) {
+                val item = ocrScannerState.foundItems[it]
+                Modifier
+                    .testTag("itemOCR ${item.w3wAddress.words}")
+                What3wordsAddressListItem(
+                    modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                    words = item.w3wAddress.words,
+                    nearestPlace = item.w3wAddress.nearestPlace,
+                    distance = item.distanceToFocus?.km()?.roundToInt(),
+                    displayUnits = displayUnits,
+                    textStyles = suggestionTextStyles,
+                    colors = suggestionColors,
+                    isLand = item.w3wAddress.country.isLand(),
+                    nearestPlacePrefix = suggestionNearestPlacePrefix,
+                    onClick = {
+                        onSuggestionSelected.invoke(item)
+                    },
+                    showDivider = ocrScannerState.foundItems.lastIndex != it
+                )
+            }
+        }
     }
+}
+
+private fun ImportImage() {
+
 }

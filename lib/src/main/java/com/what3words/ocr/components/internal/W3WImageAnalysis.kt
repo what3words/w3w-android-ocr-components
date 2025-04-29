@@ -3,6 +3,7 @@ package com.what3words.ocr.components.internal
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.compose.ui.layout.LayoutCoordinates
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
@@ -36,6 +37,7 @@ internal fun buildW3WImageAnalysis(
     )
     return ImageAnalysis.Builder().setResolutionSelector(
         ResolutionSelector.Builder()
+            .setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
             .setAspectRatioStrategy(aspectRatioStrategy)
             .build()
     ).setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST).build()

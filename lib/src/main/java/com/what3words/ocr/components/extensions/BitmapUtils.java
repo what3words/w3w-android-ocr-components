@@ -40,7 +40,7 @@ public class BitmapUtils {
                     new YuvImage(
                             imageInBuffer, ImageFormat.NV21, metadata.getWidth(), metadata.getHeight(), null);
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            image.compressToJpeg(new Rect(0, 0, metadata.getWidth(), metadata.getHeight()), 80, stream);
+            image.compressToJpeg(new Rect(0, 0, metadata.getWidth(), metadata.getHeight()), 100, stream);
 
             Bitmap bmp = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size());
 
