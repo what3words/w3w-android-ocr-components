@@ -15,7 +15,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -66,8 +65,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -110,7 +107,6 @@ import com.what3words.design.library.ui.models.DisplayUnits
 import com.what3words.design.library.ui.theme.colors_blue_20
 import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.ocr.components.R
-import com.what3words.ocr.components.extensions.loadDownsampledBitmap
 import com.what3words.ocr.components.internal.buildW3WImageAnalysis
 import com.what3words.ocr.components.ui.OcrScannerState.ScanningType
 import kotlinx.coroutines.CompletableDeferred
@@ -123,6 +119,10 @@ import kotlin.math.roundToInt
 
 private const val ANIMATION_DURATION = 500 //ms
 private const val BUTTON_CONTROL_HEIGHT = 72 //dp
+private const val BUTTON_CONTROL_MARGIN = 48 //dp
+private const val BOTTOM_SHEET_PEEK_HEIGHT = 86 //dp
+private const val BOTTOM_SHEET_NOT_FOUND_HEIGHT = 180 //dp
+private const val DRAG_SENSITIVITY_FACTOR = 300f //dp
 
 enum class SheetState { PEEK, CONTENT, FULL }
 
@@ -175,7 +175,6 @@ object W3WOcrScannerDefaults {
         val importButtonLabel: String = "Import",
         val shutterButtonContentDescription: String = "Take photo",
         val liveScanLabel: String = "Live Scan",
-        val scanningTip: String = "Position the what3words addresses within frame and capture",
         val notFoundMessage: String = "Sorry, we could not detect any what3words address in the photo.",
         val tryAgainButtonLabel: String = "Try again"
     )
@@ -274,7 +273,12 @@ object W3WOcrScannerDefaults {
         scanStateValidatingTitle: String = stringResource(id = R.string.scan_state_validating),
         scanStateFoundTitle: String = stringResource(id = R.string.scan_state_found),
         scanStateLoadingTitle: String = stringResource(id = R.string.scan_state_loading),
-        closeButtonContentDescription: String = stringResource(id = R.string.cd_close_button)
+        closeButtonContentDescription: String = stringResource(id = R.string.cd_close_button),
+        importButtonLabel: String = stringResource(R.string.import_button_label),
+        shutterButtonContentDescription: String = stringResource(R.string.cd_shutter_button),
+        liveScanLabel: String = stringResource(R.string.live_scan_label),
+        notFoundMessage: String = stringResource(R.string.scan_state_not_found),
+        tryAgainButtonLabel: String = stringResource(R.string.retry_button_label)
     ): Strings {
         return Strings(
             scanStateScanningTitle = scanStateScanningTitle,
@@ -282,7 +286,12 @@ object W3WOcrScannerDefaults {
             scanStateValidatingTitle = scanStateValidatingTitle,
             scanStateFoundTitle = scanStateFoundTitle,
             scanStateLoadingTitle = scanStateLoadingTitle,
-            closeButtonContentDescription = closeButtonContentDescription
+            closeButtonContentDescription = closeButtonContentDescription,
+            importButtonLabel = importButtonLabel,
+            shutterButtonContentDescription = shutterButtonContentDescription,
+            liveScanLabel = liveScanLabel,
+            notFoundMessage = notFoundMessage,
+            tryAgainButtonLabel = tryAgainButtonLabel
         )
     }
 }
@@ -728,9 +737,75 @@ private fun ScannerContent(
     }
 
     //endregion
-
+    val density = LocalDensity.current
+    val margin = (-2).dp
+    val color = remember { Animatable(scannerColors.shutterInactiveColor) }
     var parentHeight by remember { mutableStateOf(0f) }
     var maxBottomSheetHeight by remember { mutableStateOf(52.dp) }
+    var cropAreaBottom by remember { mutableStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    var dragOffset by remember { mutableStateOf(0f) }
+    var peekHeight by remember { mutableStateOf(86.dp) }
+    var sheetState by remember { mutableStateOf(SheetState.PEEK) }
+
+    // Animate the height
+    val animatedHeight by animateFloatAsState(
+        targetValue = calculateTargetHeight(
+            isDragging = isDragging,
+            sheetState = sheetState,
+            dragOffset = dragOffset,
+            maxBottomSheetHeight = maxBottomSheetHeight,
+            fullScreenHeight = with(density) { parentHeight.toDp() },
+            peekHeight = peekHeight,
+            isImageCaptured = ocrScannerState.capturedImage != null
+        ).value,
+        animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
+        label = "bottomSheetHeight"
+    )
+
+    // Calculate maximum allowed height for bottom sheet
+    maxBottomSheetHeight =
+        remember(cropAreaBottom, ocrScannerState.capturedImage) {
+            with(density) {
+                val parentHeightDp = parentHeight.toDp()
+                val controlBarHeight = BUTTON_CONTROL_HEIGHT.dp
+                val instructionBottomDp = cropAreaBottom.toDp()
+                parentHeightDp - instructionBottomDp - controlBarHeight - BUTTON_CONTROL_MARGIN.dp
+            }
+        }
+
+    LaunchedEffect(ocrScannerState.foundItems.size) {
+        color.animateTo(
+            scannerColors.shutterActiveColor, animationSpec = tween(
+                ANIMATION_DURATION
+            )
+        )
+        color.animateTo(
+            scannerColors.shutterInactiveColor, animationSpec = tween(
+                ANIMATION_DURATION
+            )
+        )
+    }
+
+    LaunchedEffect(ocrScannerState.state) {
+        when (ocrScannerState.state) {
+            OcrScannerState.State.NotFound -> {
+                peekHeight = BOTTOM_SHEET_NOT_FOUND_HEIGHT.dp
+                sheetState = SheetState.PEEK
+            }
+
+            OcrScannerState.State.Idle -> {
+                peekHeight = BOTTOM_SHEET_PEEK_HEIGHT.dp
+                sheetState = SheetState.PEEK
+            }
+
+            OcrScannerState.State.Found -> {
+                sheetState = SheetState.CONTENT
+            }
+
+            else -> {}
+        }
+    }
 
     ConstraintLayout(modifier = modifier.onGloballyPositioned { coordinates ->
         parentHeight = coordinates.size.height.toFloat()
@@ -790,8 +865,6 @@ private fun ScannerContent(
                 .background(scannerColors.overlayBackground)
         )
 
-        var cropAreaBottom by remember { mutableStateOf(0f) }
-
         Box(
             modifier = Modifier
                 .constrainAs(cropArea) {
@@ -835,6 +908,7 @@ private fun ScannerContent(
             contentDescription = null,
             tint = scannerColors.logoColor
         )
+
         IconButton(
             modifier = Modifier.constrainAs(buttonClose) {
                 top.linkTo(parent.top)
@@ -851,22 +925,6 @@ private fun ScannerContent(
                 imageVector = Icons.Default.Close,
                 tint = scannerColors.closeIconColor,
                 contentDescription = scannerStrings.closeButtonContentDescription
-            )
-        }
-
-        val margin = (-2).dp
-        val color = remember { Animatable(scannerColors.shutterInactiveColor) }
-
-        LaunchedEffect(ocrScannerState.foundItems.size) {
-            color.animateTo(
-                scannerColors.shutterActiveColor, animationSpec = tween(
-                    ANIMATION_DURATION
-                )
-            )
-            color.animateTo(
-                scannerColors.shutterInactiveColor, animationSpec = tween(
-                    ANIMATION_DURATION
-                )
             )
         }
 
@@ -907,53 +965,13 @@ private fun ScannerContent(
             tint = color.value
         )
 
-        val density = LocalDensity.current
-
-        // Calculate maximum allowed height for bottom sheet
-        maxBottomSheetHeight =
-            remember(cropAreaBottom, ocrScannerState.capturedImage) {
-                with(density) {
-                    val parentHeightDp = parentHeight.toDp()
-                    val controlBarHeight = BUTTON_CONTROL_HEIGHT.dp
-                    val instructionBottomDp = cropAreaBottom.toDp()
-                    parentHeightDp - instructionBottomDp - controlBarHeight - 48.dp
-                }
-            }
-
-        var peekHeight by remember { mutableStateOf(80.dp) }
-        val sheetState = remember { mutableStateOf(SheetState.PEEK) }
-        val fullScreenHeight = with(density) { parentHeight.toDp() }
-
-        LaunchedEffect(ocrScannerState.state) {
-            when (ocrScannerState.state) {
-                OcrScannerState.State.NotFound -> {
-                    peekHeight = 160.dp
-                    sheetState.value = SheetState.PEEK
-                }
-
-                OcrScannerState.State.Idle -> {
-                    peekHeight = 80.dp
-                    sheetState.value = SheetState.PEEK
-                }
-
-                OcrScannerState.State.Found -> {
-                    sheetState.value = SheetState.CONTENT
-                }
-
-                else -> {}
-            }
-        }
-
-        // Track whether we're currently dragging
-        var isDragging by remember { mutableStateOf(false) }
-        var dragOffset by remember { mutableStateOf(0f) }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
-                    if (sheetState.value == SheetState.PEEK) {
+                    if (sheetState == SheetState.PEEK) {
                         bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp)
+
                     } else {
                         top.linkTo(cropArea.bottom, margin = 24.dp)
                     }
@@ -1035,46 +1053,6 @@ private fun ScannerContent(
             )
         }
         //endregion
-
-        // Calculate the target height based on state and drag
-        val targetHeight = when {
-            isDragging -> when (sheetState.value) {
-                SheetState.CONTENT -> {
-                    // When dragging from CONTENT state, start at maxBottomSheetHeight and add positive offset (moving toward fullScreenHeight)
-                    val base = maxBottomSheetHeight.value
-                    val target =
-                        if (ocrScannerState.capturedImage == null) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
-                    val current =
-                        (base + (target - base) * (-dragOffset / 500f)).coerceIn(base, target)
-                    current.dp
-                }
-
-                SheetState.FULL -> {
-                    // When dragging from FULL state, start at fullScreenHeight and add negative offset (moving toward maxBottomSheetHeight)
-                    val base =
-                        if (ocrScannerState.capturedImage == null) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
-                    val target = maxBottomSheetHeight.value
-                    val current =
-                        (base - (base - target) * (dragOffset / 500f)).coerceIn(target, base)
-                    current.dp
-                }
-
-                else -> peekHeight // No dragging allowed in PEEK state
-            }
-
-            else -> when (sheetState.value) {
-                SheetState.PEEK -> peekHeight
-                SheetState.CONTENT -> maxBottomSheetHeight
-                SheetState.FULL -> if (ocrScannerState.capturedImage == null) fullScreenHeight else fullScreenHeight - TopAppBarDefaults.TopAppBarExpandedHeight
-            }
-        }
-
-        // Animate the height
-        val animatedHeight by animateFloatAsState(
-            targetValue = targetHeight.value,
-            animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
-            label = "bottomSheetHeight"
-        )
         Box(
             modifier = Modifier
                 .constrainAs(bottomSheet) {
@@ -1089,7 +1067,7 @@ private fun ScannerContent(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = {
-                            if (sheetState.value != SheetState.PEEK) {
+                            if (sheetState != SheetState.PEEK) {
                                 isDragging = true
                                 dragOffset = 0f
                             }
@@ -1098,10 +1076,10 @@ private fun ScannerContent(
                             isDragging = false
 
                             // Calculate which state to snap to based on current height and drag direction
-                            if (sheetState.value == SheetState.CONTENT && dragOffset < -200) {
-                                sheetState.value = SheetState.FULL
-                            } else if (sheetState.value == SheetState.FULL && dragOffset > 200) {
-                                sheetState.value = SheetState.CONTENT
+                            if (sheetState == SheetState.CONTENT && dragOffset < -DRAG_SENSITIVITY_FACTOR) {
+                                sheetState = SheetState.FULL
+                            } else if (sheetState == SheetState.FULL && dragOffset > DRAG_SENSITIVITY_FACTOR) {
+                                sheetState = SheetState.CONTENT
                             }
 
                             dragOffset = 0f
@@ -1114,7 +1092,7 @@ private fun ScannerContent(
                             change.consume()
 
                             // Only allow dragging in specific states
-                            when (sheetState.value) {
+                            when (sheetState) {
                                 SheetState.CONTENT -> {
                                     // Only allow dragging up from CONTENT
                                     if (dragAmount.y < 0) {
@@ -1355,6 +1333,83 @@ private fun OCRScannerBottomSheetContent(
     }
 }
 
-private fun ImportImage() {
+/**
+ * Calculates the target height for the bottom sheet based on its current state and drag gesture.
+ * Handles transitions between PEEK, CONTENT, and FULL states, including adjustments when dragging.
+ *
+ * @param isDragging True if the user is currently dragging the sheet.
+ * @param sheetState The current stable state of the bottom sheet (PEEK, CONTENT, or FULL).
+ * @param dragOffset The vertical drag distance accumulated during the current drag gesture.
+ *                   Positive values indicate dragging down, negative values indicate dragging up.
+ * @param dragSensitivityFactor A factor controlling how much drag is needed to transition between
+ *                              CONTENT and FULL states. A lower value means more sensitivity.
+ * @param maxBottomSheetHeight The height of the sheet when in the CONTENT state.
+ * @param fullScreenHeight The height of the sheet when in the FULL state (usually the parent height).
+ * @param peekHeight The height of the sheet when in the PEEK state.
+ * @param isImageCaptured Indicates if an image has been captured, which might reduce the available
+ *                        height in the FULL state due to a top app bar.
+ * @return The calculated target height for the bottom sheet as a [Dp] value.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun calculateTargetHeight(
+    isDragging: Boolean,
+    sheetState: SheetState,
+    dragOffset: Float,
+    dragSensitivityFactor: Float = DRAG_SENSITIVITY_FACTOR,
+    maxBottomSheetHeight: Dp,
+    fullScreenHeight: Dp,
+    peekHeight: Dp,
+    isImageCaptured: Boolean
+): Dp {
+    return when {
+        isDragging -> when (sheetState) {
+            SheetState.CONTENT -> {
+                // When dragging up from CONTENT state:
+                // Calculate the base height (maxBottomSheetHeight) and target height (full screen or adjusted full screen).
+                val base = maxBottomSheetHeight.value
+                val target =
+                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
 
+                // Calculate the interpolation factor based on the negative drag offset (dragging up).
+                // Dividing by dragSensitivityFactor scales the drag distance, determining how much drag is needed
+                // to move between states. A smaller factor means more sensitive dragging.
+                val interpolationFactor = (-dragOffset / dragSensitivityFactor).coerceIn(0f, 1f)
+
+                // Interpolate between base and target height based on the drag.
+                val current = base + (target - base) * interpolationFactor
+                current.dp.coerceIn(
+                    maxBottomSheetHeight,
+                    fullScreenHeight
+                ) // Ensure height stays within valid bounds
+            }
+
+            SheetState.FULL -> {
+                // When dragging down from FULL state:
+                // Calculate the base height (full screen or adjusted full screen) and target height (maxBottomSheetHeight).
+                val base =
+                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
+                val target = maxBottomSheetHeight.value
+
+                // Calculate the interpolation factor based on the positive drag offset (dragging down).
+                // Dividing by dragSensitivityFactor scales the drag distance.
+                val interpolationFactor = (dragOffset / dragSensitivityFactor).coerceIn(0f, 1f)
+
+                // Interpolate between base and target height based on the drag.
+                val current = base - (base - target) * interpolationFactor
+                current.dp.coerceIn(
+                    maxBottomSheetHeight,
+                    fullScreenHeight
+                ) // Ensure height stays within valid bounds
+            }
+
+            else -> peekHeight // No dragging allowed in PEEK state
+        }
+
+        else -> when (sheetState) {
+            // Non-dragging states just return the height defined for that state.
+            SheetState.PEEK -> peekHeight
+            SheetState.CONTENT -> maxBottomSheetHeight
+            SheetState.FULL -> if (!isImageCaptured) fullScreenHeight else fullScreenHeight - TopAppBarDefaults.TopAppBarExpandedHeight
+        }
+    }
 }

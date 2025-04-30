@@ -8,4 +8,9 @@
     <string name="scan_state_loading">Loading…</string>
     <string name="cd_close_button">Close button</string>
     <string name="near">near</string>
+    <string name="import_button_label">Import</string>
+    <string name="cd_shutter_button">Take photo</string>
+    <string name="live_scan_label">Live Scan</string>
+    <string name="scan_state_not_found">Sorry, we could not detect any what3words address in the photo.</string>
+    <string name="retry_button_label">Try again</string>
 </resources>

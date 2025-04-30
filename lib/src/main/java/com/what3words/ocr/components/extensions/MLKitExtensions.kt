@@ -33,8 +33,7 @@ fun TextRecognizer.scan(
     coroutineScope: CoroutineScope,
     isBypass3waFilter: Boolean = false,
     rotation: Int = 0,
-    throttleTimeout: Long = 250L,
-    shouldProcess: Boolean = false
+    throttleTimeout: Long = 250L
 ) {
     val TAG = "MLKitExtensions" // Define a TAG for logging
 
@@ -53,7 +52,7 @@ fun TextRecognizer.scan(
                     Log.d(TAG, "Bypassing 3wa filter. Detected lines: $lines")
                     onDetected.invoke(lines)
                 } else {
-                    val processedText = if(shouldProcess) correctSlashesInText(visionText.text) else visionText.text
+                    val processedText = correctSlashesInText(visionText.text)
                     Log.d(TAG, "Processed text after slash correction: $processedText")
                     val possibleAddresses = findPossible3wa(processedText)
                     Log.d(TAG, "Found possible what3words addresses: $possibleAddresses")
@@ -102,20 +101,12 @@ private fun correctSlashesInText(text: String): String {
         processedText = processedText.replace(Regex("\\b$pattern"), "///")
     }
     
-    // Handle fake spaces in what3words addresses
-    // Look for patterns like "///word1. word2. word3" or "///word1.word2. word3"
-    processedText = processedText.replace(
-        Regex("///([a-zA-Z]+)[.\\s]+([a-zA-Z]+)[.\\s]+([a-zA-Z]+)"),
-        "///$1.$2.$3"
-    )
-
-    // Also handle cases where the word boundaries might have extra spaces
-    processedText = processedText.replace(
-        Regex("///([a-zA-Z]+)\\s*[.]\\s*([a-zA-Z]+)\\s*[.]\\s*([a-zA-Z]+)"),
-        "///$1.$2.$3"
-    )
-
-    processedText = processedText.replace(" ", "")
+    processedText = processedText.replace(". ", ".")
+    processedText = processedText.replace(" . ", ".")
+    processedText = processedText.replace(" .", ".")
+    processedText = processedText.replace("  .", ".")
+    processedText = processedText.replace("  .  ", ".")
+    processedText = processedText.replace(".  ", ".")
 
     return processedText
 }

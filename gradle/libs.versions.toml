@@ -1,5 +1,6 @@
 [versions]
 # Android SDK
+coilCompose = "2.7.0"
 compileSdk = "35"
 minSdk = "24"
 autonomousappsAnalysis = "1.20.0"
@@ -52,6 +53,7 @@ dokka = "2.0.0"
 
 [libraries]
 # Gradle plugins
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 jacoco-gradle-plugin = { group = "org.jacoco", name = "org.jacoco.core", version.ref = "jacoco" }
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 sonarqube-gradle-plugin = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonarqubeGradlePlugin" }
