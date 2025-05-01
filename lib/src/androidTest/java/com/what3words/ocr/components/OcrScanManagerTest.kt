@@ -106,7 +106,8 @@ class OcrScanManagerTest {
 
         var foundSuggestions: List<W3WSuggestion>? = null
         var completed = false
-
+        ocrScanManager.toggleLiveMode(true)
+        assertEquals(OcrScannerState.ScanningType.Live, ocrScanManager.ocrScannerState.value.scanningType)
         ocrScanManager.getReady(
             onReady = {
 
@@ -133,6 +134,8 @@ class OcrScanManagerTest {
     @Test
     fun testOcrScannerState() = runTest {
         // Initial state
+        ocrScanManager.toggleLiveMode(true)
+        assertEquals(OcrScannerState.ScanningType.Live, ocrScanManager.ocrScannerState.value.scanningType)
         assertEquals(OcrScannerState.State.Idle, ocrScanManager.ocrScannerState.value.state)
         assertTrue(ocrScanManager.ocrScannerState.value.foundItems.isEmpty())
 
