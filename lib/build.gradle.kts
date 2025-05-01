@@ -88,9 +88,9 @@ android {
 }
 
 dependencies {
-    implementation(libs.camerax.view)
-    implementation(libs.camerax.camera2)
-    implementation(libs.camerax.lifecycle)
+    api(libs.camerax.view)
+    api(libs.camerax.camera2)
+    api(libs.camerax.lifecycle)
 
     implementation(libs.accompanist.permissions)
 
