@@ -118,6 +118,7 @@ class OcrScanManager(
             onScanning = {
                 _ocrScannerState.update {
                     it.copy(
+                        foundItems = emptyList(),
                         state = OcrScannerState.State.Detected,
                         capturedImage = image,
                     )
@@ -222,6 +223,7 @@ class OcrScanManager(
             onScanning = {
                 _ocrScannerState.update {
                     it.copy(
+                        foundItems = emptyList(),
                         state = OcrScannerState.State.Detected,
                         capturedImage = image,
                     )

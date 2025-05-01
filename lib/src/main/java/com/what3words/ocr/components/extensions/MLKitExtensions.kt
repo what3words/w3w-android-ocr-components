@@ -50,7 +50,6 @@ fun TextRecognizer.scan(
                     val possibleAddresses = findPossible3wa(processedText)
                     onDetected.invoke(possibleAddresses)
                 }
-
             }.addOnFailureListener { e ->
                 onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             }.addOnCompleteListener {
@@ -60,7 +59,7 @@ fun TextRecognizer.scan(
 
         delay(throttleTimeout)
     }.invokeOnCompletion { exception ->
-        onError.invoke(W3WError(message = exception?.message ?: "Unknown error in coroutine scope"))
+        exception?.let { onError.invoke(W3WError(message = it.message)) }
         onCompleted.invoke()
     }
 }
