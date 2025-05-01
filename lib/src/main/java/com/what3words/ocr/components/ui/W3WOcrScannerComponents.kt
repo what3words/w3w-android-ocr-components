@@ -69,7 +69,8 @@ fun W3WOcrScannerLiveScanToggle(
                 checkedTrackColor = scannerColors.liveSwitchCheckedTrackColor,
                 uncheckedTrackColor = scannerColors.liveSwitchUncheckedTrackColor,
                 checkedThumbColor = scannerColors.liveSwitchThumbColor,
-                uncheckedThumbColor = scannerColors.liveSwitchThumbColor
+                uncheckedThumbColor = scannerColors.liveSwitchThumbColor,
+                uncheckedBorderColor = scannerColors.liveSwitchUncheckedBorderColor
             )
         )
         Spacer(Modifier.height(6.dp))
@@ -139,15 +140,15 @@ fun W3WOcrScannerImportButton(
             onClick = onImport,
             modifier = Modifier.size(48.dp),
             border = BorderStroke(
-                width = 1.dp,
-                color = scannerColors.logoColor
+                width = 2.dp,
+                color = scannerColors.importButtonBorderColor
             ),
-            colors = IconButtonDefaults.outlinedIconButtonColors(containerColor = scannerColors.logoColor)
+            colors = IconButtonDefaults.outlinedIconButtonColors(containerColor = scannerColors.importButtonBackgroundColor)
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_import),
                 contentDescription = scannerStrings.importButtonLabel,
-                tint = scannerColors.logoColor
+                tint = scannerColors.importButtonIconColor
             )
         }
         Spacer(Modifier.height(8.dp))

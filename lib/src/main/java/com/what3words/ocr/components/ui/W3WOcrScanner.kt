@@ -34,7 +34,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -93,9 +92,10 @@ import java.util.concurrent.Executors
 
 private const val ANIMATION_DURATION = 500 //ms
 private const val BUTTON_CONTROL_MARGIN = 48 //dp
-private const val BOTTOM_SHEET_PEEK_HEIGHT = 86 //dp
+private const val BOTTOM_SHEET_PEEK_HEIGHT = 72 //dp
 private const val BOTTOM_SHEET_NOT_FOUND_HEIGHT = 180 //dp
 private const val DRAG_SENSITIVITY_FACTOR = 300f //dp
+
 private enum class SheetState { PEEK, CONTENT, FULL }
 
 /**
@@ -900,7 +900,7 @@ private fun ScannerContent(
                         end.linkTo(parent.end)
                         bottom.linkTo(parent.bottom)
                     },
-                color = MaterialTheme.colorScheme.primaryContainer
+                color = scannerColors.imagePreviewBackgroundColor
             ) {
                 // Empty box covering the entire screen as background for the preview
                 Box(modifier = Modifier.fillMaxSize())
@@ -919,10 +919,9 @@ private fun ScannerContent(
                     },
                 windowInsets = WindowInsets(0.dp),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    containerColor = scannerColors.resultsTopAppBarContainerColor,
+                    navigationIconContentColor = scannerColors.resultsTopAppBarNavigationIconContentColor,
+                    titleContentColor = scannerColors.resultsTopAppBarNavigationTitleContentColor
                 ),
                 title = {
                     Text(
@@ -1024,23 +1023,25 @@ private fun ScannerContent(
                 modifier = Modifier
                     .padding(top = 16.dp)
             ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                if (ocrScannerState.foundItems.isNotEmpty()) {
                     Box(
                         Modifier
-                            .width(40.dp)
-                            .height(4.dp)
-                            .background(
-                                scannerColors.gripColor,
-                                RoundedCornerShape(2.dp)
-                            )
-                    )
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            Modifier
+                                .width(40.dp)
+                                .height(4.dp)
+                                .background(
+                                    scannerColors.gripColor,
+                                    RoundedCornerShape(2.dp)
+                                )
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 when {
                     ocrScannerState.foundItems.isNotEmpty() -> foundContent()
                     ocrScannerState.state == OcrScannerState.State.NotFound && ocrScannerState.foundItems.isEmpty() -> notFoundContent()

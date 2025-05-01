@@ -31,7 +31,14 @@ object W3WOcrScannerDefaults {
         val liveSwitchCheckedTrackColor: Color,
         val liveSwitchUncheckedTrackColor: Color,
         val liveSwitchThumbColor: Color,
-        val scanningTipColor: Color
+        val liveSwitchUncheckedBorderColor: Color,
+        val importButtonBackgroundColor: Color,
+        val importButtonIconColor: Color,
+        val importButtonBorderColor: Color,
+        val imagePreviewBackgroundColor: Color,
+        val resultsTopAppBarContainerColor: Color,
+        val resultsTopAppBarNavigationIconContentColor: Color,
+        val resultsTopAppBarNavigationTitleContentColor: Color
     )
 
     /**
@@ -76,6 +83,14 @@ object W3WOcrScannerDefaults {
      * @param logoColor Color of the what3words logo.
      * @param shutterInactiveColor Color of the camera shutter corners when the state is scanning.
      * @param shutterActiveColor Color of the camera shutter corners when the state is 'found'.
+     * @param buttonLabelColor Color for the text labels of the scanner control buttons.
+     * @param liveSwitchCheckedTrackColor Color for the live scanning switch track when enabled.
+     * @param liveSwitchUncheckedTrackColor Color for the live scanning switch track when disabled.
+     * @param liveSwitchThumbColor Color for the live scanning switch thumb.
+     * @param liveSwitchUncheckedBorderColor Color for the border of the live scanning switch when disabled.
+     * @param importButtonBackgroundColor Color for the image import button's background.
+     * @param importButtonIconColor Color for the image import button's icon.
+     * @param importButtonBorderColor Color for the border of the image import button.
      * @return A [Colors] object with the specified or default color properties.
      */
     @Composable
@@ -91,9 +106,16 @@ object W3WOcrScannerDefaults {
         shutterActiveColor: Color = MaterialTheme.w3wColorScheme.success,
         buttonLabelColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
         liveSwitchCheckedTrackColor: Color = MaterialTheme.w3wColorScheme.brand,
-        liveSwitchUncheckedTrackColor: Color = MaterialTheme.colorScheme.primaryContainer,
+        liveSwitchUncheckedTrackColor: Color = colors_blue_20,
         liveSwitchThumbColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
-        scanningTipColor: Color = MaterialTheme.colorScheme.surfaceContainerLowest
+        liveSwitchUncheckedBorderColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
+        importButtonBackgroundColor: Color = colors_blue_20,
+        importButtonIconColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
+        importButtonBorderColor: Color = MaterialTheme.w3wColorScheme.onSurfaceWhite,
+        imagePreviewBackgroundColor: Color = colors_blue_20,
+        resultsTopAppBarContainerColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+        resultsTopNavigationIconContentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+        resultsTopNavigationTitleContentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
     ): Colors {
         return Colors(
             bottomDrawerBackground = bottomDrawerBackground,
@@ -109,7 +131,14 @@ object W3WOcrScannerDefaults {
             liveSwitchCheckedTrackColor = liveSwitchCheckedTrackColor,
             liveSwitchUncheckedTrackColor = liveSwitchUncheckedTrackColor,
             liveSwitchThumbColor = liveSwitchThumbColor,
-            scanningTipColor = scanningTipColor
+            liveSwitchUncheckedBorderColor = liveSwitchUncheckedBorderColor,
+            importButtonBackgroundColor = importButtonBackgroundColor,
+            importButtonIconColor = importButtonIconColor,
+            importButtonBorderColor = importButtonBorderColor,
+            imagePreviewBackgroundColor = imagePreviewBackgroundColor,
+            resultsTopAppBarContainerColor = resultsTopAppBarContainerColor,
+            resultsTopAppBarNavigationIconContentColor = resultsTopNavigationIconContentColor,
+            resultsTopAppBarNavigationTitleContentColor = resultsTopNavigationTitleContentColor
         )
     }
 
@@ -119,6 +148,9 @@ object W3WOcrScannerDefaults {
      *
      * @param stateTextStyle The text style for the text displaying the current scanner state.
      * @param listHeaderTextStyle The text style for the header of the scanned suggestions list.
+     * @param buttonLabelTextStyle The text style for labels beneath scanner control buttons.
+     * @param scanningTipTextStyle The text style for scanning tips and guidance text.
+     * @param notFoundMessageTextStyle The text style for the message displayed when no what3words address is found.
      * @return A [TextStyles] object with the specified or default text style properties.
      */
     @Composable
@@ -148,6 +180,12 @@ object W3WOcrScannerDefaults {
      * @param scanStateFoundTitle The title text displayed for the header of the list of validated what3words addresses.
      * @param scanStateLoadingTitle The title text displayed during waiting periods, such as permission acceptance or downloading.
      * @param closeButtonContentDescription The content description for the close button, supporting accessibility features.
+     * @param importButtonLabel The label text for the import button that allows users to import images.
+     * @param shutterButtonContentDescription The content description for the shutter button, supporting accessibility features.
+     * @param liveScanLabel The label text for the toggle that enables/disables live scanning mode.
+     * @param notFoundMessage The message displayed when no what3words address is found in the scan.
+     * @param tryAgainButtonLabel The label text for the button that allows users to retry scanning.
+     * @param resultsTitle The title text displayed in the results screen after capturing an image.
      * @return A [Strings] object with the specified or default string properties.
      */
     @Composable

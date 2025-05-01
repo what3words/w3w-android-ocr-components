@@ -90,6 +90,14 @@ class OcrScanManager(
             return
         }
 
+        if (isFromMedia) {
+            _ocrScannerState.update {
+                it.copy(
+                    scanningType = ScanningType.Photo
+                )
+            }
+        }
+
         val scanningType = _ocrScannerState.value.scanningType
 
         when {
@@ -101,7 +109,7 @@ class OcrScanManager(
                 onCompleted
             )
 
-            scanningType == ScanningType.Photo && isFromMedia -> scanImportedImage(
+            isFromMedia -> scanImportedImage(
                 image, onError, onFound, onCompleted
             )
         }
