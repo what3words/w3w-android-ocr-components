@@ -1,7 +1,6 @@
 package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
-import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
@@ -35,48 +34,33 @@ fun TextRecognizer.scan(
     rotation: Int = 0,
     throttleTimeout: Long = 250L
 ) {
-    val TAG = "MLKitExtensions" // Define a TAG for logging
-
     require(image.width > 0 && image.height > 0) { "Invalid image dimensions" }
     require(rotation in 0..359) { "Rotation must be between 0 and 359 degrees" }
 
-    Log.d(TAG, "Starting scan. Image dimensions: ${image.width}x${image.height}, Rotation: $rotation")
     onScanning.invoke()
 
     coroutineScope.launch {
         suspendCoroutine { continuation ->
             this@scan.process(image, rotation).addOnSuccessListener { visionText ->
-                Log.d(TAG, "Image processing successful. Detected text: ${visionText.text}")
                 if (isBypass3waFilter) {
                     val lines = visionText.text.split("\n")
-                    Log.d(TAG, "Bypassing 3wa filter. Detected lines: $lines")
                     onDetected.invoke(lines)
                 } else {
                     val processedText = correctSlashesInText(visionText.text)
-                    Log.d(TAG, "Processed text after slash correction: $processedText")
                     val possibleAddresses = findPossible3wa(processedText)
-                    Log.d(TAG, "Found possible what3words addresses: $possibleAddresses")
                     onDetected.invoke(possibleAddresses)
                 }
 
             }.addOnFailureListener { e ->
-                Log.e(TAG, "Image processing failed", e)
                 onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             }.addOnCompleteListener {
-                Log.d(TAG, "Image processing task completed.")
                 continuation.resume(Unit)
             }
         }
 
-        Log.d(TAG, "Applying throttle delay: ${throttleTimeout}ms")
         delay(throttleTimeout)
     }.invokeOnCompletion { exception ->
-        if (exception != null) {
-            Log.e(TAG, "Coroutine scope completed with error", exception)
-            onError.invoke(W3WError(message = exception.message ?: "Unknown error in coroutine scope"))
-        } else {
-            Log.d(TAG, "Coroutine scope completed successfully.")
-        }
+        onError.invoke(W3WError(message = exception?.message ?: "Unknown error in coroutine scope"))
         onCompleted.invoke()
     }
 }

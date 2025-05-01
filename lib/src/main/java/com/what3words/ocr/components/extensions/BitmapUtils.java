@@ -68,12 +68,6 @@ public class BitmapUtils {
         return getBitmap(nv21Buffer, frameMetadata, image.getCropRect());
     }
 
-    private static int getPowerOfTwoForSampleRatio(double ratio){
-        int k = Integer.highestOneBit((int)Math.floor(ratio));
-        if(k==0) return 1;
-        else return k;
-    }
-
     /** Rotates a bitmap if it is converted from a bytebuffer. */
     private static Bitmap rotateAndCropBitmap(
             Bitmap bitmap, int rotationDegrees, boolean flipX, boolean flipY, Rect crop) {
