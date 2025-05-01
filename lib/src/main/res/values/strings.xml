@@ -13,4 +13,5 @@
     <string name="live_scan_label">Live Scan</string>
     <string name="scan_state_not_found">Sorry, we could not detect any what3words address in the photo.</string>
     <string name="retry_button_label">Try again</string>
+    <string name="results_title">Results</string>
 </resources>

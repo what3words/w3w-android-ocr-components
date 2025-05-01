@@ -926,7 +926,7 @@ private fun ScannerContent(
                 ),
                 title = {
                     Text(
-                        text = "Results"
+                        text = scannerStrings.resultsTitle,
                     )
                 },
                 navigationIcon = {

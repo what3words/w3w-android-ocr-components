@@ -55,11 +55,12 @@ object W3WOcrScannerDefaults {
         val scanStateFoundTitle: String,
         val scanStateLoadingTitle: String,
         val closeButtonContentDescription: String,
-        val importButtonLabel: String = "Import",
-        val shutterButtonContentDescription: String = "Take photo",
-        val liveScanLabel: String = "Live Scan",
-        val notFoundMessage: String = "Sorry, we could not detect any what3words address in the photo.",
-        val tryAgainButtonLabel: String = "Try again"
+        val importButtonLabel: String,
+        val shutterButtonContentDescription: String,
+        val liveScanLabel: String,
+        val notFoundMessage: String,
+        val tryAgainButtonLabel: String,
+        val resultsTitle: String
     )
 
     /**
@@ -161,7 +162,8 @@ object W3WOcrScannerDefaults {
         shutterButtonContentDescription: String = stringResource(R.string.cd_shutter_button),
         liveScanLabel: String = stringResource(R.string.live_scan_label),
         notFoundMessage: String = stringResource(R.string.scan_state_not_found),
-        tryAgainButtonLabel: String = stringResource(R.string.retry_button_label)
+        tryAgainButtonLabel: String = stringResource(R.string.retry_button_label),
+        resultsTitle: String = stringResource(R.string.results_title)
     ): Strings {
         return Strings(
             scanStateScanningTitle = scanStateScanningTitle,
@@ -174,7 +176,8 @@ object W3WOcrScannerDefaults {
             shutterButtonContentDescription = shutterButtonContentDescription,
             liveScanLabel = liveScanLabel,
             notFoundMessage = notFoundMessage,
-            tryAgainButtonLabel = tryAgainButtonLabel
+            tryAgainButtonLabel = tryAgainButtonLabel,
+            resultsTitle = resultsTitle
         )
     }
 }
