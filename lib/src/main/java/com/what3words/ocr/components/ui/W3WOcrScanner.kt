@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -603,6 +606,14 @@ private fun ScannerContent(
     fun unbindCamera(cameraProvider: ProcessCameraProvider) {
         cameraProvider.unbindAll()
         isCameraBound = false
+    }
+
+    BackHandler {
+        if (ocrScannerState.capturedImage == null) {
+            onDismiss?.invoke()
+        } else {
+            onBackPressed.invoke()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
