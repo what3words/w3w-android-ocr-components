@@ -15,7 +15,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -701,9 +703,16 @@ private fun ScannerContent(
         }
     }
 
-    ConstraintLayout(modifier = modifier.onGloballyPositioned { coordinates ->
-        parentHeight = coordinates.size.height.toFloat()
-    }) {
+    ConstraintLayout(
+        modifier = modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,  // No visual indication when clicked,
+                onClick = {}
+            )
+            .onGloballyPositioned { coordinates ->
+                parentHeight = coordinates.size.height.toFloat()
+            }) {
         val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage, controlBar, instructionText, bottomSheet) = createRefs()
         val (picturePreviewBackground, topAppBar, picturePreviewImage) = createRefs()
         // Use the provided PreviewView
