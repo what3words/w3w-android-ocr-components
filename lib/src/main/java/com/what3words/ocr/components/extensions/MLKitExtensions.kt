@@ -43,14 +43,13 @@ fun TextRecognizer.scan(
         suspendCoroutine { continuation ->
             this@scan.process(image, rotation).addOnSuccessListener { visionText ->
                 if (isBypass3waFilter) {
-                    onDetected.invoke(visionText.text.split("\n"))
+                    val lines = visionText.text.split("\n")
+                    onDetected.invoke(lines)
                 } else {
-                    val possibleAddresses = findPossible3wa(visionText.text)
-                    if (possibleAddresses.isNotEmpty()) {
-                        onDetected.invoke(possibleAddresses)
-                    }
+                    val processedText = correctSlashesInText(visionText.text)
+                    val possibleAddresses = findPossible3wa(processedText)
+                    onDetected.invoke(possibleAddresses)
                 }
-
             }.addOnFailureListener { e ->
                 onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             }.addOnCompleteListener {
@@ -64,6 +63,37 @@ fun TextRecognizer.scan(
         onCompleted.invoke()
     }
 }
+
+/**
+ * Corrects common OCR misinterpretations of the three slashes (///) that begin what3words addresses.
+ *
+ * @param text The text recognized by OCR
+ * @return The text with common slash misinterpretations corrected
+ */
+private fun correctSlashesInText(text: String): String {
+    // Common patterns where slashes are misrecognized
+    val patterns = listOf(
+        "Ill", "IlI", "lIl", "III", "ill", "lll", "I/I", "l/l", "II/", "Iil",
+        "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II",
+    )
+
+    var processedText = text
+
+    // Replace pattern at the beginning of a word
+    for (pattern in patterns) {
+        processedText = processedText.replace(Regex("\\b$pattern"), "///")
+    }
+    
+    processedText = processedText.replace(". ", ".")
+    processedText = processedText.replace(" . ", ".")
+    processedText = processedText.replace(" .", ".")
+    processedText = processedText.replace("  .", ".")
+    processedText = processedText.replace("  .  ", ".")
+    processedText = processedText.replace(".  ", ".")
+
+    return processedText
+}
+
 
 /**
  * Checks if all modules that this wrapper depend on are installed, will return true if no modules need to be downloaded to this specific implementation.

@@ -1,14 +1,14 @@
 import java.net.URI
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-parcelize")
-    id("maven-publish")
-    id("jacoco")
-    id("signing")
-    id("org.jetbrains.dokka") version "1.5.0"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.20"
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    id(libs.plugins.maven.publish.get().pluginId)
+    id(libs.plugins.signing.get().pluginId)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.compose.compiler)
+    id(libs.plugins.kotlin.parcelize.get().pluginId)
+    id(libs.plugins.jacoco.get().pluginId)
 }
 
 group = "com.what3words"
@@ -23,10 +23,10 @@ version =
 
 android {
     namespace = "com.what3words.ocr.components"
-    compileSdk = 34
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -63,9 +63,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.6"
-    }
     packaging {
         resources {
             excludes += "META-INF/LICENSE*"
@@ -91,61 +88,52 @@ android {
 }
 
 dependencies {
-    // CameraX
-    implementation("androidx.camera:camera-view:1.3.4")
-    implementation("androidx.camera:camera-camera2:1.3.4")
-    implementation("androidx.camera:camera-lifecycle:1.3.4")
-    implementation("androidx.camera:camera-view:1.3.4")
+    api(libs.camerax.view)
+    api(libs.camerax.camera2)
+    api(libs.camerax.lifecycle)
 
-    // accompanist
-    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation(libs.accompanist.permissions)
 
-    // Kotlin
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
 
-    // MLKit
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-chinese:16.0.1")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-devanagari:16.0.1")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-japanese:16.0.1")
-    compileOnly("com.google.android.gms:play-services-mlkit-text-recognition-korean:16.0.1")
+    compileOnly(libs.mlkit.text.recognition)
+    compileOnly(libs.mlkit.text.recognition.chinese)
+    compileOnly(libs.mlkit.text.recognition.devanagari)
+    compileOnly(libs.mlkit.text.recognition.japanese)
+    compileOnly(libs.mlkit.text.recognition.korean)
 
-    // what3words
-    api("com.what3words:w3w-android-wrapper:4.0.2")
-    api("com.what3words:w3w-android-design-library:2.0.4")
-    api("com.what3words:w3w-core-android:1.1.0")
+    api(libs.w3w.android.wrapper)
+    api(libs.w3w.android.design)
+    api(libs.w3w.core.android)
 
-    //compose
-    implementation(platform("androidx.compose:compose-bom:2025.01.01"))
-    implementation("androidx.compose.runtime:runtime")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.activity:activity-compose")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.tooling)
+    implementation(libs.compose.activity)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.constraint.layout.compose)
+    implementation(libs.coil.compose)
 
+    implementation(libs.play.services.base)
 
-    // gms for module install
-    implementation("com.google.android.gms:play-services-base:18.5.0")
+    androidTestImplementation(libs.test.runner)
+    androidTestUtil(libs.test.orchestrator)
+    androidTestImplementation(libs.test.ext.junit)
+    androidTestImplementation(libs.test.mockk)
+    androidTestImplementation(libs.test.coroutines)
+    androidTestImplementation(libs.test.jupiter.api)
+    androidTestImplementation(libs.test.jupiter.params)
+    testRuntimeOnly(libs.test.jupiter.engine)
 
-    // Test dependencies
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestUtil("androidx.test:orchestrator:1.5.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("io.mockk:mockk-android:1.13.3")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
-    androidTestImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
-    androidTestImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
-
-    androidTestImplementation("com.google.mlkit:text-recognition:16.0.1")
-    androidTestImplementation("com.google.mlkit:text-recognition-chinese:16.0.1")
-    androidTestImplementation("com.google.mlkit:text-recognition-devanagari:16.0.1")
-    androidTestImplementation("com.google.mlkit:text-recognition-japanese:16.0.1")
-    androidTestImplementation("com.google.mlkit:text-recognition-korean:16.0.1")
+    androidTestImplementation(libs.test.mlkit.text)
+    androidTestImplementation(libs.test.mlkit.text.chinese)
+    androidTestImplementation(libs.test.mlkit.text.devanagari)
+    androidTestImplementation(libs.test.mlkit.text.japanese)
+    androidTestImplementation(libs.test.mlkit.text.korean)
 }
 
 tasks.register("checkSnapshotDependencies") {
