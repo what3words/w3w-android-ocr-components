@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
-import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -730,7 +727,7 @@ private fun ScannerContent(
             .onGloballyPositioned { coordinates ->
                 parentHeight = coordinates.size.height.toFloat()
             }) {
-        val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage, controlBar, instructionText, bottomSheet) = createRefs()
+        val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, iconClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage, controlBar, instructionText, bottomSheet) = createRefs()
         val (picturePreviewBackground, topAppBar, picturePreviewImage, edgeToEdgeSpacer) = createRefs()
         // Use the provided PreviewView
         AndroidView(
@@ -829,24 +826,31 @@ private fun ScannerContent(
             tint = scannerColors.logoColor
         )
 
-        IconButton(
-            modifier = Modifier.constrainAs(buttonClose) {
+        Icon(
+            modifier = Modifier.constrainAs(iconClose) {
                 top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
-                end.linkTo(parent.end)
+                end.linkTo(topRightCropImage.end, margin = margin)
                 bottom.linkTo(cropArea.top)
-                width = Dimension.wrapContent
-                height = Dimension.wrapContent
+                width = Dimension.value(24.dp)
+                height = Dimension.value(24.dp)
             },
-            onClick = {
+            imageVector = Icons.Default.Close,
+            tint = scannerColors.closeIconColor,
+            contentDescription = scannerStrings.closeButtonContentDescription
+        )
+
+        Box(
+            modifier = Modifier.constrainAs(buttonClose) {
+                top.linkTo(iconClose.top)
+                end.linkTo(iconClose.end)
+                bottom.linkTo(iconClose.bottom)
+                start.linkTo(iconClose.start)
+                width = Dimension.value(48.dp)
+                height = Dimension.value(48.dp)
+            }.clickable {
                 onDismiss?.invoke()
             }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                tint = scannerColors.closeIconColor,
-                contentDescription = scannerStrings.closeButtonContentDescription
-            )
-        }
+        )
 
         Icon(
             modifier = Modifier.constrainAs(topLeftCropImage) {
