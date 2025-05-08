@@ -161,9 +161,9 @@ fun W3WOcrScanner(
     modifier: Modifier = Modifier,
     ocrScannerState: OcrScannerState,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
-    isEdgeToEdgeEnabled: Boolean = false,
     previewViewImplementationMode: PreviewView.ImplementationMode = PreviewView.ImplementationMode.PERFORMANCE,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig = W3WOcrScannerDefaults.defaultLayoutConfig(),
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
@@ -244,7 +244,6 @@ fun W3WOcrScanner(
             ScannerContent(
                 modifier = modifier,
                 context = LocalContext.current,
-                isEdgeToEdgeEnabled = isEdgeToEdgeEnabled,
                 lifecycleOwner = LocalLifecycleOwner.current,
                 cameraSelector = cameraSelector,
                 previewViewImplementationMode = previewViewImplementationMode,
@@ -252,6 +251,7 @@ fun W3WOcrScanner(
                 onFrameCaptured = onFrameCaptured,
                 onDismiss = onDismiss,
                 onError = onError,
+                scannerLayoutConfig = scannerLayoutConfig,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
                 onBackPressed = onBackPressed,
@@ -316,9 +316,9 @@ fun W3WOcrScanner(
     modifier: Modifier = Modifier,
     ocrScanManager: OcrScanManager,
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
-    isEdgeToEdgeEnabled: Boolean = false,
     previewViewImplementationMode: PreviewView.ImplementationMode = PreviewView.ImplementationMode.PERFORMANCE,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig = W3WOcrScannerDefaults.defaultLayoutConfig(),
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
@@ -423,7 +423,6 @@ fun W3WOcrScanner(
             ScannerContent(
                 modifier = modifier,
                 context = LocalContext.current,
-                isEdgeToEdgeEnabled = isEdgeToEdgeEnabled,
                 lifecycleOwner = LocalLifecycleOwner.current,
                 ocrScannerState = ocrScannerState,
                 cameraSelector = cameraSelector,
@@ -451,6 +450,7 @@ fun W3WOcrScanner(
                 },
                 onDismiss = onDismiss,
                 onError = onError,
+                scannerLayoutConfig = scannerLayoutConfig,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
                 onBackPressed = {
@@ -551,13 +551,13 @@ private fun ScannerContent(
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
     scannerColors: W3WOcrScannerDefaults.Colors,
     scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig,
     importButton: @Composable () -> Unit,
     liveScanToggle: @Composable () -> Unit,
     shutterButton: @Composable () -> Unit,
     notFoundContent: @Composable ColumnScope.() -> Unit,
     stateInfoContent: @Composable ColumnScope.() -> Unit,
-    foundContent: @Composable ColumnScope.() -> Unit,
-    isEdgeToEdgeEnabled: Boolean = false
+    foundContent: @Composable ColumnScope.() -> Unit
 ) {
     //region Camera Bindings
     val orientation = LocalConfiguration.current.orientation
@@ -660,13 +660,6 @@ private fun ScannerContent(
     var peekHeight by remember { mutableStateOf(86.dp) }
     var sheetState by remember { mutableStateOf(SheetState.PEEK) }
     var controlButtonBarHeight by remember { mutableStateOf(0f) }
-    val systemInsets = WindowInsets.systemBars
-    val topInset = if (isEdgeToEdgeEnabled) with(LocalDensity.current) {
-        systemInsets.getTop(LocalDensity.current).toDp()
-    } else 0.dp
-    val bottomInset = if (isEdgeToEdgeEnabled) with(LocalDensity.current) {
-        systemInsets.getBottom(LocalDensity.current).toDp()
-    } else 0.dp
 
     // Animate the height
     val animatedHeight by animateFloatAsState(
@@ -675,8 +668,8 @@ private fun ScannerContent(
             sheetState = sheetState,
             dragOffset = dragOffset,
             maxBottomSheetHeight = maxBottomSheetHeight,
-            fullScreenHeight = with(density) { parentHeight.toDp() } - topInset - bottomInset,
-            peekHeight = peekHeight + bottomInset,
+            fullScreenHeight = with(density) { parentHeight.toDp() } - scannerLayoutConfig.contentPadding.calculateTopPadding() - scannerLayoutConfig.contentPadding.calculateBottomPadding(),
+            peekHeight = peekHeight + scannerLayoutConfig.contentPadding.calculateBottomPadding(),
             isImageCaptured = ocrScannerState.capturedImage != null
         ).value,
         animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
@@ -787,7 +780,7 @@ private fun ScannerContent(
                     end.linkTo(endBackground.start)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(60.dp + topInset)
+                    height = Dimension.value(60.dp + scannerLayoutConfig.contentPadding.calculateTopPadding())
                 }
                 .background(scannerColors.overlayBackground)
         )
@@ -824,7 +817,7 @@ private fun ScannerContent(
         )
         Icon(
             modifier = Modifier.constrainAs(logo) {
-                top.linkTo(parent.top, margin = topInset)
+                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(cropArea.top)
@@ -838,7 +831,7 @@ private fun ScannerContent(
 
         IconButton(
             modifier = Modifier.constrainAs(buttonClose) {
-                top.linkTo(parent.top, margin = topInset)
+                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
                 end.linkTo(parent.end)
                 bottom.linkTo(cropArea.top)
                 width = Dimension.wrapContent
@@ -897,7 +890,7 @@ private fun ScannerContent(
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
                     if (sheetState == SheetState.PEEK) {
-                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp + bottomInset)
+                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp + scannerLayoutConfig.contentPadding.calculateBottomPadding())
 
                     } else {
                         top.linkTo(cropArea.bottom, margin = 24.dp)
@@ -949,7 +942,7 @@ private fun ScannerContent(
                         top.linkTo(parent.top)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                        height = Dimension.value(if (isEdgeToEdgeEnabled) topInset else 0.dp)
+                        height = Dimension.value(scannerLayoutConfig.contentPadding.calculateTopPadding())
                         width = Dimension.fillToConstraints
                     }
                     .background(scannerColors.resultsTopAppBarContainerColor)
@@ -1066,7 +1059,7 @@ private fun ScannerContent(
             Column(
                 modifier = Modifier
                     .padding(top = 16.dp)
-                    .padding(bottom = bottomInset)
+                    .padding(bottom = scannerLayoutConfig.contentPadding.calculateBottomPadding())
             ) {
                 if (ocrScannerState.foundItems.isNotEmpty()) {
                     Box(

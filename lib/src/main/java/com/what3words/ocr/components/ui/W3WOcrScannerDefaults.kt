@@ -1,10 +1,13 @@
 package com.what3words.ocr.components.ui
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import com.what3words.design.library.ui.theme.colors_blue_20
 import com.what3words.design.library.ui.theme.w3wColorScheme
 import com.what3words.ocr.components.R
@@ -69,6 +72,31 @@ object W3WOcrScannerDefaults {
         val tryAgainButtonLabel: String,
         val resultsTitle: String
     )
+
+    /**
+     * Configuration class for layout settings of the OCR Scanner.
+     */
+    data class LayoutConfig(
+        val contentPadding: PaddingValues
+    )
+
+    /**
+     * Factory function for creating a default [LayoutConfig] instance for [W3WOcrScanner].
+     * This function allows customization of padding and other layout properties for the OCR scanner UI.
+     *
+     * @param contentPadding The padding values to be applied to the content area of the scanner.
+     *                       This allows for adjusting the scanner layout to account for system insets
+     *                       or other UI elements that may overlap with the scanner.
+     * @return A [LayoutConfig] object with the specified or default padding values.
+     */
+    @Composable
+    fun defaultLayoutConfig(
+        contentPadding: PaddingValues = PaddingValues(0.dp),
+    ): LayoutConfig {
+        return LayoutConfig(
+            contentPadding = contentPadding
+        )
+    }
 
     /**
      * Factory function for creating a default [Colors] instance for [W3WOcrScanner].
