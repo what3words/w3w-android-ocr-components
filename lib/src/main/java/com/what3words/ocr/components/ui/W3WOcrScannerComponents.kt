@@ -294,6 +294,7 @@ fun ColumnScope.OCRScannerStateInfoContent(
 fun ColumnScope.OCRScannerNotFoundContent(
     scannerStrings: W3WOcrScannerDefaults.Strings,
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles,
+    scannerColors: W3WOcrScannerDefaults.Colors,
     onRetryPressed: () -> Unit
 ) {
     Text(
@@ -302,6 +303,7 @@ fun ColumnScope.OCRScannerNotFoundContent(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .fillMaxWidth(),
         text = scannerStrings.notFoundMessage,
+        color = scannerColors.notFoundMessageTextColor,
         style = scannerTextStyles.notFoundMessageTextStyle,
         textAlign = TextAlign.Center
     )
@@ -309,7 +311,7 @@ fun ColumnScope.OCRScannerNotFoundContent(
         onClick = { onRetryPressed() },
         modifier = Modifier
             .testTag("ocrNotFoundRetryButton")
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp)
             .fillMaxWidth()
             .align(Alignment.CenterHorizontally)
     ) {

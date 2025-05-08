@@ -203,6 +203,7 @@ fun W3WOcrScanner(
         OCRScannerNotFoundContent(
             scannerStrings = scannerStrings,
             scannerTextStyles = scannerTextStyles,
+            scannerColors = scannerColors,
             onRetryPressed = onBackPressed
         )
     },
@@ -494,6 +495,7 @@ fun W3WOcrScanner(
                     OCRScannerNotFoundContent(
                         scannerStrings = scannerStrings,
                         scannerTextStyles = scannerTextStyles,
+                        scannerColors = scannerColors,
                         onRetryPressed = {
                             ocrScanManager.onBackPressed()
                         }

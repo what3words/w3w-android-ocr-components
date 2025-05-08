@@ -41,7 +41,8 @@ object W3WOcrScannerDefaults {
         val imagePreviewBackgroundColor: Color,
         val resultsTopAppBarContainerColor: Color,
         val resultsTopAppBarNavigationIconContentColor: Color,
-        val resultsTopAppBarNavigationTitleContentColor: Color
+        val resultsTopAppBarNavigationTitleContentColor: Color,
+        val notFoundMessageTextColor: Color
     )
 
     /**
@@ -144,6 +145,7 @@ object W3WOcrScannerDefaults {
         resultsTopAppBarContainerColor: Color = MaterialTheme.colorScheme.secondaryContainer,
         resultsTopNavigationIconContentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
         resultsTopNavigationTitleContentColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+        notFoundMessageTextColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
     ): Colors {
         return Colors(
             bottomDrawerBackground = bottomDrawerBackground,
@@ -166,7 +168,8 @@ object W3WOcrScannerDefaults {
             imagePreviewBackgroundColor = imagePreviewBackgroundColor,
             resultsTopAppBarContainerColor = resultsTopAppBarContainerColor,
             resultsTopAppBarNavigationIconContentColor = resultsTopNavigationIconContentColor,
-            resultsTopAppBarNavigationTitleContentColor = resultsTopNavigationTitleContentColor
+            resultsTopAppBarNavigationTitleContentColor = resultsTopNavigationTitleContentColor,
+            notFoundMessageTextColor = notFoundMessageTextColor
         )
     }
 
