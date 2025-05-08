@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
-import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -97,7 +95,7 @@ import java.util.concurrent.Executors
 
 private const val ANIMATION_DURATION = 500 //ms
 private const val BUTTON_CONTROL_MARGIN = 48 //dp
-private const val BOTTOM_SHEET_PEEK_HEIGHT = 72 //dp
+private const val BOTTOM_SHEET_PEEK_HEIGHT = 65 //dp
 private const val BOTTOM_SHEET_NOT_FOUND_HEIGHT = 180 //dp
 private const val DRAG_SENSITIVITY_FACTOR = 300f //dp
 
@@ -162,6 +160,7 @@ fun W3WOcrScanner(
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
     previewViewImplementationMode: PreviewView.ImplementationMode = PreviewView.ImplementationMode.PERFORMANCE,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig = W3WOcrScannerDefaults.defaultLayoutConfig(),
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
@@ -249,6 +248,7 @@ fun W3WOcrScanner(
                 onFrameCaptured = onFrameCaptured,
                 onDismiss = onDismiss,
                 onError = onError,
+                scannerLayoutConfig = scannerLayoutConfig,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
                 onBackPressed = onBackPressed,
@@ -315,6 +315,7 @@ fun W3WOcrScanner(
     displayUnits: DisplayUnits = DisplayUnits.SYSTEM,
     previewViewImplementationMode: PreviewView.ImplementationMode = PreviewView.ImplementationMode.PERFORMANCE,
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig = W3WOcrScannerDefaults.defaultLayoutConfig(),
     scannerColors: W3WOcrScannerDefaults.Colors = W3WOcrScannerDefaults.defaultColors(),
     scannerTextStyles: W3WOcrScannerDefaults.TextStyles = W3WOcrScannerDefaults.defaultTextStyles(),
     scannerStrings: W3WOcrScannerDefaults.Strings = W3WOcrScannerDefaults.defaultStrings(),
@@ -446,6 +447,7 @@ fun W3WOcrScanner(
                 },
                 onDismiss = onDismiss,
                 onError = onError,
+                scannerLayoutConfig = scannerLayoutConfig,
                 scannerColors = scannerColors,
                 scannerStrings = scannerStrings,
                 onBackPressed = {
@@ -546,6 +548,7 @@ private fun ScannerContent(
     cameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA,
     scannerColors: W3WOcrScannerDefaults.Colors,
     scannerStrings: W3WOcrScannerDefaults.Strings,
+    scannerLayoutConfig: W3WOcrScannerDefaults.LayoutConfig,
     importButton: @Composable () -> Unit,
     liveScanToggle: @Composable () -> Unit,
     shutterButton: @Composable () -> Unit,
@@ -662,8 +665,8 @@ private fun ScannerContent(
             sheetState = sheetState,
             dragOffset = dragOffset,
             maxBottomSheetHeight = maxBottomSheetHeight,
-            fullScreenHeight = with(density) { parentHeight.toDp() },
-            peekHeight = peekHeight,
+            fullScreenHeight = with(density) { parentHeight.toDp() } - scannerLayoutConfig.contentPadding.calculateTopPadding() - scannerLayoutConfig.contentPadding.calculateBottomPadding(),
+            peekHeight = peekHeight + scannerLayoutConfig.contentPadding.calculateBottomPadding(),
             isImageCaptured = ocrScannerState.capturedImage != null
         ).value,
         animationSpec = spring(stiffness = 300f, dampingRatio = 0.8f),
@@ -724,8 +727,8 @@ private fun ScannerContent(
             .onGloballyPositioned { coordinates ->
                 parentHeight = coordinates.size.height.toFloat()
             }) {
-        val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage, controlBar, instructionText, bottomSheet) = createRefs()
-        val (picturePreviewBackground, topAppBar, picturePreviewImage) = createRefs()
+        val (preview, startBackground, endBackground, topBackground, cropArea, bottomBackground, logo, buttonClose, iconClose, topLeftCropImage, topRightCropImage, bottomLeftCropImage, bottomRightCropImage, controlBar, instructionText, bottomSheet) = createRefs()
+        val (picturePreviewBackground, topAppBar, picturePreviewImage, edgeToEdgeSpacer) = createRefs()
         // Use the provided PreviewView
         AndroidView(
             modifier = Modifier
@@ -774,7 +777,7 @@ private fun ScannerContent(
                     end.linkTo(endBackground.start)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(60.dp)
+                    height = Dimension.value(60.dp + scannerLayoutConfig.contentPadding.calculateTopPadding())
                 }
                 .background(scannerColors.overlayBackground)
         )
@@ -811,7 +814,7 @@ private fun ScannerContent(
         )
         Icon(
             modifier = Modifier.constrainAs(logo) {
-                top.linkTo(parent.top)
+                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(cropArea.top)
@@ -823,24 +826,31 @@ private fun ScannerContent(
             tint = scannerColors.logoColor
         )
 
-        IconButton(
-            modifier = Modifier.constrainAs(buttonClose) {
-                top.linkTo(parent.top)
-                end.linkTo(parent.end)
+        Icon(
+            modifier = Modifier.constrainAs(iconClose) {
+                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
+                end.linkTo(topRightCropImage.end, margin = margin)
                 bottom.linkTo(cropArea.top)
-                width = Dimension.wrapContent
-                height = Dimension.wrapContent
+                width = Dimension.value(24.dp)
+                height = Dimension.value(24.dp)
             },
-            onClick = {
+            imageVector = Icons.Default.Close,
+            tint = scannerColors.closeIconColor,
+            contentDescription = scannerStrings.closeButtonContentDescription
+        )
+
+        Box(
+            modifier = Modifier.constrainAs(buttonClose) {
+                top.linkTo(iconClose.top)
+                end.linkTo(iconClose.end)
+                bottom.linkTo(iconClose.bottom)
+                start.linkTo(iconClose.start)
+                width = Dimension.value(48.dp)
+                height = Dimension.value(48.dp)
+            }.clickable {
                 onDismiss?.invoke()
             }
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                tint = scannerColors.closeIconColor,
-                contentDescription = scannerStrings.closeButtonContentDescription
-            )
-        }
+        )
 
         Icon(
             modifier = Modifier.constrainAs(topLeftCropImage) {
@@ -884,7 +894,7 @@ private fun ScannerContent(
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
                     if (sheetState == SheetState.PEEK) {
-                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp)
+                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp + scannerLayoutConfig.contentPadding.calculateBottomPadding())
 
                     } else {
                         top.linkTo(cropArea.bottom, margin = 24.dp)
@@ -930,10 +940,21 @@ private fun ScannerContent(
                     maxBottomSheetHeight
                 ) else
                     createGuidelineFromBottom(peekHeight)
+            Box(
+                modifier = Modifier
+                    .constrainAs(edgeToEdgeSpacer) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                        height = Dimension.value(scannerLayoutConfig.contentPadding.calculateTopPadding())
+                        width = Dimension.fillToConstraints
+                    }
+                    .background(scannerColors.resultsTopAppBarContainerColor)
+            )
             TopAppBar(
                 modifier = Modifier
                     .constrainAs(topAppBar) {
-                        top.linkTo(parent.top)
+                        top.linkTo(edgeToEdgeSpacer.bottom)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
                     },
@@ -1042,6 +1063,7 @@ private fun ScannerContent(
             Column(
                 modifier = Modifier
                     .padding(top = 16.dp)
+                    .padding(bottom = scannerLayoutConfig.contentPadding.calculateBottomPadding())
             ) {
                 if (ocrScannerState.foundItems.isNotEmpty()) {
                     Box(
