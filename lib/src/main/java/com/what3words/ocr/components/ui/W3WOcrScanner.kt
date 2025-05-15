@@ -712,7 +712,7 @@ private fun ScannerContent(
             }
 
             OcrScannerState.State.Found -> {
-                sheetState = SheetState.CONTENT
+                if (sheetState == SheetState.PEEK) sheetState = SheetState.CONTENT
             }
 
             else -> {}
@@ -779,7 +779,8 @@ private fun ScannerContent(
                     end.linkTo(endBackground.start)
                     top.linkTo(parent.top)
                     width = Dimension.fillToConstraints
-                    height = Dimension.value(60.dp + scannerLayoutConfig.contentPadding.calculateTopPadding())
+                    height =
+                        Dimension.value(60.dp + scannerLayoutConfig.contentPadding.calculateTopPadding())
                 }
                 .background(scannerColors.overlayBackground)
         )
@@ -816,7 +817,10 @@ private fun ScannerContent(
         )
         Icon(
             modifier = Modifier.constrainAs(logo) {
-                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
+                top.linkTo(
+                    parent.top,
+                    margin = scannerLayoutConfig.contentPadding.calculateTopPadding()
+                )
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 bottom.linkTo(cropArea.top)
@@ -830,7 +834,10 @@ private fun ScannerContent(
 
         Icon(
             modifier = Modifier.constrainAs(iconClose) {
-                top.linkTo(parent.top, margin = scannerLayoutConfig.contentPadding.calculateTopPadding())
+                top.linkTo(
+                    parent.top,
+                    margin = scannerLayoutConfig.contentPadding.calculateTopPadding()
+                )
                 end.linkTo(topRightCropImage.end, margin = margin)
                 bottom.linkTo(cropArea.top)
                 width = Dimension.value(24.dp)
@@ -842,16 +849,18 @@ private fun ScannerContent(
         )
 
         Box(
-            modifier = Modifier.constrainAs(buttonClose) {
-                top.linkTo(iconClose.top)
-                end.linkTo(iconClose.end)
-                bottom.linkTo(iconClose.bottom)
-                start.linkTo(iconClose.start)
-                width = Dimension.value(48.dp)
-                height = Dimension.value(48.dp)
-            }.clickable {
-                onDismiss?.invoke()
-            }
+            modifier = Modifier
+                .constrainAs(buttonClose) {
+                    top.linkTo(iconClose.top)
+                    end.linkTo(iconClose.end)
+                    bottom.linkTo(iconClose.bottom)
+                    start.linkTo(iconClose.start)
+                    width = Dimension.value(48.dp)
+                    height = Dimension.value(48.dp)
+                }
+                .clickable {
+                    onDismiss?.invoke()
+                }
         )
 
         Icon(
@@ -896,7 +905,10 @@ private fun ScannerContent(
                 .fillMaxWidth()
                 .constrainAs(controlBar) {
                     if (sheetState == SheetState.PEEK) {
-                        bottom.linkTo(parent.bottom, margin = peekHeight + 24.dp + scannerLayoutConfig.contentPadding.calculateBottomPadding())
+                        bottom.linkTo(
+                            parent.bottom,
+                            margin = peekHeight + 24.dp + scannerLayoutConfig.contentPadding.calculateBottomPadding()
+                        )
 
                     } else {
                         top.linkTo(cropArea.bottom, margin = 24.dp)
@@ -948,7 +960,8 @@ private fun ScannerContent(
                         top.linkTo(parent.top)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                        height = Dimension.value(scannerLayoutConfig.contentPadding.calculateTopPadding())
+                        height =
+                            Dimension.value(scannerLayoutConfig.contentPadding.calculateTopPadding())
                         width = Dimension.fillToConstraints
                     }
                     .background(scannerColors.resultsTopAppBarContainerColor)
