@@ -91,15 +91,15 @@ fun W3WOcrScannerShutterButton(
     Box(
         modifier = Modifier
             .alpha(if (ocrScannerState.scanningType != ScanningType.Live) 1.0f else 0.4f)
-            .size(72.dp)
+            .size(82.dp)
             .clip(CircleShape)
-            .border(3.dp, scannerColors.shutterInactiveColor, CircleShape),
+            .border(4.dp, scannerColors.shutterInactiveColor, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         var isPressed by remember { mutableStateOf(false) }
 
         val animatedSize by animateFloatAsState(
-            targetValue = if (isPressed) 48.dp.value else 60.dp.value,
+            targetValue = if (isPressed) 52.dp.value else 64.dp.value,
             animationSpec = tween(durationMillis = 150),
             label = "shutter-button-animation"
         )

@@ -923,13 +923,13 @@ private fun ScannerContent(
                 },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.weight(1f).padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
                 importButton()
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 shutterButton()
             }
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.weight(1f).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
                 liveScanToggle()
             }
         }
