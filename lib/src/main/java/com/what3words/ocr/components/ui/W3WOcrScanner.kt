@@ -687,7 +687,7 @@ private fun ScannerContent(
         }
 
     LaunchedEffect(ocrScannerState.foundItems.size) {
-        if (!ocrScannerState.foundItems.isEmpty()) {
+        if (ocrScannerState.foundItems.isNotEmpty()) {
             color.animateTo(
                 scannerColors.shutterActiveColor, animationSpec = tween(
                     ANIMATION_DURATION
