@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -860,11 +861,11 @@ private fun ScannerContent(
                     width = Dimension.value(48.dp)
                     height = Dimension.value(48.dp)
                 }
+                .clip(CircleShape)
                 .clickable {
                     onDismiss?.invoke()
                 }
         )
-
         Icon(
             modifier = Modifier.constrainAs(topLeftCropImage) {
                 top.linkTo(cropArea.top, margin)
