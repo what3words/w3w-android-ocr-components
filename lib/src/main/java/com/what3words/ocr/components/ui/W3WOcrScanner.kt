@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -687,16 +688,18 @@ private fun ScannerContent(
         }
 
     LaunchedEffect(ocrScannerState.foundItems.size) {
-        color.animateTo(
-            scannerColors.shutterActiveColor, animationSpec = tween(
-                ANIMATION_DURATION
+        if (ocrScannerState.foundItems.isNotEmpty()) {
+            color.animateTo(
+                scannerColors.shutterActiveColor, animationSpec = tween(
+                    ANIMATION_DURATION
+                )
             )
-        )
-        color.animateTo(
-            scannerColors.shutterInactiveColor, animationSpec = tween(
-                ANIMATION_DURATION
+            color.animateTo(
+                scannerColors.shutterInactiveColor, animationSpec = tween(
+                    ANIMATION_DURATION
+                )
             )
-        )
+        }
     }
 
     LaunchedEffect(ocrScannerState.state) {
@@ -858,11 +861,11 @@ private fun ScannerContent(
                     width = Dimension.value(48.dp)
                     height = Dimension.value(48.dp)
                 }
+                .clip(CircleShape)
                 .clickable {
                     onDismiss?.invoke()
                 }
         )
-
         Icon(
             modifier = Modifier.constrainAs(topLeftCropImage) {
                 top.linkTo(cropArea.top, margin)
@@ -923,13 +926,23 @@ private fun ScannerContent(
                 },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(modifier = Modifier.weight(1f).padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 importButton()
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 shutterButton()
             }
-            Box(modifier = Modifier.weight(1f).padding(vertical = 4.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 liveScanToggle()
             }
         }
