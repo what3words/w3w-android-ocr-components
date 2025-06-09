@@ -99,6 +99,7 @@ private const val BUTTON_CONTROL_MARGIN = 48 //dp
 private const val BOTTOM_SHEET_PEEK_HEIGHT = 65 //dp
 private const val BOTTOM_SHEET_NOT_FOUND_HEIGHT = 180 //dp
 private const val DRAG_SENSITIVITY_FACTOR = 300f //dp
+private const val PADDING_FULL_SCREEN_SHEET = 4 //dp
 
 private enum class SheetState { PEEK, CONTENT, FULL }
 
@@ -668,7 +669,7 @@ private fun ScannerContent(
             sheetState = sheetState,
             dragOffset = dragOffset,
             maxBottomSheetHeight = maxBottomSheetHeight,
-            fullScreenHeight = with(density) { parentHeight.toDp() } - scannerLayoutConfig.contentPadding.calculateTopPadding() - scannerLayoutConfig.contentPadding.calculateBottomPadding(),
+            fullScreenHeight = with(density) { parentHeight.toDp() } - scannerLayoutConfig.contentPadding.calculateTopPadding(),
             peekHeight = peekHeight + scannerLayoutConfig.contentPadding.calculateBottomPadding(),
             isImageCaptured = ocrScannerState.capturedImage != null
         ).value,
@@ -677,8 +678,7 @@ private fun ScannerContent(
     )
 
     // Calculate maximum allowed height for bottom sheet
-    maxBottomSheetHeight =
-        remember(cropAreaBottom, ocrScannerState.capturedImage) {
+    maxBottomSheetHeight = remember(cropAreaBottom, parentHeight, controlButtonBarHeight, ocrScannerState.capturedImage) {
             with(density) {
                 val parentHeightDp = parentHeight.toDp()
                 val controlBarHeight = controlButtonBarHeight.toDp()
@@ -796,7 +796,12 @@ private fun ScannerContent(
                     top.linkTo(topBackground.bottom)
                     width = Dimension.fillToConstraints
                     height =
-                        Dimension.ratio(if (orientation == ORIENTATION_PORTRAIT) "2:1.5" else "3.1")
+                        Dimension.percent(
+                            when {
+                                orientation == ORIENTATION_PORTRAIT -> 0.3f  // 30% of screen height in portrait
+                                else -> 0.45f  // 45% of screen height in landscape
+                            }
+                        )
                 }
                 .onGloballyPositioned {
                     cropAreaBottom = it.boundsInParent().bottom
@@ -1157,7 +1162,7 @@ private fun calculateTargetHeight(
                 // Calculate the base height (maxBottomSheetHeight) and target height (full screen or adjusted full screen).
                 val base = maxBottomSheetHeight.value
                 val target =
-                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
+                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value - PADDING_FULL_SCREEN_SHEET.dp.value
 
                 // Calculate the interpolation factor based on the negative drag offset (dragging up).
                 // Dividing by dragSensitivityFactor scales the drag distance, determining how much drag is needed
@@ -1176,7 +1181,7 @@ private fun calculateTargetHeight(
                 // When dragging down from FULL state:
                 // Calculate the base height (full screen or adjusted full screen) and target height (maxBottomSheetHeight).
                 val base =
-                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value
+                    if (!isImageCaptured) fullScreenHeight.value else fullScreenHeight.value - TopAppBarDefaults.TopAppBarExpandedHeight.value - PADDING_FULL_SCREEN_SHEET.dp.value
                 val target = maxBottomSheetHeight.value
 
                 // Calculate the interpolation factor based on the positive drag offset (dragging down).
@@ -1198,7 +1203,7 @@ private fun calculateTargetHeight(
             // Non-dragging states just return the height defined for that state.
             SheetState.PEEK -> peekHeight
             SheetState.CONTENT -> maxBottomSheetHeight
-            SheetState.FULL -> if (!isImageCaptured) fullScreenHeight else fullScreenHeight - TopAppBarDefaults.TopAppBarExpandedHeight
+            SheetState.FULL -> if (!isImageCaptured) fullScreenHeight else fullScreenHeight - TopAppBarDefaults.TopAppBarExpandedHeight - PADDING_FULL_SCREEN_SHEET.dp
         }
     }
 }
