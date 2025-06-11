@@ -562,12 +562,21 @@ private fun ScannerContent(
 ) {
     //region Camera Bindings
     val orientation = LocalConfiguration.current.orientation
+    val configuration = LocalConfiguration.current
+
+    // Track configuration changes that affect layout
+    val screenWidth = configuration.screenWidthDp
+    val screenHeight = configuration.screenHeightDp
+    val configurationKey = remember(orientation, screenWidth, screenHeight) {
+        "${orientation}_${screenWidth}_${screenHeight}"
+    }
 
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val previewView = remember {
         PreviewView(context).apply {
             implementationMode = previewViewImplementationMode
             scaleType = PreviewView.ScaleType.FILL_CENTER
+
         }
     }
 
@@ -582,7 +591,10 @@ private fun ScannerContent(
     // Function to bind the camera use cases
     fun bindCamera(cameraProvider: ProcessCameraProvider) {
         try {
-            val preview = Preview.Builder().build()
+            val targetRotation = previewView.display.rotation
+            val preview = Preview.Builder()
+                .setTargetRotation(targetRotation)
+                .build()
 
             val imageAnalysis = buildW3WImageAnalysis(
                 onFrameCaptured = {
@@ -592,6 +604,7 @@ private fun ScannerContent(
                 imageAnalyzerExecutor = imageAnalyzerExecutor,
                 cropLayoutCoordinates = cropLayoutCoordinates ?: return,
                 cameraLayoutCoordinates = cameraLayoutCoordinates ?: return,
+                targetRotation = targetRotation
             )
 
             cameraProvider.unbindAll()
@@ -602,7 +615,7 @@ private fun ScannerContent(
                 imageAnalysis
             )
 
-            preview.setSurfaceProvider(previewView.surfaceProvider)
+            preview.surfaceProvider = previewView.surfaceProvider
             isCameraBound = true
         } catch (e: Exception) {
             onError?.invoke(W3WError(message = "Camera initialization failed: ${e.message}"))
@@ -634,9 +647,14 @@ private fun ScannerContent(
         }
     }
 
-    LaunchedEffect(cropLayoutCoordinates, cameraLayoutCoordinates) {
-        if (cropLayoutCoordinates != null && cameraLayoutCoordinates != null && !isCameraBound) {
+    LaunchedEffect(cropLayoutCoordinates, cameraLayoutCoordinates, configurationKey) {
+
+        if (cropLayoutCoordinates != null && cameraLayoutCoordinates != null) {
             val cameraProvider = cameraProviderFuture.get()
+            if (isCameraBound) {
+                // Unbind first if already bound, then rebind with new coordinates
+                unbindCamera(cameraProvider)
+            }
             bindCamera(cameraProvider)
         }
     }
@@ -678,14 +696,19 @@ private fun ScannerContent(
     )
 
     // Calculate maximum allowed height for bottom sheet
-    maxBottomSheetHeight = remember(cropAreaBottom, parentHeight, controlButtonBarHeight, ocrScannerState.capturedImage) {
-            with(density) {
-                val parentHeightDp = parentHeight.toDp()
-                val controlBarHeight = controlButtonBarHeight.toDp()
-                val instructionBottomDp = cropAreaBottom.toDp()
-                parentHeightDp - instructionBottomDp - controlBarHeight - BUTTON_CONTROL_MARGIN.dp
-            }
+    maxBottomSheetHeight = remember(
+        cropAreaBottom,
+        parentHeight,
+        controlButtonBarHeight,
+        ocrScannerState.capturedImage
+    ) {
+        with(density) {
+            val parentHeightDp = parentHeight.toDp()
+            val controlBarHeight = controlButtonBarHeight.toDp()
+            val instructionBottomDp = cropAreaBottom.toDp()
+            parentHeightDp - instructionBottomDp - controlBarHeight - BUTTON_CONTROL_MARGIN.dp
         }
+    }
 
     LaunchedEffect(ocrScannerState.foundItems.size) {
         if (ocrScannerState.foundItems.isNotEmpty()) {
@@ -745,9 +768,7 @@ private fun ScannerContent(
                     bottom.linkTo(parent.bottom)
                 }
                 .onGloballyPositioned {
-                    if (ocrScannerState.state == OcrScannerState.State.Idle) {
-                        cameraLayoutCoordinates = it
-                    }
+                    cameraLayoutCoordinates = it
                 },
             factory = { previewView }
         )
@@ -805,9 +826,7 @@ private fun ScannerContent(
                 }
                 .onGloballyPositioned {
                     cropAreaBottom = it.boundsInParent().bottom
-                    if (ocrScannerState.state == OcrScannerState.State.Idle) {
-                        cropLayoutCoordinates = it
-                    }
+                    cropLayoutCoordinates = it
                 }
         )
 
@@ -967,11 +986,8 @@ private fun ScannerContent(
                 // Empty box covering the entire screen as background for the preview
                 Box(modifier = Modifier.fillMaxSize())
             }
-            val topGuideline =
-                if (ocrScannerState.state == OcrScannerState.State.Found) createGuidelineFromBottom(
-                    maxBottomSheetHeight
-                ) else
-                    createGuidelineFromBottom(peekHeight)
+            // Use the actual animated height for the guideline instead of static calculations
+            val topGuideline = createGuidelineFromBottom(animatedHeight.dp)
             Box(
                 modifier = Modifier
                     .constrainAs(edgeToEdgeSpacer) {
@@ -1017,12 +1033,25 @@ private fun ScannerContent(
             AsyncImage(
                 modifier = Modifier
                     .constrainAs(picturePreviewImage) {
-                        top.linkTo(topAppBar.bottom, 10.dp)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        bottom.linkTo(topGuideline, 10.dp)
-                        width = Dimension.fillToConstraints
-                        height = Dimension.fillToConstraints
+                        // For Photo scanning mode, match the crop area exactly to show what the user captured
+                        // For other modes, use full available space
+                        if (!ocrScannerState.isFromMedia) {
+                            // Camera capture - match crop area position and size exactly
+                            top.linkTo(topAppBar.bottom, 10.dp)
+                            start.linkTo(cropArea.start)
+                            end.linkTo(cropArea.end)
+                            bottom.linkTo(topGuideline, 10.dp)
+                            width = Dimension.fillToConstraints
+                            height = Dimension.fillToConstraints
+                        } else {
+                            // Other modes - use full available space
+                            top.linkTo(topAppBar.bottom, 10.dp)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            bottom.linkTo(topGuideline, 10.dp)
+                            width = Dimension.fillToConstraints
+                            height = Dimension.fillToConstraints
+                        }
                     },
                 model = ocrScannerState.capturedImage.bitmap,
                 contentDescription = null,

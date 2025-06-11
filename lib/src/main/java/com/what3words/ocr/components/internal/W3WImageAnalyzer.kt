@@ -6,10 +6,9 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
-import com.what3words.ocr.components.extensions.BitmapUtils
 import kotlinx.coroutines.CompletableDeferred
 import kotlin.math.roundToInt
 
@@ -25,14 +24,17 @@ internal class W3WImageAnalyzer(
 
     @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
-        BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
-            val bitmapToBeScanned = try {
-                if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
+        try {
+            // Use CameraX's built-in method to convert ImageProxy to Bitmap
+            // With targetRotation set, this should be properly oriented
+            val bitmap = imageProxy.toBitmap()
 
+            val bitmapToBeScanned =
+                if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
                     val x1: Float =
-                        (cropLayoutCoordinates.positionInParent().x * bitmap.width) / cameraLayoutCoordinates.size.width
+                        (cropLayoutCoordinates.positionInRoot().x * bitmap.width) / cameraLayoutCoordinates.size.width
                     val y1: Float =
-                        (cropLayoutCoordinates.positionInParent().y * bitmap.height) / cameraLayoutCoordinates.size.height
+                        (cropLayoutCoordinates.positionInRoot().y * bitmap.height) / cameraLayoutCoordinates.size.height
                     val width1: Int =
                         (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
                     val height1: Int =
@@ -47,19 +49,20 @@ internal class W3WImageAnalyzer(
                 } else {
                     bitmap
                 }
-            } catch (e: Exception) {
-                Log.e("W3WImageAnalyzer", "Bitmap cropping error: ${e.message}")
-                //ignore frame if any cropping issues.
-                imageProxy.close()
-                return
-            }
 
             val deferred = onFrameCaptured.invoke(W3WImage(bitmapToBeScanned))
             deferred.invokeOnCompletion {
+                if (bitmap == bitmapToBeScanned) bitmap.recycle()
+                else {
+                    bitmap.recycle()
+                    bitmapToBeScanned.recycle()
+                }
+
                 imageProxy.close()
             }
-        } ?: run {
-            onError.invoke(W3WError(message = "ImageProxy to Bitmap conversion failed"))
+        } catch (e: Exception) {
+            Log.e("W3WImageAnalyzer", "Error processing image: ${e.message}", e)
+            onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             imageProxy.close()
         }
     }
