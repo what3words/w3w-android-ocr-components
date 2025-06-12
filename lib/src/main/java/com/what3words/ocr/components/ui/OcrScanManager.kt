@@ -93,7 +93,8 @@ class OcrScanManager(
         if (isFromMedia) {
             _ocrScannerState.update {
                 it.copy(
-                    scanningType = ScanningType.Photo
+                    scanningType = ScanningType.Photo,
+                    isFromMedia = true
                 )
             }
         }
@@ -128,7 +129,15 @@ class OcrScanManager(
                     it.copy(
                         foundItems = emptyList(),
                         state = OcrScannerState.State.Detected,
-                        capturedImage = image,
+                        capturedImage = image.bitmap.config?.let {
+                            W3WImage(
+                                image.bitmap.copy(
+                                    it,
+                                    false
+                                )
+                            )
+                        },
+                        isFromMedia = true
                     )
                 }
             },
@@ -233,7 +242,15 @@ class OcrScanManager(
                     it.copy(
                         foundItems = emptyList(),
                         state = OcrScannerState.State.Detected,
-                        capturedImage = image,
+                        capturedImage = image.bitmap.config?.let {
+                            W3WImage(
+                                image.bitmap.copy(
+                                    it,
+                                    false
+                                )
+                            )
+                        },
+                        isFromMedia = false
                     )
                 }
             },
@@ -322,7 +339,8 @@ class OcrScanManager(
             currentState.copy(
                 state = newState,
                 foundItems = newFoundItems ?: currentState.foundItems,
-                capturedImage = image ?: currentState.capturedImage
+                capturedImage = image?.bitmap?.config?.let { W3WImage(image.bitmap.copy(it, false)) }
+                    ?: currentState.capturedImage
             )
         }
     }
@@ -345,7 +363,8 @@ class OcrScanManager(
             currentState.copy(
                 capturedImage = null,
                 foundItems = emptyList(),
-                state = OcrScannerState.State.Idle
+                state = OcrScannerState.State.Idle,
+                isFromMedia = false
             )
         }
     }

@@ -6,10 +6,9 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.boundsInRoot
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
-import com.what3words.ocr.components.extensions.BitmapUtils
 import kotlinx.coroutines.CompletableDeferred
 import kotlin.math.roundToInt
 
@@ -25,41 +24,40 @@ internal class W3WImageAnalyzer(
 
     @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
-        BitmapUtils.getBitmap(imageProxy)?.let { bitmap ->
-            val bitmapToBeScanned = try {
-                if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
+        try {
+            val originalBitmap = imageProxy.toBitmap()
 
-                    val x1: Float =
-                        (cropLayoutCoordinates.positionInParent().x * bitmap.width) / cameraLayoutCoordinates.size.width
-                    val y1: Float =
-                        (cropLayoutCoordinates.positionInParent().y * bitmap.height) / cameraLayoutCoordinates.size.height
-                    val width1: Int =
-                        (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
-                    val height1: Int =
-                        (cropLayoutCoordinates.size.height * bitmap.height) / cameraLayoutCoordinates.size.height
-                    Bitmap.createBitmap(
-                        bitmap,
-                        x1.roundToInt(),
-                        y1.roundToInt(),
-                        width1,
-                        height1
-                    )
-                } else {
-                    bitmap
-                }
-            } catch (e: Exception) {
-                Log.e("W3WImageAnalyzer", "Bitmap cropping error: ${e.message}")
-                //ignore frame if any cropping issues.
-                imageProxy.close()
-                return
+            val finalBitmap = if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
+                val cameraXCropRect = imageProxy.cropRect
+                val cropBounds = cropLayoutCoordinates.boundsInRoot()
+                val cameraBounds = cameraLayoutCoordinates.boundsInRoot()
+
+                // Calculate combined crop area
+                val relativeX = (cropBounds.left - cameraBounds.left) / cameraBounds.width
+                val relativeY = (cropBounds.top - cameraBounds.top) / cameraBounds.height
+                val relativeWidth = cropBounds.width / cameraBounds.width
+                val relativeHeight = cropBounds.height / cameraBounds.height
+
+                val cropX = (cameraXCropRect.left + relativeX * cameraXCropRect.width()).roundToInt()
+                val cropY = (cameraXCropRect.top + relativeY * cameraXCropRect.height()).roundToInt()
+                val cropWidth = (relativeWidth * cameraXCropRect.width()).roundToInt()
+                val cropHeight = (relativeHeight * cameraXCropRect.height()).roundToInt()
+
+                Bitmap.createBitmap(originalBitmap, cropX, cropY, cropWidth, cropHeight)
+            } else {
+                val cropRect = imageProxy.cropRect
+                Bitmap.createBitmap(originalBitmap, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
             }
 
-            val deferred = onFrameCaptured.invoke(W3WImage(bitmapToBeScanned))
+            val deferred = onFrameCaptured.invoke(W3WImage(finalBitmap))
             deferred.invokeOnCompletion {
+                originalBitmap.recycle()
+                finalBitmap.recycle()
                 imageProxy.close()
             }
-        } ?: run {
-            onError.invoke(W3WError(message = "ImageProxy to Bitmap conversion failed"))
+        } catch (e: Exception) {
+            Log.e("W3WImageAnalyzer", "Error processing image: ${e.message}", e)
+            onError.invoke(W3WError(message = "Image processing failed: ${e.message}"))
             imageProxy.close()
         }
     }

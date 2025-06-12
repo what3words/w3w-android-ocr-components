@@ -24,7 +24,11 @@ data class OcrScannerState(
      */
     val state: State = State.Idle,
     val scanningType: ScanningType = ScanningType.Photo,
-    val capturedImage: W3WImage? = null
+    val capturedImage: W3WImage? = null,
+    /**
+     * Indicates whether the captured image came from media import (true) or camera capture (false).
+     */
+    val isFromMedia: Boolean = false
 ) {
 
     /**
