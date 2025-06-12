@@ -4,11 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.content.res.Configuration.ORIENTATION_PORTRAIT
 import android.os.Build
+import android.util.Rational
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
+import androidx.camera.core.ViewPort
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.Animatable
@@ -576,7 +579,6 @@ private fun ScannerContent(
         PreviewView(context).apply {
             implementationMode = previewViewImplementationMode
             scaleType = PreviewView.ScaleType.FILL_CENTER
-
         }
     }
 
@@ -595,6 +597,14 @@ private fun ScannerContent(
             val preview = Preview.Builder()
                 .setTargetRotation(targetRotation)
                 .build()
+                .also { it.surfaceProvider = previewView.surfaceProvider }
+
+            val viewPort = ViewPort.Builder(
+                Rational(previewView.width, previewView.height),
+                targetRotation
+            )
+                .setScaleType(ViewPort.FILL_CENTER)   // <- WYSIWYG
+                .build()
 
             val imageAnalysis = buildW3WImageAnalysis(
                 onFrameCaptured = {
@@ -607,15 +617,20 @@ private fun ScannerContent(
                 targetRotation = targetRotation
             )
 
+            // 7) Bind everything together
+            val group = UseCaseGroup.Builder()
+                .addUseCase(preview)
+                .addUseCase(imageAnalysis)
+                .setViewPort(viewPort)
+                .build()
+
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
-                preview,
-                imageAnalysis
+                group
             )
 
-            preview.surfaceProvider = previewView.surfaceProvider
             isCameraBound = true
         } catch (e: Exception) {
             onError?.invoke(W3WError(message = "Camera initialization failed: ${e.message}"))
@@ -820,7 +835,7 @@ private fun ScannerContent(
                         Dimension.percent(
                             when {
                                 orientation == ORIENTATION_PORTRAIT -> 0.3f  // 30% of screen height in portrait
-                                else -> 0.45f  // 45% of screen height in landscape
+                                else -> 0.40f  // 40% of screen height in landscape
                             }
                         )
                 }

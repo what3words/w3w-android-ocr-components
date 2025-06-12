@@ -6,7 +6,7 @@ import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.boundsInRoot
 import com.what3words.core.types.common.W3WError
 import com.what3words.core.types.image.W3WImage
 import kotlinx.coroutines.CompletableDeferred
@@ -25,39 +25,34 @@ internal class W3WImageAnalyzer(
     @ExperimentalGetImage
     override fun analyze(imageProxy: ImageProxy) {
         try {
-            // Use CameraX's built-in method to convert ImageProxy to Bitmap
-            // With targetRotation set, this should be properly oriented
-            val bitmap = imageProxy.toBitmap()
+            val originalBitmap = imageProxy.toBitmap()
 
-            val bitmapToBeScanned =
-                if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
-                    val x1: Float =
-                        (cropLayoutCoordinates.positionInRoot().x * bitmap.width) / cameraLayoutCoordinates.size.width
-                    val y1: Float =
-                        (cropLayoutCoordinates.positionInRoot().y * bitmap.height) / cameraLayoutCoordinates.size.height
-                    val width1: Int =
-                        (cropLayoutCoordinates.size.width * bitmap.width) / cameraLayoutCoordinates.size.width
-                    val height1: Int =
-                        (cropLayoutCoordinates.size.height * bitmap.height) / cameraLayoutCoordinates.size.height
-                    Bitmap.createBitmap(
-                        bitmap,
-                        x1.roundToInt(),
-                        y1.roundToInt(),
-                        width1,
-                        height1
-                    )
-                } else {
-                    bitmap
-                }
+            val finalBitmap = if (cropLayoutCoordinates.isAttached && cameraLayoutCoordinates.isAttached) {
+                val cameraXCropRect = imageProxy.cropRect
+                val cropBounds = cropLayoutCoordinates.boundsInRoot()
+                val cameraBounds = cameraLayoutCoordinates.boundsInRoot()
 
-            val deferred = onFrameCaptured.invoke(W3WImage(bitmapToBeScanned))
+                // Calculate combined crop area
+                val relativeX = (cropBounds.left - cameraBounds.left) / cameraBounds.width
+                val relativeY = (cropBounds.top - cameraBounds.top) / cameraBounds.height
+                val relativeWidth = cropBounds.width / cameraBounds.width
+                val relativeHeight = cropBounds.height / cameraBounds.height
+
+                val cropX = (cameraXCropRect.left + relativeX * cameraXCropRect.width()).roundToInt()
+                val cropY = (cameraXCropRect.top + relativeY * cameraXCropRect.height()).roundToInt()
+                val cropWidth = (relativeWidth * cameraXCropRect.width()).roundToInt()
+                val cropHeight = (relativeHeight * cameraXCropRect.height()).roundToInt()
+
+                Bitmap.createBitmap(originalBitmap, cropX, cropY, cropWidth, cropHeight)
+            } else {
+                val cropRect = imageProxy.cropRect
+                Bitmap.createBitmap(originalBitmap, cropRect.left, cropRect.top, cropRect.width(), cropRect.height())
+            }
+
+            val deferred = onFrameCaptured.invoke(W3WImage(finalBitmap))
             deferred.invokeOnCompletion {
-                if (bitmap == bitmapToBeScanned) bitmap.recycle()
-                else {
-                    bitmap.recycle()
-                    bitmapToBeScanned.recycle()
-                }
-
+                originalBitmap.recycle()
+                finalBitmap.recycle()
                 imageProxy.close()
             }
         } catch (e: Exception) {
