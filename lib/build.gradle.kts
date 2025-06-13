@@ -1,4 +1,4 @@
-import java.net.URI
+import java.util.Base64
 
 plugins {
     alias(libs.plugins.android.library)
@@ -7,6 +7,7 @@ plugins {
     id(libs.plugins.signing.get().pluginId)
     alias(libs.plugins.dokka)
     alias(libs.plugins.compose.compiler)
+    id(libs.plugins.jreleaser.get().pluginId)
     id(libs.plugins.kotlin.parcelize.get().pluginId)
     id(libs.plugins.jacoco.get().pluginId)
 }
@@ -160,37 +161,18 @@ tasks.register("checkSnapshotDependencies") {
 
 //region publishing
 
-val ossrhUsername = findProperty("OSSRH_USERNAME") as String?
-val ossrhPassword = findProperty("OSSRH_PASSWORD") as String?
-val signingKey = findProperty("SIGNING_KEY") as String?
-val signingKeyPwd = findProperty("SIGNING_KEY_PWD") as String?
-
+//region publishing
 publishing {
-    repositories {
-        maven {
-            name = "sonatype"
-            val releasesRepoUrl =
-                "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            val snapshotsRepoUrl =
-                "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-            url = if (version.toString()
-                    .endsWith("SNAPSHOT")
-            ) URI.create(snapshotsRepoUrl) else URI.create(releasesRepoUrl)
+    publications {
+        create<MavenPublication>("maven") {
+            afterEvaluate {
+                from(components["release"])
+            }
 
-            credentials {
-                username = ossrhUsername
-                password = ossrhPassword
-            }
-        }
-        publications {
-            create<MavenPublication>("Maven") {
-                artifactId = "w3w-android-ocr-components"
-                groupId = "com.what3words"
-                version = project.version.toString()
-                afterEvaluate {
-                    from(components["release"])
-                }
-            }
+            groupId = "com.what3words"
+            artifactId = "w3w-android-ocr-components"
+            version = project.version.toString()
+
             withType(MavenPublication::class.java) {
                 val publicationName = name
                 val dokkaJar =
@@ -230,13 +212,57 @@ publishing {
                     }
                 }
             }
+            // POM metadata
+        }
+    }
+
+    repositories {
+        maven {
+            name = "sonatypeSnapshots"
+            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+            credentials {
+                username = findProperty("MAVEN_CENTRAL_USERNAME") as? String
+                password = findProperty("MAVEN_CENTRAL_PASSWORD") as? String
+            }
+        }
+        maven {
+            name = "stagingLocal"
+            url = uri(layout.buildDirectory.dir("staging-deploy").get().asFile.absolutePath)
         }
     }
 }
 
-signing {
-    useInMemoryPgpKeys(signingKey, signingKeyPwd)
-    sign(publishing.publications)
+jreleaser {
+    release {
+        github {
+            repoOwner = "what3words"
+            overwrite = true
+        }
+    }
+
+    signing {
+        active.set(org.jreleaser.model.Active.ALWAYS)
+        armored.set(true)
+        publicKey.set(String(Base64.getDecoder().decode(findProperty("W3W_GPG_PUBLIC_KEY")?.toString())))
+        secretKey.set(String(Base64.getDecoder().decode(findProperty("W3W_GPG_SECRET_KEY")?.toString())))
+        passphrase.set(findProperty("W3W_GPG_PASSPHRASE")?.toString())
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                create("sonatype") {
+                    active.set(org.jreleaser.model.Active.ALWAYS)
+                    url.set("https://central.sonatype.com/api/v1/publisher")
+                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().asFile.absolutePath)
+                    username.set(findProperty("MAVEN_CENTRAL_USERNAME")?.toString())
+                    password.set(findProperty("MAVEN_CENTRAL_PASSWORD")?.toString())
+                    verifyPom.set(false)
+                    setStage(org.jreleaser.model.api.deploy.maven.MavenCentralMavenDeployer.Stage.UPLOAD.toString())
+                }
+            }
+        }
+    }
 }
+//endregion
 
 //endregion

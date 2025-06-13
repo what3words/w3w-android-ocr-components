@@ -1,4 +1,4 @@
-name: Build Test
+name: Build, test and snapshot
 
 on:
   push:
@@ -9,7 +9,8 @@ on:
       - 'epic/**'
   pull_request:
     branches:
-      - 'staging'
+      - 'epic/**'
+    types: [ closed ]
 
 jobs:
   build_test:
@@ -63,3 +64,48 @@ jobs:
         with:
           name: test-results
           path: lib/build/outputs/androidTest-results
+
+  snapshot:
+    # This job must explicitly depend on build_test
+    needs: build_test
+    # Run for direct commits to epic branches OR when PRs are merged into epic branches
+    # AND only when build_test succeeds
+    if: >
+      success() && 
+      ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/epic/')) ||
+       (github.event_name == 'pull_request' && github.event.action == 'closed' && 
+        github.event.pull_request.merged == true && startsWith(github.base_ref, 'epic/')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Restore gradle.properties
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        shell: bash
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "MAVEN_CENTRAL_USERNAME=${MAVEN_CENTRAL_USERNAME}">> ~/.gradle/gradle.properties
+          echo "MAVEN_CENTRAL_PASSWORD=${MAVEN_CENTRAL_PASSWORD}">> ~/.gradle/gradle.properties
+          echo "IS_SNAPSHOT_RELEASE=true">> ~/.gradle/gradle.properties
+          cat ~/.gradle/gradle.properties
+
+      - name: Setup Gradle with caching
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Publish SNAPSHOT
+        run: ./gradlew design-library:publishMavenPublicationToSonatypeSnapshotsRepository

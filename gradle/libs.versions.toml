@@ -5,6 +5,7 @@ compileSdk = "35"
 minSdk = "24"
 autonomousappsAnalysis = "1.20.0"
 gradleKtlint = "10.1.0"
+jreleaser = "1.17.0"
 
 # CameraX
 camerax = "1.4.2"
@@ -115,6 +116,7 @@ test-mlkit-text-korean = { group = "com.google.mlkit", name = "text-recognition-
 [plugins]
 android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
 gradle-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "gradleKtlint" }
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
 autonomousapps-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "autonomousappsAnalysis" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
