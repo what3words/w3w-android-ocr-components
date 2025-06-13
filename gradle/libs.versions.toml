@@ -25,7 +25,7 @@ mlkit-text-recognition-languages = "16.0.1"
 
 # what3words
 w3w-android-wrapper = "4.0.3"
-w3w-android-design = "2.0.5-SNAPSHOT"
+w3w-android-design = "2.0.5"
 w3w-core-android = "1.2.0"
 
 # Compose
