@@ -32,6 +32,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Restore gradle.properties
+        shell: bash
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 

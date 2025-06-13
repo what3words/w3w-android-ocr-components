@@ -243,8 +243,12 @@ jreleaser {
     signing {
         active.set(org.jreleaser.model.Active.ALWAYS)
         armored.set(true)
-        publicKey.set(String(Base64.getDecoder().decode(findProperty("W3W_GPG_PUBLIC_KEY")?.toString())))
-        secretKey.set(String(Base64.getDecoder().decode(findProperty("W3W_GPG_SECRET_KEY")?.toString())))
+        publicKey.set(
+            findProperty("W3W_GPG_PUBLIC_KEY")?.toString()
+                ?.let { String(Base64.getDecoder().decode(it)) } ?: "")
+        secretKey.set(
+            findProperty("W3W_GPG_SECRET_KEY")?.toString()
+                ?.let { String(Base64.getDecoder().decode(it)) } ?: "")
         passphrase.set(findProperty("W3W_GPG_PASSPHRASE")?.toString())
     }
     deploy {
