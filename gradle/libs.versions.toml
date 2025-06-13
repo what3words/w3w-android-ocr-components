@@ -88,11 +88,11 @@ w3w-core-android = { group = "com.what3words", name = "w3w-core-android", versio
 # Compose
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
 compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
-compose-ui = { group = "androidx.compose.ui", name = "ui", version = "" }
-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "" }
-compose-activity = { group = "androidx.activity", name = "activity-compose", version = "" }
-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "" }
-compose-material3 = { group = "androidx.compose.material3", name = "material3", version = "" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-activity = { group = "androidx.activity", name = "activity-compose" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 constraint-layout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraint-layout-compose" }
 
 # GMS
