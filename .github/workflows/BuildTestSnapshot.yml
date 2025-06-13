@@ -54,11 +54,13 @@ jobs:
       - name: Setup GMD
         run: ./gradlew :lib:pixel6Api33Setup
           --info
+          --build-cache
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
 
       - name: Build lib and run instrumentation tests
         run: ./gradlew :lib:pixel6Api33DebugAndroidTest
+          --build-cache
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
           -Pandroid.experimental.androidTest.numManagedDeviceShards=1
