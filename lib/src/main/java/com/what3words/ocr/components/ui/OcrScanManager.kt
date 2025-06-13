@@ -10,6 +10,7 @@ import com.what3words.core.types.common.W3WResult
 import com.what3words.core.types.domain.W3WSuggestion
 import com.what3words.core.types.image.W3WImage
 import com.what3words.core.types.options.W3WAutosuggestOptions
+import com.what3words.ocr.components.ui.OcrScannerState.ScanningType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +48,7 @@ class OcrScanManager(
      * Flag to indicate if the OCR scanner is currently stopping. It don't accept new images for processing.
      */
     private var isStopping: Boolean = false
+    private var shouldCaptureNextFrame: Boolean = false
 
     /**
      * Prepares the OCR scanner for operation. This method should be called before scanning images.
@@ -80,40 +82,220 @@ class OcrScanManager(
         image: W3WImage,
         onError: (W3WError) -> Unit,
         onFound: (List<W3WSuggestion>) -> Unit,
-        onCompleted: () -> Unit
+        onCompleted: () -> Unit,
+        isFromMedia: Boolean = false
     ) {
         // In case the scanner is stopping, we ignore the scan request.
         if (isStopping) {
             return
         }
 
-        try {
-            w3wImageDataSource.scan(
+        if (isFromMedia) {
+            _ocrScannerState.update {
+                it.copy(
+                    scanningType = ScanningType.Photo,
+                    isFromMedia = true
+                )
+            }
+        }
+
+        val scanningType = _ocrScannerState.value.scanningType
+
+        when {
+            scanningType == ScanningType.Live -> scanLiveImage(image, onError, onFound, onCompleted)
+            scanningType == ScanningType.Photo && !isFromMedia -> scanCapturedImage(
                 image,
-                onScanning = {
-                    updateState(OcrScannerState.State.Scanning)
-                },
-                onDetected = { possibleAddresses ->
-                    updateState(OcrScannerState.State.Detected)
-                    updateState(OcrScannerState.State.Validating)
+                onError,
+                onFound,
+                onCompleted
+            )
+
+            isFromMedia -> scanImportedImage(
+                image, onError, onFound, onCompleted
+            )
+        }
+    }
+
+    private fun scanImportedImage(
+        image: W3WImage,
+        onError: (W3WError) -> Unit,
+        onFound: (List<W3WSuggestion>) -> Unit,
+        onCompleted: () -> Unit
+    ) {
+        processImage(
+            image,
+            onScanning = {
+                _ocrScannerState.update {
+                    it.copy(
+                        foundItems = emptyList(),
+                        state = OcrScannerState.State.Detected,
+                        capturedImage = image.bitmap.config?.let {
+                            W3WImage(
+                                image.bitmap.copy(
+                                    it,
+                                    false
+                                )
+                            )
+                        },
+                        isFromMedia = true
+                    )
+                }
+            },
+            onDetected = { possibleAddresses ->
+                updateState(OcrScannerState.State.Validating)
+                if (possibleAddresses.isEmpty()) {
+                    updateState(OcrScannerState.State.NotFound, emptyList())
+                } else {
                     validateAddressesAsync(possibleAddresses) { newSuggestions ->
                         if (newSuggestions.isNotEmpty()) {
                             onFound(newSuggestions)
+                            // In photo mode, replace all suggestions with new ones
                             updateState(
                                 OcrScannerState.State.Found,
-                                (newSuggestions + _ocrScannerState.value.foundItems).distinctBy { it.w3wAddress.words }
+                                newSuggestions.distinctBy { it.w3wAddress.words }
                             )
+                        } else {
+                            updateState(OcrScannerState.State.NotFound, emptyList())
                         }
-
                     }
-                },
-                onError = {
-                    onError(it)
-                },
-                onCompleted = {
-                    image.bitmap.recycle()
-                    onCompleted.invoke()
                 }
+            },
+            onError = {
+                onError(it)
+            },
+            onCompleted = {
+                onCompleted.invoke()
+            }
+        )
+    }
+
+    /**
+     * Processes an image in live scanning mode.
+     * In live mode, we continuously scan frames and accumulate results.
+     */
+    private fun scanLiveImage(
+        image: W3WImage,
+        onError: (W3WError) -> Unit,
+        onFound: (List<W3WSuggestion>) -> Unit,
+        onCompleted: () -> Unit
+    ) {
+        processImage(
+            image,
+            onScanning = {
+                updateState(OcrScannerState.State.Scanning)
+            },
+            onDetected = { possibleAddresses ->
+                updateState(OcrScannerState.State.Detected)
+                updateState(OcrScannerState.State.Validating)
+                validateAddressesAsync(possibleAddresses) { newSuggestions ->
+                    if (newSuggestions.isNotEmpty()) {
+                        onFound(newSuggestions)
+                        // In live mode, accumulate unique suggestions over time
+                        updateState(
+                            OcrScannerState.State.Found,
+                            (newSuggestions + _ocrScannerState.value.foundItems).distinctBy { it.w3wAddress.words }
+                        )
+                    }
+                }
+            },
+            onError = { onError(it) },
+            onCompleted = {
+                // Always recycle the bitmap in live mode after processing
+                image.bitmap.recycle()
+                onCompleted.invoke()
+            }
+        )
+    }
+
+    /**
+     * Processes an image in photo or import mode.
+     * In these modes, we only process specific frames on demand.
+     */
+    private fun scanCapturedImage(
+        image: W3WImage,
+        onError: (W3WError) -> Unit,
+        onFound: (List<W3WSuggestion>) -> Unit,
+        onCompleted: () -> Unit
+    ) {
+        // Ignore frame if no capture was requested
+        if (!shouldCaptureNextFrame) {
+            image.bitmap.recycle()
+            onCompleted.invoke()
+            _ocrScannerState.update {
+                it.copy(
+                    state = if (it.state == OcrScannerState.State.NotFound)
+                        OcrScannerState.State.NotFound
+                    else
+                        OcrScannerState.State.Scanning
+                )
+            }
+            return
+        }
+
+        // Reset capture flag
+        shouldCaptureNextFrame = false
+
+        processImage(
+            image,
+            onScanning = {
+                _ocrScannerState.update {
+                    it.copy(
+                        foundItems = emptyList(),
+                        state = OcrScannerState.State.Detected,
+                        capturedImage = image.bitmap.config?.let {
+                            W3WImage(
+                                image.bitmap.copy(
+                                    it,
+                                    false
+                                )
+                            )
+                        },
+                        isFromMedia = false
+                    )
+                }
+            },
+            onDetected = { possibleAddresses ->
+                updateState(OcrScannerState.State.Validating)
+                if (possibleAddresses.isEmpty()) {
+                    updateState(OcrScannerState.State.NotFound, emptyList())
+                } else {
+                    validateAddressesAsync(possibleAddresses) { newSuggestions ->
+                        if (newSuggestions.isNotEmpty()) {
+                            onFound(newSuggestions)
+                            // In photo mode, replace all suggestions with new ones
+                            updateState(
+                                OcrScannerState.State.Found,
+                                newSuggestions.distinctBy { it.w3wAddress.words }
+                            )
+                        } else {
+                            updateState(OcrScannerState.State.NotFound, emptyList())
+                        }
+                    }
+                }
+            },
+            onError = {
+                onError(it)
+            },
+            onCompleted = {
+                onCompleted.invoke()
+            }
+        )
+    }
+
+    private fun processImage(
+        image: W3WImage,
+        onScanning: () -> Unit,
+        onError: (W3WError) -> Unit,
+        onCompleted: () -> Unit,
+        onDetected: (List<String>) -> Unit
+    ) {
+        try {
+            w3wImageDataSource.scan(
+                image,
+                onScanning = onScanning,
+                onDetected = onDetected,
+                onError = onError,
+                onCompleted = onCompleted,
             )
         } catch (e: Exception) {
             onError(W3WError(message = e.message))
@@ -150,12 +332,39 @@ class OcrScanManager(
 
     private fun updateState(
         newState: OcrScannerState.State,
-        newFoundItems: List<W3WSuggestion>? = null
+        newFoundItems: List<W3WSuggestion>? = null,
+        image: W3WImage? = null
     ) {
         _ocrScannerState.update { currentState ->
             currentState.copy(
                 state = newState,
-                foundItems = newFoundItems ?: currentState.foundItems
+                foundItems = newFoundItems ?: currentState.foundItems,
+                capturedImage = image?.bitmap?.config?.let { W3WImage(image.bitmap.copy(it, false)) }
+                    ?: currentState.capturedImage
+            )
+        }
+    }
+
+    fun toggleLiveMode(isLiveMode: Boolean) {
+        _ocrScannerState.update { currentState ->
+            currentState.copy(
+                scanningType = if (isLiveMode) ScanningType.Live else ScanningType.Photo
+            )
+        }
+    }
+
+    fun captureNextFrame() {
+        shouldCaptureNextFrame = true
+    }
+
+    fun onBackPressed() {
+        _ocrScannerState.value.capturedImage?.bitmap?.recycle()
+        _ocrScannerState.update { currentState ->
+            currentState.copy(
+                capturedImage = null,
+                foundItems = emptyList(),
+                state = OcrScannerState.State.Idle,
+                isFromMedia = false
             )
         }
     }

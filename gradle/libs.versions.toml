@@ -1,0 +1,127 @@
+[versions]
+# Android SDK
+coilCompose = "2.7.0"
+compileSdk = "35"
+minSdk = "24"
+autonomousappsAnalysis = "1.20.0"
+gradleKtlint = "10.1.0"
+jreleaser = "1.17.0"
+
+# CameraX
+camerax = "1.4.2"
+
+# Accompanist
+accompanist = "0.34.0"
+
+# Kotlin
+kotlin = "2.0.21"
+coroutines-core = "1.8.0"
+coroutines-android = "1.10.1"
+serialization = "1.6.3"
+
+# MLKit
+mlkit-text-recognition = "19.0.1"
+mlkit-text-recognition-languages = "16.0.1"
+
+# what3words
+w3w-android-wrapper = "4.0.3"
+w3w-android-design = "2.0.5-SNAPSHOT"
+w3w-core-android = "1.2.0"
+
+# Compose
+compose-bom = "2025.04.00"
+constraint-layout-compose = "1.1.1"
+
+# GMS
+play-services-base = "18.5.0"
+
+# Gradle plugins
+android-gradle-plugin = "8.8.2"
+jacoco = "0.8.9"
+sonarqubeGradlePlugin = "3.3"
+
+# Test dependencies
+test-runner = "1.6.2"
+test-orchestrator = "1.5.1"
+test-ext-junit = "1.2.1"
+mockk = "1.13.3"
+coroutines-test = "1.8.1"
+junit-jupiter = "5.9.3"
+mlkit-text = "16.0.1"
+
+#Maven Publish
+dokka = "2.0.0"
+
+[libraries]
+# Gradle plugins
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+jacoco-gradle-plugin = { group = "org.jacoco", name = "org.jacoco.core", version.ref = "jacoco" }
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+sonarqube-gradle-plugin = { module = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin", version.ref = "sonarqubeGradlePlugin" }
+
+# CameraX
+camerax-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+
+# Accompanist
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+
+# Kotlin
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines-core" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines-android" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+ktlint-gradle = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "gradleKtlint" }
+
+# MLKit
+mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkit-text-recognition" }
+mlkit-text-recognition-chinese = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition-chinese", version.ref = "mlkit-text-recognition-languages" }
+mlkit-text-recognition-devanagari = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition-devanagari", version.ref = "mlkit-text-recognition-languages" }
+mlkit-text-recognition-japanese = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition-japanese", version.ref = "mlkit-text-recognition-languages" }
+mlkit-text-recognition-korean = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition-korean", version.ref = "mlkit-text-recognition-languages" }
+
+# what3words
+w3w-android-wrapper = { group = "com.what3words", name = "w3w-android-wrapper", version.ref = "w3w-android-wrapper" }
+w3w-android-design = { group = "com.what3words", name = "w3w-android-design-library", version.ref = "w3w-android-design" }
+w3w-core-android = { group = "com.what3words", name = "w3w-core-android", version.ref = "w3w-core-android" }
+
+# Compose
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-activity = { group = "androidx.activity", name = "activity-compose" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+constraint-layout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraint-layout-compose" }
+
+# GMS
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "play-services-base" }
+
+# Test dependencies
+test-runner = { group = "androidx.test", name = "runner", version.ref = "test-runner" }
+test-orchestrator = { group = "androidx.test", name = "orchestrator", version.ref = "test-orchestrator" }
+test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "test-ext-junit" }
+test-mockk = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
+test-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines-test" }
+test-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit-jupiter" }
+test-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit-jupiter" }
+test-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit-jupiter" }
+test-mlkit-text = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkit-text" }
+test-mlkit-text-chinese = { group = "com.google.mlkit", name = "text-recognition-chinese", version.ref = "mlkit-text" }
+test-mlkit-text-devanagari = { group = "com.google.mlkit", name = "text-recognition-devanagari", version.ref = "mlkit-text" }
+test-mlkit-text-japanese = { group = "com.google.mlkit", name = "text-recognition-japanese", version.ref = "mlkit-text" }
+test-mlkit-text-korean = { group = "com.google.mlkit", name = "text-recognition-korean", version.ref = "mlkit-text" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
+gradle-ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "gradleKtlint" }
+jreleaser = { id = "org.jreleaser", version.ref = "jreleaser" }
+autonomousapps-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "autonomousappsAnalysis" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+maven-publish = { id = "maven-publish" }
+signing = { id = "signing" }
+kotlin-parcelize = { id = "kotlin-parcelize" }
+jacoco = { id = "jacoco" }
