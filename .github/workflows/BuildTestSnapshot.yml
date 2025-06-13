@@ -116,4 +116,4 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Publish SNAPSHOT
-        run: ./gradlew design-library:publishMavenPublicationToSonatypeSnapshotsRepository
+        run: ./gradlew lib:publishMavenPublicationToSonatypeSnapshotsRepository
