@@ -188,15 +188,6 @@ publishing {
                     }
                 artifact(dokkaJar)
                 pom {
-                    withXml {
-                        val root = asNode()
-                        /** 3️⃣  Declare the Google Maven repository */
-                        val repos = root.appendNode("repositories")
-                        val repo  = repos.appendNode("repository")
-                        repo.appendNode("id",   "google")
-                        repo.appendNode("name", "Google Maven")
-                        repo.appendNode("url",  "https://maven.google.com")
-                    }
                     name.set("w3w-android-ocr-components")
                     description.set("Android OCR UI Components that work with Google MLKit")
                     url.set("https://github.com/what3words/w3w-android-ocr-components")
