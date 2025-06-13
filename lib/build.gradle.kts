@@ -109,6 +109,7 @@ dependencies {
     api(libs.w3w.android.design)
     api(libs.w3w.core.android)
 
+    implementation(platform(libs.compose.bom))
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling)
