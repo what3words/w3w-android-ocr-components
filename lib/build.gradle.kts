@@ -109,7 +109,7 @@ dependencies {
     api(libs.w3w.android.design)
     api(libs.w3w.core.android)
 
-    implementation(platform(libs.compose.bom))
+    api(platform(libs.compose.bom))
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.tooling)
@@ -210,17 +210,6 @@ publishing {
                         connection.set("scm:git:git://github.com/what3words/w3w-android-ocr-components.git")
                         developerConnection.set("scm:git:ssh://git@github.com:what3words/w3w-android-ocr-components.git")
                         url.set("https://github.com/what3words/w3w-android-ocr-components/tree/master")
-                    }
-
-                    withXml {
-                        val dependencyManagement = asNode().appendNode("dependencyManagement")
-                        val dependencies = dependencyManagement.appendNode("dependencies")
-                        val bomDependency = dependencies.appendNode("dependency")
-                        bomDependency.appendNode("groupId", "androidx.compose")
-                        bomDependency.appendNode("artifactId", "compose-bom")
-                        bomDependency.appendNode("version", libs.versions.compose.bom.get())
-                        bomDependency.appendNode("type", "pom")
-                        bomDependency.appendNode("scope", "import")
                     }
                 }
             }
