@@ -192,6 +192,7 @@ publishing {
                     name.set("w3w-android-ocr-components")
                     description.set("Android OCR UI Components that work with Google MLKit")
                     url.set("https://github.com/what3words/w3w-android-ocr-components")
+
                     licenses {
                         license {
                             name.set("The MIT License (MIT)")
@@ -209,6 +210,17 @@ publishing {
                         connection.set("scm:git:git://github.com/what3words/w3w-android-ocr-components.git")
                         developerConnection.set("scm:git:ssh://git@github.com:what3words/w3w-android-ocr-components.git")
                         url.set("https://github.com/what3words/w3w-android-ocr-components/tree/master")
+                    }
+
+                    withXml {
+                        val dependencyManagement = asNode().appendNode("dependencyManagement")
+                        val dependencies = dependencyManagement.appendNode("dependencies")
+                        val bomDependency = dependencies.appendNode("dependency")
+                        bomDependency.appendNode("groupId", "androidx.compose")
+                        bomDependency.appendNode("artifactId", "compose-bom")
+                        bomDependency.appendNode("version", libs.versions.compose.bom.get())
+                        bomDependency.appendNode("type", "pom")
+                        bomDependency.appendNode("scope", "import")
                     }
                 }
             }
