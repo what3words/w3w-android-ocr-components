@@ -1,0 +1,77 @@
+name: Publish Release
+
+on:
+  push:
+    branches:
+      - 'staging'
+  pull_request:
+    branches:
+      - 'staging'
+    types: [closed]
+  workflow_dispatch:    # Allow manual triggering
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create Gradle Properties
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          W3W_GPG_SECRET_KEY: ${{ secrets.W3W_GPG_SECRET_KEY }}
+          W3W_GPG_PUBLIC_KEY: ${{ secrets.W3W_GPG_PUBLIC_KEY }}
+          W3W_GPG_PASSPHRASE: ${{ secrets.W3W_GPG_PASSPHRASE }}
+          W3W_GITHUB_TOKEN: ${{ secrets.W3W_GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "MAVEN_CENTRAL_USERNAME=${MAVEN_CENTRAL_USERNAME}" >> ~/.gradle/gradle.properties
+          echo "MAVEN_CENTRAL_PASSWORD=${MAVEN_CENTRAL_PASSWORD}" >> ~/.gradle/gradle.properties
+          echo "W3W_GITHUB_TOKEN=${W3W_GITHUB_TOKEN}" >> ~/.gradle/gradle.properties
+          echo "W3W_GPG_SECRET_KEY=${W3W_GPG_SECRET_KEY}" >> ~/.gradle/gradle.properties
+          echo "W3W_GPG_PUBLIC_KEY=${W3W_GPG_PUBLIC_KEY}" >> ~/.gradle/gradle.properties
+          echo "W3W_GPG_PASSPHRASE=${W3W_GPG_PASSPHRASE}" >> ~/.gradle/gradle.properties
+          cat ~/.gradle/gradle.properties
+
+      - name: Clean build
+        run: ./gradlew clean
+
+      - name: Publish to local staging repository
+        run: ./gradlew :lib:publishMavenPublicationToStagingLocalRepository
+
+      - name: Release with JReleaser
+        run: ./gradlew :lib:jreleaserFullRelease
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JRELEASER_GIT_ROOT_SEARCH: true
+
+      - name: JReleaser output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-release
+          path: |
+            lib/build/jreleaser/trace.log
+            lib/build/jreleaser/output.properties
+
+      - name: Upload staging directory
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-deploy
+          path: lib/build/staging-deploy/

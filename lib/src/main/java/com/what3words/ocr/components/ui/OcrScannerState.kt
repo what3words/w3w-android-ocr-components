@@ -2,6 +2,7 @@ package com.what3words.ocr.components.ui
 
 import androidx.compose.runtime.Stable
 import com.what3words.core.types.domain.W3WSuggestion
+import com.what3words.core.types.image.W3WImage
 
 /**
  * Represents the state of an [W3WOcrScanner], including detected what3words suggestions
@@ -18,11 +19,16 @@ data class OcrScannerState(
      * List of detected what3words addresses.
      */
     val foundItems: List<W3WSuggestion> = listOf(),
-
     /**
      * Current operational state of the OCR scanner.
      */
-    val state: State = State.Idle
+    val state: State = State.Idle,
+    val scanningType: ScanningType = ScanningType.Photo,
+    val capturedImage: W3WImage? = null,
+    /**
+     * Indicates whether the captured image came from media import (true) or camera capture (false).
+     */
+    val isFromMedia: Boolean = false
 ) {
 
     /**
@@ -39,6 +45,12 @@ data class OcrScannerState(
         Scanning,
         Detected,
         Validating,
-        Found
+        Found,
+        NotFound
+    }
+
+    enum class ScanningType {
+        Live,
+        Photo
     }
 }
