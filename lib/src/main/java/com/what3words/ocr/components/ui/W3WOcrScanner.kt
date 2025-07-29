@@ -645,6 +645,10 @@ private fun ScannerContent(
 
     BackHandler {
         if (ocrScannerState.capturedImage == null) {
+            if (isCameraBound) {
+                unbindCamera(cameraProviderFuture.get())
+            }
+            imageAnalyzerExecutor.shutdown()
             onDismiss?.invoke()
         } else {
             onBackPressed.invoke()
@@ -902,6 +906,10 @@ private fun ScannerContent(
                 }
                 .clip(CircleShape)
                 .clickable {
+                    if (isCameraBound) {
+                        unbindCamera(cameraProviderFuture.get())
+                    }
+                    imageAnalyzerExecutor.shutdown()
                     onDismiss?.invoke()
                 }
         )

@@ -1,6 +1,7 @@
 package com.what3words.ocr.components.extensions
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
@@ -77,19 +78,19 @@ private fun correctSlashesInText(text: String): String {
         "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II",
     )
 
-    var processedText = text
+    // replace break lines with spaces
+    var processedText = text.replace("\n", " ")
 
     // Replace pattern at the beginning of a word
     for (pattern in patterns) {
         processedText = processedText.replace(Regex("\\b$pattern"), "///")
     }
     
-    processedText = processedText.replace(". ", ".")
-    processedText = processedText.replace(" . ", ".")
-    processedText = processedText.replace(" .", ".")
-    processedText = processedText.replace("  .", ".")
-    processedText = processedText.replace("  .  ", ".")
-    processedText = processedText.replace(".  ", ".")
+    // Define all what3words separators based on the regex pattern
+    val w3wSeparators = "[.｡。･・︒។։။۔።।]"
+
+    // Remove spaces around any what3words separator
+    processedText = processedText.replace(Regex("\\s*($w3wSeparators)\\s*"), "\$1")
 
     return processedText
 }
