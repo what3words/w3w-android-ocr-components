@@ -6,7 +6,6 @@ on:
       - 'task/**'
       - 'bug/**'
       - 'fix/**'
-      - 'epic/**'
   pull_request:
     branches:
       - 'epic/**'
