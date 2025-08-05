@@ -71,20 +71,9 @@ fun TextRecognizer.scan(
  * @return The text with common slash misinterpretations corrected
  */
 private fun correctSlashesInText(text: String): String {
-    // Common patterns where slashes are misrecognized
-    val patterns = listOf(
-        "Ill", "IlI", "lIl", "III", "ill", "lll", "I/I", "l/l", "II/", "Iil",
-        "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II",
-    )
-
     // replace break lines with spaces
     var processedText = text.replace("\n", " ")
 
-    // Replace pattern at the beginning of a word
-    for (pattern in patterns) {
-        processedText = processedText.replace(Regex("\\b$pattern"), "///")
-    }
-    
     // Define all what3words separators based on the regex pattern
     val w3wSeparators = "[.｡。･・︒។։။۔።।]"
 
