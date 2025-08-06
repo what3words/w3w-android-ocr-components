@@ -22,6 +22,11 @@ import kotlin.coroutines.suspendCoroutine
  * @param onDetected the callback when our [findPossible3wa] regex finds possible matches on the scanned text.
  * @param onError the callback with a [W3WError] in case an error was found while scanning.
  * @param onCompleted the callback when the scanning process is completed.
+ * @param coroutineScope the [CoroutineScope] to use for launching the scanning operation.
+ * @param isBypass3waFilter whether to bypass the what3words address filtering and return all detected text lines.
+ * @param shouldCorrectSlashes whether to correct common OCR misinterpretations of slashes in what3words addresses.
+ * @param rotation the rotation angle in degrees (0-359) to apply to the image during processing.
+ * @param throttleTimeout the delay in milliseconds to wait before completing the operation.
  */
 fun TextRecognizer.scan(
     image: Bitmap,
@@ -31,6 +36,7 @@ fun TextRecognizer.scan(
     onCompleted: () -> Unit,
     coroutineScope: CoroutineScope,
     isBypass3waFilter: Boolean = false,
+    shouldCorrectSlashes: Boolean,
     rotation: Int = 0,
     throttleTimeout: Long = 250L
 ) {
@@ -46,7 +52,7 @@ fun TextRecognizer.scan(
                     val lines = visionText.text.split("\n")
                     onDetected.invoke(lines)
                 } else {
-                    val processedText = correctSlashesInText(visionText.text)
+                    val processedText = postProcessText(visionText.text, shouldCorrectSlashes)
                     val possibleAddresses = findPossible3wa(processedText)
                     onDetected.invoke(possibleAddresses)
                 }
@@ -70,26 +76,28 @@ fun TextRecognizer.scan(
  * @param text The text recognized by OCR
  * @return The text with common slash misinterpretations corrected
  */
-private fun correctSlashesInText(text: String): String {
-    // Common patterns where slashes are misrecognized
-    val patterns = listOf(
-        "Ill", "IlI", "lIl", "III", "ill", "lll", "I/I", "l/l", "II/", "Iil",
-        "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II",
-    )
 
+private fun postProcessText(text: String, shouldCorrectSlashes: Boolean): String {
     // replace break lines with spaces
     var processedText = text.replace("\n", " ")
 
-    // Replace pattern at the beginning of a word
-    for (pattern in patterns) {
-        processedText = processedText.replace(Regex("\\b$pattern"), "///")
-    }
-    
     // Define all what3words separators based on the regex pattern
     val w3wSeparators = "[.｡。･・︒។։။۔።।]"
 
     // Remove spaces around any what3words separator
     processedText = processedText.replace(Regex("\\s*($w3wSeparators)\\s*"), "\$1")
+
+    if (shouldCorrectSlashes) {
+        val patterns = listOf(
+            "Ill", "IlI", "lIl", "III", "ill", "lll", "I/I", "l/l", "II/", "Iil",
+            "Il/", "I//", "//I", "/ll", "l//", "//l", "I/", "Il", "ll", "lI", "II",
+        )
+
+        // Replace pattern at the beginning of a word
+        for (pattern in patterns) {
+            processedText = processedText.replace(Regex("\\b$pattern"), "///")
+        }
+    }
 
     return processedText
 }
