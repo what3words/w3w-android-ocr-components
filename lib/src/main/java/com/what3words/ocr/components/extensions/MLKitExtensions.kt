@@ -78,8 +78,8 @@ fun TextRecognizer.scan(
  */
 
 private fun postProcessText(text: String, shouldCorrectSlashes: Boolean): String {
-    // replace break lines with spaces
-    var processedText = text.replace("\n", " ")
+    // replace break lines with spaces and common unicode issue with old Japanese delimiter.
+    var processedText = text.replace("\n", " ").replace("·", "｡")
 
     // Define all what3words separators based on the regex pattern
     val w3wSeparators = "[.｡。･・︒។։။۔።।]"
