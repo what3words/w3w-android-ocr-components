@@ -32,6 +32,7 @@ import kotlinx.coroutines.SupervisorJob
 class W3WMLKitImageDataSource internal constructor(
     private val context: Context,
     private val recognizerOptions: Int = TextRecognizerOptions.LATIN,
+    private val shouldCorrectSlashes: Boolean,
     dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
 ) : W3WImageDataSource {
 
@@ -111,7 +112,8 @@ class W3WMLKitImageDataSource internal constructor(
             onError,
             onCompleted,
             scope,
-            isBypassed3waFilter
+            isBypassed3waFilter,
+            shouldCorrectSlashes
         )
     }
 
@@ -128,6 +130,8 @@ class W3WMLKitImageDataSource internal constructor(
          *
          * @param context The context of the application.
          * @param recognizerOptions The options [TextRecognizerOptionsInterface] for configuring the text recognizer.
+         * @param dispatcherProvider The dispatcher provider for coroutine execution.
+         * @param shouldCorrectSlashes Whether to correct common OCR misinterpretations of slashes in what3words addresses.
          *
          * @return A new instance of W3WMLKitImageDataSource.
          */
@@ -135,9 +139,10 @@ class W3WMLKitImageDataSource internal constructor(
         fun create(
             context: Context,
             recognizerOptions: Int,
-            dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider()
+            dispatcherProvider: DispatcherProvider = DefaultDispatcherProvider(),
+            shouldCorrectSlashes: Boolean = true
         ): W3WMLKitImageDataSource {
-            return W3WMLKitImageDataSource(context, recognizerOptions, dispatcherProvider)
+            return W3WMLKitImageDataSource(context, recognizerOptions, shouldCorrectSlashes, dispatcherProvider)
         }
     }
 }
