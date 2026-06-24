@@ -185,7 +185,7 @@ publishing {
                         group = JavaBasePlugin.DOCUMENTATION_GROUP
                         description = "Assembles Kotlin docs with Dokka into a Javadoc jar"
                         archiveClassifier.set("javadoc")
-                        from(tasks.named("dokkaHtml"))
+                        from(tasks.named("dokkaGeneratePublicationHtml"))
 
                         // Each archive name should be distinct, to avoid implicit dependency issues.
                         // We use the same format as the sources Jar tasks.
