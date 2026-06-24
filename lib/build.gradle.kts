@@ -1,15 +1,15 @@
 import java.util.Base64
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    id(libs.plugins.maven.publish.get().pluginId)
-    id(libs.plugins.signing.get().pluginId)
+    id("maven-publish")
+    id("signing")
     alias(libs.plugins.dokka)
     alias(libs.plugins.compose.compiler)
-    id(libs.plugins.jreleaser.get().pluginId)
-    id(libs.plugins.kotlin.parcelize.get().pluginId)
-    id(libs.plugins.jacoco.get().pluginId)
+    alias(libs.plugins.jreleaser)
+    id("kotlin-parcelize")
+    id("jacoco")
 }
 
 group = "com.what3words"
@@ -55,11 +55,8 @@ android {
         unitTests.isReturnDefaultValues = true
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -88,10 +85,17 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        // Aligns with the shared catalog jvmToolchain (17).
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
 dependencies {
-    api(libs.camerax.view)
-    api(libs.camerax.camera2)
-    api(libs.camerax.lifecycle)
+    api(libs.androidx.camera.view)
+    api(libs.androidx.camera.camera2)
+    api(libs.androidx.camera.lifecycle)
 
     implementation(libs.accompanist.permissions)
 
@@ -99,43 +103,43 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
 
-    compileOnly(libs.mlkit.text.recognition)
-    compileOnly(libs.mlkit.text.recognition.chinese)
-    compileOnly(libs.mlkit.text.recognition.devanagari)
-    compileOnly(libs.mlkit.text.recognition.japanese)
-    compileOnly(libs.mlkit.text.recognition.korean)
+    compileOnly(libs.mlkit.textRecognition)
+    compileOnly(libs.mlkit.textRecognition.chinese)
+    compileOnly(libs.mlkit.textRecognition.devanagari)
+    compileOnly(libs.mlkit.textRecognition.japanese)
+    compileOnly(libs.mlkit.textRecognition.korean)
 
     api(libs.w3w.android.wrapper)
-    api(libs.w3w.android.design)
-    api(libs.w3w.core.android)
+    api(libs.w3w.android.design.library)
+    api(libs.w3w.core.multiplatform)
 
-    implementation(platform(libs.compose.bom))
-    implementation(libs.compose.runtime)
-    implementation(libs.compose.ui)
-    implementation(libs.compose.ui.tooling)
-    implementation(libs.compose.activity)
-    implementation(libs.compose.ui.tooling.preview)
-    implementation(libs.compose.material3)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
 
-    implementation(libs.constraint.layout.compose)
-    implementation(libs.coil.compose)
+    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs.coil.kt.coil.compose)
 
-    implementation(libs.play.services.base)
+    implementation(libs.gms.base)
 
-    androidTestImplementation(libs.test.runner)
-    androidTestUtil(libs.test.orchestrator)
-    androidTestImplementation(libs.test.ext.junit)
-    androidTestImplementation(libs.test.mockk)
-    androidTestImplementation(libs.test.coroutines)
-    androidTestImplementation(libs.test.jupiter.api)
-    androidTestImplementation(libs.test.jupiter.params)
-    testRuntimeOnly(libs.test.jupiter.engine)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestUtil(libs.androidx.test.orchestrator)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.junit.jupiter.api)
+    androidTestImplementation(libs.junit.jupiter.params)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 
-    androidTestImplementation(libs.test.mlkit.text)
-    androidTestImplementation(libs.test.mlkit.text.chinese)
-    androidTestImplementation(libs.test.mlkit.text.devanagari)
-    androidTestImplementation(libs.test.mlkit.text.japanese)
-    androidTestImplementation(libs.test.mlkit.text.korean)
+    androidTestImplementation(libs.mlkit.textRecognition.bundled)
+    androidTestImplementation(libs.mlkit.textRecognition.bundled.chinese)
+    androidTestImplementation(libs.mlkit.textRecognition.bundled.devanagari)
+    androidTestImplementation(libs.mlkit.textRecognition.bundled.japanese)
+    androidTestImplementation(libs.mlkit.textRecognition.bundled.korean)
 }
 
 tasks.register("checkSnapshotDependencies") {
