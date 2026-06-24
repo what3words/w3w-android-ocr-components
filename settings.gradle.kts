@@ -12,12 +12,11 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        maven(url = "https://central.sonatype.com/repository/maven-snapshots/")
     }
     versionCatalogs {
         create("libs") {
-            // Shared what3words Android version catalog (AGP, Kotlin, compileSdk,
-            // jvmToolchain, jacoco, Compose, etc.) published to Maven Central / Maven local.
-            from("com.what3words:android-version-catalog:2026.06.01")
+            from("com.what3words:android-version-catalog:2026.06.01-SNAPSHOT")
 
             // ---- Local overrides ----
             // Pin minSdk for this library; the shared catalog default differs.
