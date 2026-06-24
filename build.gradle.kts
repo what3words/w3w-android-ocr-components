@@ -13,7 +13,6 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.gradle.ktlint) apply false
     alias(libs.plugins.jreleaser) apply false
-    alias(libs.plugins.autonomousapps.dependency.analysis)
 }
 
 tasks.register<Delete>("clean").configure {

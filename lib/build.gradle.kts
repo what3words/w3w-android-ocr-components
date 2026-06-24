@@ -55,8 +55,8 @@ android {
         unitTests.isReturnDefaultValues = true
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jvmToolchain.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jvmToolchain.get())
     }
     buildFeatures {
         compose = true
@@ -87,8 +87,7 @@ android {
 
 kotlin {
     compilerOptions {
-        // Aligns with the shared catalog jvmToolchain (17).
-        jvmTarget = JvmTarget.JVM_17
+        jvmTarget = JvmTarget.fromTarget(libs.versions.jvmToolchain.get())
     }
 }
 
