@@ -164,18 +164,18 @@ class W3WMLKitImageDataSourceTest(
         @JvmStatic
         @Parameterized.Parameters
         fun testParameters() = listOf(
-            arrayOf(LATIN_AND_CHINESE, R.drawable.simple_valid_chinese_3wa, "美白.色系.自尊"),
-            arrayOf(LATIN, R.drawable.simple_filled_count_soap, "filled.count.soap"),
-            arrayOf(LATIN, R.drawable.simple_valid_english_uppercase_3wa, "FILLED.COUNT.SOAP"),
-            arrayOf(LATIN_AND_DEVANAGARI, R.drawable.simple_valid_hindi_3wa, "डोलने.पीसना.संभाला"),
-            arrayOf(
+            arrayOf<Any>(LATIN_AND_CHINESE, R.drawable.simple_valid_chinese_3wa, "美白.色系.自尊"),
+            arrayOf<Any>(LATIN, R.drawable.simple_filled_count_soap, "filled.count.soap"),
+            arrayOf<Any>(LATIN, R.drawable.simple_valid_english_uppercase_3wa, "FILLED.COUNT.SOAP"),
+            arrayOf<Any>(LATIN_AND_DEVANAGARI, R.drawable.simple_valid_hindi_3wa, "डोलने.पीसना.संभाला"),
+            arrayOf<Any>(
                 LATIN_AND_JAPANESE,
                 R.drawable.simple_valid_japanese_3wa,
                 "こくさい。ていか。かざす"
             ),
-            arrayOf(LATIN_AND_KOREAN, R.drawable.simple_valid_korean_3wa, "국기.깔끔.되었다"),
-            arrayOf(LATIN, R.drawable.complex_index_home_raft, "index.home.raft"),
-            arrayOf(LATIN, R.drawable.simple_portuguese_2_3wa, "refrigerando.valem.touro")
+            arrayOf<Any>(LATIN_AND_KOREAN, R.drawable.simple_valid_korean_3wa, "국기.깔끔.되었다"),
+            arrayOf<Any>(LATIN, R.drawable.complex_index_home_raft, "index.home.raft"),
+            arrayOf<Any>(LATIN, R.drawable.simple_portuguese_2_3wa, "refrigerando.valem.touro")
         )
     }
 }
