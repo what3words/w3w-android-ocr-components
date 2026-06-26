@@ -1,0 +1,86 @@
+name: Publish to Maven Central
+
+on:
+  push:
+    branches: [ main, staging ]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-maven-central
+  cancel-in-progress: false
+
+# contents: write is required to push the tag and create the GitHub release.
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Pushes to `staging` publish a -SNAPSHOT build; everything else (main,
+      # manual dispatch) publishes a regular release and creates a GitHub release.
+      - name: Determine release type
+        id: release_type
+        run: |
+          if [ "${{ github.ref_name }}" = "staging" ]; then
+            echo "snapshot=true" >> "$GITHUB_OUTPUT"
+            echo "Publishing a -SNAPSHOT build from staging."
+          else
+            echo "snapshot=false" >> "$GITHUB_OUTPUT"
+            echo "Publishing a release build."
+          fi
+
+      - name: Publish to Maven Central
+        run: |
+          if [ "${{ steps.release_type.outputs.snapshot }}" = "true" ]; then
+            ./gradlew :lib:publishToMavenCentral -Psnapshot --no-configuration-cache --stacktrace
+          else
+            ./gradlew :lib:publishToMavenCentral --no-configuration-cache --stacktrace
+          fi
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+
+      - name: Read project version
+        id: version
+        if: steps.release_type.outputs.snapshot == 'false'
+        run: |
+          VERSION=$(./gradlew -q --no-configuration-cache :lib:properties | awk -F': ' '/^version:/ {print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved project version: $VERSION"
+
+      - name: Tag and create GitHub release
+        if: steps.release_type.outputs.snapshot == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping tag/release creation."
+          else
+            # gh creates the tag at the current commit and publishes a release
+            # page with auto-generated notes from commits since the last tag.
+            gh release create "$TAG" \
+              --target "$GITHUB_SHA" \
+              --title "$TAG" \
+              --generate-notes
+          fi
