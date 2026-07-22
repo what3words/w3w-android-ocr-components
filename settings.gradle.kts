@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("libs") {
-            from("com.what3words:android-version-catalog:2026.06.01-SNAPSHOT")
+            from("com.what3words:android-version-catalog:2026.06.01")
 
             // ---- Local overrides ----
             // Pin minSdk for this library; the shared catalog default differs.
